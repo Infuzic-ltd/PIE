@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIE Real Estate — Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  :root{
+    --navy:#0d1b3e;--navy-2:#13234d;--gold:#c9a24b;
+    --bg:#eef2f8;--card:#ffffff;--line:#e6ebf3;
+    --ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;
+    --blue:#3b82f6;--green:#22c55e;--purple:#8b5cf6;--orange:#f59e0b;--teal:#14b8a6;--red:#ef4444;
+    --radius:16px;
+    --shadow:0 1px 3px rgba(16,30,60,.06), 0 8px 24px rgba(16,30,60,.05);
+    --shadow-sm:0 1px 2px rgba(16,30,60,.06);
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{scroll-behavior:smooth}
+  body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.45;}
+  .serif{font-family:'Playfair Display',serif}
+  .shell{display:flex;min-height:100vh}
+  .sidebar{width:240px;flex:0 0 240px;background:linear-gradient(180deg,var(--navy) 0%,#0a1530 100%);color:#cdd6e6;padding:22px 16px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:40;}
+  .brand{text-align:center;padding:16px 0 22px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:18px;}
+  .brand .logo{font-size:34px;font-weight:700;letter-spacing:6px;color:var(--gold);line-height:1}
+  .brand .sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+  .nav{display:flex;flex-direction:column;gap:3px;flex:1}
+  .nav a{display:flex;align-items:center;gap:13px;padding:11px 14px;border-radius:10px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s;position:relative;}
+  .nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+  .nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(59,130,246,.4)}
+  .nav a::before{content:"";position:absolute;left:0;top:50%;width:3px;height:0;background:#fff;border-radius:3px;transform:translateY(-50%);transition:height .2s}
+  .nav a:hover::before{height:18px}
+  .nav a.active::before{height:22px}
+  .profile{display:flex;align-items:center;gap:11px;padding:12px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:14px;}
+  .profile .avatar{width:38px;height:38px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:15px;font-weight:700;flex:0 0 38px;}
+  .profile .nm{font-size:13px;font-weight:600;color:#fff}
+  .profile .rl{font-size:11px;color:#8b97b3;text-transform:capitalize}
+  .logout-link{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;transition:background .15s,color .15s;}
+  .logout-link svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .logout-link:hover{background:rgba(239,68,68,.12);color:#ef4444}
+  .main{flex:1;min-width:0;padding:22px 26px 60px}
+  .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .topbar h1{font-size:21px;font-weight:800;display:flex;align-items:center;gap:11px}
+  .topbar .ico-badge{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#fde68a,#f59e0b);display:grid;place-items:center;color:#7c4a03;}
+  .topbar .subtitle{font-size:13px;color:var(--ink-soft);margin-top:5px;margin-left:45px}
+  .top-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s,background .12s;white-space:nowrap;}
+  .btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;position:relative;overflow:hidden;}
+  .btn.primary:hover{background:#2563eb}
+  .btn.primary::after{content:"";position:absolute;top:0;left:-120%;width:60%;height:100%;background:linear-gradient(110deg,transparent,rgba(255,255,255,.35),transparent);transition:left .55s}
+  .btn.primary:hover::after{left:130%}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s,border-color .22s}
+  .card-h{font-size:14px;font-weight:700;letter-spacing:.3px}
+  .pad{padding:20px}
+  .kpi-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:18px;}
+  .kpi{padding:18px}
+  .kpi .top{display:flex;align-items:center;gap:12px}
+  .kpi .icon{width:46px;height:46px;border-radius:50%;display:grid;place-items:center;color:#fff;flex:0 0 46px;transition:transform .25s cubic-bezier(.34,1.56,.64,1),box-shadow .25s}
+  .kpi .icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9}
+  .kpi:hover .icon{transform:scale(1.08) rotate(-4deg)}
+  .kpi .label{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--ink-faint);text-transform:uppercase}
+  .kpi .val{font-size:24px;font-weight:800;margin-top:3px;line-height:1.1}
+  .kpi .delta{font-size:12px;font-weight:600;margin-top:11px;display:flex;align-items:center;gap:5px}
+  .delta .up{color:var(--green)}
+  .delta .down{color:var(--red)}
+  .delta .muted{color:var(--ink-faint);font-weight:500}
+  .bg-blue{background:var(--blue)}.bg-green{background:var(--green)}.bg-purple{background:var(--purple)}.bg-orange{background:var(--orange)}.bg-teal{background:var(--teal)}
+  .grid-3{display:grid;grid-template-columns:.92fr 1.18fr 1.22fr;gap:16px;margin-bottom:18px}
+  .grid-rev{display:grid;grid-template-columns:1.4fr 1.1fr 1fr;gap:16px}
+  .grid-3 .card:hover,.grid-rev .card:hover,.kpi:hover{transform:translateY(-4px);box-shadow:0 14px 34px rgba(16,30,60,.12);border-color:#d6deea}
+  .funnel-wrap{display:flex;gap:20px;align-items:center;margin-top:18px}
+  .funnel{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;min-width:0}
+  .f-bar{height:30px;border-radius:4px;width:100%;transform-origin:center;animation:growW .8s cubic-bezier(.2,.7,.3,1) both;transition:transform .2s,filter .2s,box-shadow .2s;cursor:pointer}
+  .f-bar:hover{transform:scaleX(1.03);filter:saturate(1.15)}
+  .funnel-legend{display:flex;flex-direction:column;gap:14px;font-size:12.5px;flex:0 0 auto}
+  .funnel-legend .row{display:flex;align-items:center;justify-content:space-between;gap:20px;transition:transform .15s}
+  .funnel-legend .row:hover{transform:translateX(3px)}
+  .funnel-legend .nm{color:var(--ink-soft)}
+  .funnel-legend .num{font-weight:700}
+  .agents{display:flex;flex-direction:column;gap:15px;margin-top:18px}
+  .agent{display:grid;grid-template-columns:30px 110px 1fr auto;align-items:center;gap:11px;padding:7px 9px;margin:0 -9px;border-radius:10px;transition:background .18s}
+  .agent:hover{background:#f6f9fd}
+  .agent img{width:30px;height:30px;border-radius:50%;object-fit:cover}
+  .agent .nm{font-size:13px;font-weight:600}
+  .agent .bar-track{height:7px;background:#eef1f6;border-radius:6px;overflow:hidden}
+  .agent .bar-fill{height:100%;border-radius:6px;transform-origin:left;animation:growW 1s cubic-bezier(.2,.7,.3,1) both;animation-delay:.15s}
+  .agent .deals{font-size:11.5px;font-weight:700;color:var(--ink-soft);margin-bottom:4px}
+  .agent .pkr{font-size:12.5px;font-weight:700;color:var(--ink);white-space:nowrap}
+  .donut-wrap{display:flex;align-items:center;gap:16px;margin-top:16px}
+  .donut-shell{position:relative;flex:0 0 116px;width:116px;height:116px}
+  .donut-canvas{width:116px;height:116px}
+  .donut-center{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
+  .donut-center .dc-v{font-size:16px;font-weight:800;line-height:1.05;text-align:center;transition:opacity .2s}
+  .donut-center .dc-l{font-size:8px;font-weight:600;letter-spacing:.4px;color:var(--ink-faint);text-transform:uppercase;margin-top:3px}
+  .donut-legend{flex:1;display:flex;flex-direction:column;gap:11px;min-width:0}
+  .donut-legend .row{display:grid;grid-template-columns:10px 1fr auto auto;align-items:center;gap:8px;font-size:12px;cursor:default;transition:opacity .2s}
+  .dot{width:10px;height:10px;border-radius:50%;flex:0 0 10px}
+  .donut-legend .nm{color:var(--ink-soft);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .donut-legend .pct{font-weight:700;text-align:right;white-space:nowrap}
+  .donut-legend .amt{font-weight:600;color:var(--ink-soft);text-align:right;white-space:nowrap;font-size:11.5px}
+  .donut-legend.dim .row:not(.hot){opacity:.32}
+  .rev-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px}
+  .rev-legend{display:flex;gap:16px;font-size:12px;color:var(--ink-soft)}
+  .rev-legend span{display:inline-flex;align-items:center;gap:6px}
+  .ll{width:18px;height:2.5px;border-radius:2px;background:var(--blue)}
+  .ll.dash{background:repeating-linear-gradient(90deg,#bcd0f5 0 5px,transparent 5px 9px)}
+  .rev-canvas{margin-top:14px;height:178px;position:relative}
+  .rev-canvas canvas{position:absolute;inset:0}
+  .pipe-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-top:16px}
+  .pipe{border:1px solid var(--line);border-radius:12px;padding:14px;transition:transform .2s cubic-bezier(.2,.7,.3,1),box-shadow .2s}
+  .pipe:hover{transform:translateY(-3px);box-shadow:0 10px 24px rgba(16,30,60,.1)}
+  .pipe .nm{font-size:12px;font-weight:600}
+  .pipe .v{font-size:24px;font-weight:800;margin:6px 0 6px;line-height:1;transition:transform .2s}
+  .pipe:hover .v{transform:scale(1.06)}
+  .pipe .d{font-size:11.5px;font-weight:600}
+  .pipe.lead{background:#eff5ff}.pipe.lead .nm{color:var(--blue)}
+  .pipe.qual{background:#effbf6}.pipe.qual .nm{color:var(--teal)}
+  .pipe.prop{background:#fff7ec}.pipe.prop .nm{color:var(--orange)}
+  .pipe.nego{background:#f4f0ff}.pipe.nego .nm{color:var(--purple)}
+  .pipe.won{background:#eefbf2;grid-column:1/-1}.pipe.won .nm{color:var(--green)}
+  .acts{display:flex;flex-direction:column;margin-top:8px}
+  .act{display:flex;align-items:center;gap:12px;padding:11px 8px;border-bottom:1px solid var(--line);margin:0 -8px;border-radius:10px;transition:background .18s}
+  .act:last-child{border-bottom:none}
+  .act:hover{background:#f6f9fd}
+  .act .ai{width:34px;height:34px;border-radius:9px;background:#f1f5fb;display:grid;place-items:center;color:var(--blue);flex:0 0 34px;transition:transform .2s}
+  .act:hover .ai{transform:scale(1.08)}
+  .act .ai svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+  .act .at{font-size:13px;flex:1;min-width:0}
+  .act .ag{font-size:11px;color:var(--ink-faint);white-space:nowrap}
+  .viewall{display:block;text-align:right;margin-top:12px;font-size:13px;font-weight:600;color:var(--blue);text-decoration:none;transition:transform .2s}
+  .viewall:hover{transform:translateX(3px)}
+  .up{color:var(--green)}.down{color:var(--red)}
+  .menu-btn{display:none;align-items:center;justify-content:center;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer}
+  .menu-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+  .scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+  @keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+  @keyframes growW{from{width:0 !important}}
+  .reveal{opacity:0;animation:fadeUp .55s cubic-bezier(.2,.7,.3,1) forwards;animation-delay:var(--d,0s)}
+  @media (prefers-reduced-motion:reduce){.reveal{opacity:1;animation:none}*{animation:none !important;transition:none !important}}
+  @media (max-width:1180px){.kpi-grid{grid-template-columns:repeat(3,1fr)}.grid-3{grid-template-columns:1fr 1fr}.grid-rev{grid-template-columns:1fr 1fr}}
+  @media (max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease;box-shadow:0 0 40px rgba(0,0,0,.3)}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.menu-btn{display:inline-flex}.main{padding:18px 16px 50px}.grid-3,.grid-rev{grid-template-columns:1fr}.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+  @media (max-width:560px){.kpi-grid{grid-template-columns:1fr}.pipe-grid{grid-template-columns:1fr}.pipe.won{grid-column:auto}.donut-wrap{flex-direction:column}.funnel-wrap{flex-direction:column;align-items:stretch}.topbar h1{font-size:18px}}
+  *:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">
+      <div class="logo serif">PIE</div>
+      <div class="sub">REAL ESTATE</div>
+    </div>
+    <nav class="nav">
+      <a href="#" class="active"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Overview</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+      <a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg> Buyers</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="13" rx="2"/><path d="M8 6V4h8v2"/></svg> Deals</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><circle cx="18" cy="9" r="2"/></svg> Agents</a>
+      <a href="#"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg> Reports</a>
+      <a href="#"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 2.5 2.5L16 9"/></svg> Tasks</a>
+      <a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19 12a7 7 0 0 0-.1-1.2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-2-1.2L16.2 2H7.8L7.4 4.7a7 7 0 0 0-2 1.2l-2.3-1-2 3.4 2 1.5A7 7 0 0 0 3 12c0 .4 0 .8.1 1.2l-2 1.5 2 3.4 2.3-1c.6.5 1.3.9 2 1.2l.4 2.7h8.4l.4-2.7c.7-.3 1.4-.7 2-1.2l2.3 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z"/></svg> Settings</a>
+    </nav>
+    <div class="profile">
+      <div class="avatar">{{ user.first_name|first|upper }}{{ user.last_name|first|upper }}</div>
+      <div>
+        <div class="nm">{{ user.get_full_name }}</div>
+        <div class="rl">{{ user.get_role_display }}</div>
+      </div>
+    </div>
+    <a href="{% url 'logout' %}" class="logout-link">
+      <svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+      Sign out
+    </a>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <div style="display:flex;gap:12px;align-items:flex-start">
+        <button class="menu-btn" id="menuBtn" aria-label="Open menu"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+        <div>
+          <h1><span class="ico-badge"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg></span>Executive Analytics</h1>
+          <p class="subtitle">Real-time insights to help leadership make smarter decisions.</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="btn">May 20 – Jun 20, 2024 <svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+        <button class="btn"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 8v5l-4 2v-7z"/></svg> Filter</button>
+        <button class="btn primary"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4"/><path d="M5 20h14"/></svg> Export Report</button>
+      </div>
+    </header>
+
+    <section class="kpi-grid">
+      <div class="card kpi">
+        <div class="top">
+          <div class="icon bg-blue"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 8.5a2.8 2.8 0 0 1 0 5.5"/><path d="M19 20a4.5 4.5 0 0 0-3-4.2"/></svg></div>
+          <div><div class="label">Total Active Leads</div><div class="val">248</div></div>
+        </div>
+        <div class="delta"><span class="up">↑ 18.6%</span> <span class="muted">from last month</span></div>
+      </div>
+      <div class="card kpi">
+        <div class="top">
+          <div class="icon bg-green"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M14.5 9a2.5 2.5 0 0 0-2.5-1.5c-1.4 0-2.5.8-2.5 2s1 1.7 2.5 2 2.5 1 2.5 2.2S13 17.5 12 17.5A2.6 2.6 0 0 1 9.5 16M12 6v1.5M12 16.5V18"/></svg></div>
+          <div><div class="label">Monthly Revenue</div><div class="val">PKR 125.8M</div></div>
+        </div>
+        <div class="delta"><span class="up">↑ 16.8%</span> <span class="muted">from last month</span></div>
+      </div>
+      <div class="card kpi">
+        <div class="top">
+          <div class="icon bg-purple"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg></div>
+          <div><div class="label">Active Deals</div><div class="val">152</div></div>
+        </div>
+        <div class="delta"><span class="up">↑ 12.7%</span> <span class="muted">from last month</span></div>
+      </div>
+      <div class="card kpi">
+        <div class="top">
+          <div class="icon bg-orange"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+          <div><div class="label">Upcoming Follow-ups</div><div class="val">27</div></div>
+        </div>
+        <div class="delta"><span class="muted">Due in next 7 days</span></div>
+      </div>
+      <div class="card kpi">
+        <div class="top">
+          <div class="icon bg-teal"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg></div>
+          <div><div class="label">Deals Closed (This Month)</div><div class="val">18</div></div>
+        </div>
+        <div class="delta"><span class="up">↑ 20.0%</span> <span class="muted">from last month</span></div>
+      </div>
+    </section>
+
+    <section class="grid-3">
+      <div class="card pad">
+        <div class="card-h">LEADS CONVERSION FUNNEL</div>
+        <div class="funnel-wrap">
+          <div class="funnel">
+            <div class="f-bar" style="background:#2563eb;width:100%"></div>
+            <div class="f-bar" style="background:#3b82f6;width:86%"></div>
+            <div class="f-bar" style="background:#22b8cf;width:72%"></div>
+            <div class="f-bar" style="background:#2dd4a7;width:58%"></div>
+            <div class="f-bar" style="background:#f59e0b;width:44%"></div>
+            <div class="f-bar" style="background:#ef4444;width:30%"></div>
+          </div>
+          <div class="funnel-legend">
+            <div class="row"><span class="nm">New Leads</span><span class="num">248</span></div>
+            <div class="row"><span class="nm">Contacted</span><span class="num">186</span></div>
+            <div class="row"><span class="nm">Qualified</span><span class="num">112</span></div>
+            <div class="row"><span class="nm">Proposal Sent</span><span class="num">68</span></div>
+            <div class="row"><span class="nm">Negotiation</span><span class="num">32</span></div>
+            <div class="row"><span class="nm">Closed Won</span><span class="num">18</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <div class="card-h">AGENT PERFORMANCE (TOP 5)</div>
+        <div class="agents">
+          <div class="agent">
+            <img src="https://i.pravatar.cc/60?img=11" alt="">
+            <span class="nm">John Smith</span>
+            <div><div class="deals">24 Deals</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#3b82f6"></div></div></div>
+            <span class="pkr">PKR 28.5M</span>
+          </div>
+          <div class="agent">
+            <img src="https://i.pravatar.cc/60?img=5" alt="">
+            <span class="nm">Sarah Johnson</span>
+            <div><div class="deals">19 Deals</div><div class="bar-track"><div class="bar-fill" style="width:79%;background:#22c55e"></div></div></div>
+            <span class="pkr">PKR 21.3M</span>
+          </div>
+          <div class="agent">
+            <img src="https://i.pravatar.cc/60?img=13" alt="">
+            <span class="nm">Ali Khan</span>
+            <div><div class="deals">15 Deals</div><div class="bar-track"><div class="bar-fill" style="width:62%;background:#8b5cf6"></div></div></div>
+            <span class="pkr">PKR 17.2M</span>
+          </div>
+          <div class="agent">
+            <img src="https://i.pravatar.cc/60?img=20" alt="">
+            <span class="nm">Fatima Ahmed</span>
+            <div><div class="deals">11 Deals</div><div class="bar-track"><div class="bar-fill" style="width:46%;background:#f59e0b"></div></div></div>
+            <span class="pkr">PKR 12.8M</span>
+          </div>
+          <div class="agent">
+            <img src="https://i.pravatar.cc/60?img=33" alt="">
+            <span class="nm">Bilal Hassan</span>
+            <div><div class="deals">9 Deals</div><div class="bar-track"><div class="bar-fill" style="width:37%;background:#ef4444"></div></div></div>
+            <span class="pkr">PKR 9.7M</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <div class="card-h">PROPERTY SALES BY AREA</div>
+        <div class="donut-wrap">
+          <div class="donut-shell">
+            <canvas id="donut" class="donut-canvas"></canvas>
+            <div class="donut-center"><span class="dc-v">PKR<br>125.8M</span><span class="dc-l">Total Sales</span></div>
+          </div>
+          <div class="donut-legend" id="donutLegend">
+            <div class="row" data-i="0"><span class="dot" style="background:#3b82f6"></span><span class="nm">DHA</span><span class="pct">35%</span><span class="amt">PKR 43.0M</span></div>
+            <div class="row" data-i="1"><span class="dot" style="background:#14b8a6"></span><span class="nm">Bahria Town</span><span class="pct">25%</span><span class="amt">PKR 31.4M</span></div>
+            <div class="row" data-i="2"><span class="dot" style="background:#22c55e"></span><span class="nm">Gulberg</span><span class="pct">15%</span><span class="amt">PKR 18.6M</span></div>
+            <div class="row" data-i="3"><span class="dot" style="background:#f59e0b"></span><span class="nm">Johar Town</span><span class="pct">10%</span><span class="amt">PKR 12.5M</span></div>
+            <div class="row" data-i="4"><span class="dot" style="background:#c4b5fd"></span><span class="nm">Others</span><span class="pct">15%</span><span class="amt">PKR 20.3M</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid-rev">
+      <div class="card pad">
+        <div class="rev-head">
+          <div class="card-h">REVENUE OVERVIEW</div>
+          <div class="rev-legend">
+            <span><i class="ll"></i> This Year</span>
+            <span><i class="ll dash"></i> Last Year</span>
+          </div>
+        </div>
+        <div class="rev-canvas"><canvas id="revenue"></canvas></div>
+      </div>
+
+      <div class="card pad">
+        <div class="card-h">DEAL PIPELINE SUMMARY</div>
+        <div class="pipe-grid">
+          <div class="pipe lead"><div class="nm">Lead</div><div class="v">248</div><div class="d up">↑ 18.6%</div></div>
+          <div class="pipe qual"><div class="nm">Qualified</div><div class="v">112</div><div class="d up">↑ 12.7%</div></div>
+          <div class="pipe prop"><div class="nm">Proposal</div><div class="v">68</div><div class="d down">↓ 4.2%</div></div>
+          <div class="pipe nego"><div class="nm">Negotiation</div><div class="v">32</div><div class="d up">↑ 5.3%</div></div>
+          <div class="pipe won"><div class="nm">Closed Won</div><div class="v">18</div><div class="d up">↑ 20.0%</div></div>
+        </div>
+      </div>
+
+      <div class="card pad">
+        <div class="card-h">RECENT ACTIVITIES</div>
+        <div class="acts">
+          <div class="act">
+            <div class="ai"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.2"/><path d="M5 20a7 7 0 0 1 14 0"/></svg></div>
+            <div class="at">New lead received from Website</div><div class="ag">2 mins ago</div>
+          </div>
+          <div class="act">
+            <div class="ai"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg></div>
+            <div class="at">Sarah Johnson scheduled a follow-up</div><div class="ag">15 mins ago</div>
+          </div>
+          <div class="act">
+            <div class="ai"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/></svg></div>
+            <div class="at">Property added: Modern Villa in DHA</div><div class="ag">35 mins ago</div>
+          </div>
+          <div class="act">
+            <div class="ai"><svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg></div>
+            <div class="at">Deal closed: Ayesha Residency</div><div class="ag">2 hours ago</div>
+          </div>
+        </div>
+        <a href="#" class="viewall">View All Activities →</a>
+      </div>
+    </section>
+  </main>
+</div>
+
+<script>
+  const body = document.body, menuBtn = document.getElementById('menuBtn'), scrim = document.getElementById('scrim');
+  menuBtn.addEventListener('click', () => body.classList.toggle('nav-open'));
+  scrim.addEventListener('click', () => body.classList.remove('nav-open'));
+
+  const reveals = ['.kpi','.grid-3 > .card','.grid-rev > .card'];
+  let n = 0;
+  reveals.forEach(sel => document.querySelectorAll(sel).forEach(el => {
+    el.classList.add('reveal');
+    el.style.setProperty('--d', (Math.min(n,8) * 0.06) + 's');
+    n++;
+  }));
+
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const colors = ['#3b82f6','#14b8a6','#22c55e','#f59e0b','#c4b5fd'];
+  const donut = new Chart(document.getElementById('donut'), {
+    type: 'doughnut',
+    data: {
+      labels: ['DHA','Bahria Town','Gulberg','Johar Town','Others'],
+      datasets: [{data:[35,25,15,10,15],backgroundColor:colors,hoverBackgroundColor:colors,borderWidth:3,borderColor:'#fff',hoverOffset:10,hoverBorderColor:'#fff'}]
+    },
+    options: {
+      cutout:'66%',responsive:true,maintainAspectRatio:false,
+      animation:reduce?false:{animateRotate:true,animateScale:true,duration:900,easing:'easeOutQuart'},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#0d1b3e',padding:11,cornerRadius:9,callbacks:{label:c=>` ${c.parsed}%  ·  PKR ${['43.0','31.4','18.6','12.5','20.3'][c.dataIndex]}M`}}}
+    }
+  });
+
+  const legend = document.getElementById('donutLegend');
+  const dcv = document.querySelector('.donut-center .dc-v');
+  const dcl = document.querySelector('.donut-center .dc-l');
+  const baseV = dcv.innerHTML, baseL = dcl.textContent;
+  function highlight(i){
+    legend.classList.add('dim');
+    legend.querySelectorAll('.row').forEach(r=>r.classList.toggle('hot',+r.dataset.i===i));
+    donut.setActiveElements([{datasetIndex:0,index:i}]);
+    donut.tooltip.setActiveElements([{datasetIndex:0,index:i}],{});
+    donut.update();
+    dcv.innerHTML='PKR<br>'+['43.0','31.4','18.6','12.5','20.3'][i]+'M';
+    dcl.textContent=donut.data.labels[i];
+  }
+  function clearHi(){
+    legend.classList.remove('dim');
+    legend.querySelectorAll('.row').forEach(r=>r.classList.remove('hot'));
+    donut.setActiveElements([]);donut.tooltip.setActiveElements([],{});donut.update();
+    dcv.innerHTML=baseV;dcl.textContent=baseL;
+  }
+  legend.querySelectorAll('.row').forEach(r=>{
+    r.addEventListener('mouseenter',()=>highlight(+r.dataset.i));
+    r.addEventListener('mouseleave',clearHi);
+  });
+
+  const ctx = document.getElementById('revenue').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,172);
+  grad.addColorStop(0,'rgba(59,130,246,.20)');
+  grad.addColorStop(1,'rgba(59,130,246,0)');
+  new Chart(ctx,{
+    type:'line',
+    data:{
+      labels:['Jan','Feb','Mar','Apr','May','Jun'],
+      datasets:[
+        {label:'This Year',data:[22,52,46,68,92,128],borderColor:'#3b82f6',backgroundColor:grad,borderWidth:2.5,fill:true,tension:.4,pointBackgroundColor:'#3b82f6',pointBorderColor:'#fff',pointBorderWidth:2,pointRadius:0,pointHoverRadius:6,pointHoverBorderWidth:3},
+        {label:'Last Year',data:[18,34,40,54,60,82],borderColor:'#bcd0f5',borderWidth:2,borderDash:[5,4],fill:false,tension:.4,pointRadius:0,pointHoverRadius:5,pointBackgroundColor:'#bcd0f5',pointBorderColor:'#fff',pointBorderWidth:2}
+      ]
+    },
+    options:{
+      responsive:true,maintainAspectRatio:false,
+      interaction:{mode:'index',intersect:false},
+      animation:reduce?false:{duration:1100,easing:'easeOutQuart'},
+      plugins:{legend:{display:false},tooltip:{backgroundColor:'#0d1b3e',padding:11,cornerRadius:9,callbacks:{label:c=>` ${c.dataset.label}: PKR ${c.parsed.y}M`}}},
+      scales:{
+        y:{beginAtZero:true,max:150,ticks:{callback:v=>v+'M',color:'#8a94a6',font:{size:11}},grid:{color:'#eef1f6'},border:{display:false}},
+        x:{ticks:{color:'#8a94a6',font:{size:11}},grid:{display:false},border:{display:false}}
+      }
+    }
+  });
+</script>
+</body>
+</html>

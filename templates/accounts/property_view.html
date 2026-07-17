@@ -1,0 +1,444 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ property.title }} — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0d1b3e; --navy-2:#13234d; --gold:#c9a24b;
+  --bg:#f1f4f9; --card:#ffffff; --line:#e7ecf3;
+  --ink:#1a2332; --ink-soft:#5a6678; --ink-faint:#8a94a6;
+  --blue:#2563eb; --blue-light:#3b82f6; --green:#22c55e; --orange:#f59e0b; --purple:#8b5cf6; --red:#ef4444;
+  --radius:14px; --shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+.serif{font-family:'Playfair Display',serif}
+a{color:inherit}
+.shell{display:flex;min-height:100vh}
+
+/* ---- Sidebar ---- */
+.sidebar{width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--navy),#0a1530);color:#cdd6e6;
+  padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50}
+.brand{text-align:center;padding:14px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.brand .logo{font-size:32px;font-weight:700;letter-spacing:6px;color:var(--gold);line-height:1}
+.brand .sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav::-webkit-scrollbar{width:0}
+.nav a{display:flex;align-items:center;gap:13px;padding:10px 13px;border-radius:10px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s;position:relative}
+.nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.subnav a{font-size:13px;padding:8px 12px;color:#93a1c2}
+.subnav a.active{background:rgba(37,99,235,.16);color:#fff;box-shadow:none}
+.subnav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.profile{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:12px;cursor:pointer}
+.profile .nm{font-size:13px;font-weight:600;color:#fff}
+.profile .rl{font-size:11px;color:#8b97b3}
+.profile .cv{margin-left:auto;color:#8b97b3}
+.profile .cv svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:2}
+.avatar{width:36px;height:36px;border-radius:50%;background:#3b82f6;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:0 0 36px}
+
+/* ---- Main ---- */
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;align-items:center;justify-content:center;flex:0 0 40px}
+.menu-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+.searchbar{flex:1;max-width:380px;position:relative;display:flex;align-items:center}
+.searchbar svg{position:absolute;left:13px;width:16px;height:16px;stroke:var(--ink-faint);fill:none;stroke-width:1.8}
+.searchbar input{width:100%;padding:9px 12px 9px 38px;border:1px solid var(--line);border-radius:10px;background:#f7f9fc;font-size:13px;font-family:inherit}
+.searchbar input:focus{outline:none;border-color:var(--blue);background:#fff}
+.bell{position:relative;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center}
+.bell svg{width:18px;height:18px;stroke:var(--ink-soft);fill:none;stroke-width:1.8}
+.bell .dot{position:absolute;top:-5px;right:-5px;min-width:18px;height:18px;border-radius:9px;background:var(--blue);color:#fff;font-size:10px;font-weight:700;display:grid;place-items:center;padding:0 4px}
+.content{padding:24px 26px 40px;flex:1}
+
+/* ---- Page header ---- */
+.page-head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:20px}
+.page-head h2{font-size:22px;font-weight:800}
+.page-head p{font-size:13.5px;color:var(--ink-soft);margin-top:4px}
+.crumb{font-size:13px;color:var(--ink-soft);margin-bottom:6px;display:flex;align-items:center;gap:7px}
+.crumb a{color:var(--blue);text-decoration:none;font-weight:500}
+.crumb svg{width:13px;height:13px;stroke:var(--ink-faint);fill:none;stroke-width:2}
+.head-actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn-wa{background:#25d366;border-color:#25d366;color:#fff}
+.btn-wa:hover{background:#1ebe5d;box-shadow:0 4px 14px rgba(37,211,102,.35)}
+.btn-wa svg{fill:currentColor;stroke:none}
+/* WhatsApp modal */
+.wa-overlay{position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:200;display:flex;align-items:center;justify-content:center;padding:20px}
+.wa-modal{background:#fff;border-radius:18px;width:100%;max-width:480px;overflow:hidden;box-shadow:0 24px 60px rgba(0,0,0,.2)}
+.wa-head{background:#128c7e;color:#fff;padding:18px 22px;display:flex;align-items:center;gap:12px}
+.wa-head svg{width:26px;height:26px;fill:#fff;flex:0 0 26px}
+.wa-head h3{font-size:17px;font-weight:700;flex:1}
+.wa-close{margin-left:auto;background:none;border:none;color:rgba(255,255,255,.75);font-size:22px;cursor:pointer;line-height:1;padding:2px 6px}
+.wa-close:hover{color:#fff}
+.wa-body{padding:22px}
+.wa-body label{font-size:12.5px;font-weight:600;color:var(--ink);display:block;margin-bottom:7px}
+.wa-phone-row{display:flex;align-items:center;border:1.5px solid var(--line);border-radius:10px;overflow:hidden;background:#f7f9fc;transition:border-color .18s}
+.wa-phone-row:focus-within{border-color:#25d366;background:#fff}
+.wa-phone-cc{padding:0 12px;font-size:14px;font-weight:700;color:var(--ink-soft);border-right:1px solid var(--line);background:#eef2f7;height:44px;display:grid;place-items:center}
+.wa-phone-row input{flex:1;border:none;background:none;padding:10px 13px;font-size:14px;font-family:inherit;outline:none;color:var(--ink)}
+.wa-preview{margin-top:16px;background:#e7fce8;border:1px solid #b7efbb;border-radius:10px;padding:14px}
+.wa-preview-lbl{font-size:11px;font-weight:700;letter-spacing:.4px;color:#16a34a;text-transform:uppercase;margin-bottom:8px}
+.wa-msg{font-size:13px;color:#1a2332;white-space:pre-wrap;line-height:1.6}
+.wa-foot{padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
+.status-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
+
+/* ---- Buttons ---- */
+.btn{display:inline-flex;align-items:center;gap:8px;text-decoration:none;padding:10px 16px;border-radius:10px;font-size:13.5px;font-weight:600;
+  border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s,background .12s;white-space:nowrap;font-family:inherit}
+.btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.9}
+.btn:hover{transform:translateY(-1px);box-shadow:var(--shadow)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff;position:relative;overflow:hidden}
+.btn.primary:hover{background:#1d4ed8}
+.btn.primary::after{content:"";position:absolute;top:0;left:-120%;width:55%;height:100%;background:linear-gradient(110deg,transparent,rgba(255,255,255,.3),transparent);transition:left .55s}
+.btn.primary:hover::after{left:140%}
+
+/* ---- Cards ---- */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.pad{padding:20px}
+
+/* ---- KPI ---- */
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:20px}
+.kpi{padding:18px 20px;transition:transform .2s,box-shadow .2s}
+.kpi:hover{transform:translateY(-4px);box-shadow:0 14px 32px rgba(16,30,60,.1)}
+.kpi .top{display:flex;align-items:center;gap:14px}
+.kpi .ic{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:0 0 46px;transition:transform .25s}
+.kpi:hover .ic{transform:scale(1.08)}
+.kpi .ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9}
+.kpi .lbl{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--ink-faint);text-transform:uppercase}
+.kpi .val{font-size:25px;font-weight:800;margin-top:2px;line-height:1.1}
+.kpi .delta{font-size:12.5px;font-weight:600;margin-top:12px}
+.up{color:var(--green)} .down{color:var(--red)} .muted{color:var(--ink-faint);font-weight:500}
+.bg-blue{background:var(--blue-light)} .bg-green{background:var(--green)} .bg-orange{background:var(--orange)} .bg-purple{background:var(--purple)}
+
+/* ---- Badges ---- */
+.badge{display:inline-flex;align-items:center;font-size:11.5px;font-weight:600;padding:4px 11px;border-radius:20px}
+.b-apt{background:#dbeafe;color:#2563eb} .b-house{background:#dcfce7;color:#16a34a}
+.b-comm{background:#ede9fe;color:#7c3aed} .b-plot{background:#fef9c3;color:#a16207}
+.b-active{background:#dcfce7;color:#16a34a} .b-inactive{background:#fef3c7;color:#d97706}
+.b-sold{background:#e0e7ff;color:#4338ca}
+
+/* ---- Form controls ---- */
+.section-title{display:flex;align-items:center;gap:11px;margin-bottom:18px}
+.section-title .bi{width:34px;height:34px;border-radius:9px;background:#eef3fb;color:var(--blue);display:grid;place-items:center;flex:0 0 34px}
+.section-title .bi svg{width:18px;height:18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.section-title h3{font-size:17px;font-weight:700}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px 20px}
+.fld{display:flex;flex-direction:column}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12.5px;font-weight:600;color:var(--ink);margin-bottom:7px}
+.fld label .req{color:var(--red)}
+.ctrl{position:relative;display:flex;align-items:center}
+.ctrl input,.ctrl select,.ctrl textarea{width:100%;padding:11px 13px;font-size:14px;font-family:inherit;color:var(--ink);
+  background:#f7f9fc;border:1.5px solid var(--line);border-radius:10px;transition:border-color .18s,background .18s,box-shadow .18s;appearance:none}
+.ctrl textarea{min-height:96px;resize:vertical}
+.ctrl input::placeholder,.ctrl textarea::placeholder{color:#aab4c5}
+.ctrl input:focus,.ctrl select:focus,.ctrl textarea:focus{outline:none;border-color:var(--blue);background:#fff;box-shadow:0 0 0 4px rgba(37,99,235,.1)}
+.ctrl .caret{position:absolute;right:13px;pointer-events:none;color:var(--ink-faint)}
+.ctrl .caret svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:2}
+.ctrl.prefix input{padding-left:52px}
+.ctrl .pfx{position:absolute;left:0;top:0;bottom:0;width:42px;display:grid;place-items:center;font-size:12.5px;font-weight:700;color:var(--ink-soft);border-right:1px solid var(--line);background:#eef2f7;border-radius:10px 0 0 10px}
+.ctrl.unit input{padding-right:96px}
+.ctrl .unit-sel{position:absolute;right:4px;top:4px;bottom:4px;border:none;background:#eef2f7;border-radius:8px;width:84px;padding:0 10px;font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+
+/* checkboxes */
+.checks{display:grid;grid-template-columns:repeat(3,1fr);gap:14px 18px}
+.chk{display:flex;align-items:center;gap:10px;font-size:13.5px;color:var(--ink);cursor:pointer;user-select:none}
+.chk input{position:absolute;opacity:0;width:0;height:0}
+.chk .box{width:18px;height:18px;border-radius:5px;border:1.5px solid #c5cedd;display:grid;place-items:center;transition:.15s;flex:0 0 18px}
+.chk .box svg{width:12px;height:12px;stroke:#fff;fill:none;stroke-width:3;opacity:0;transform:scale(.5);transition:.15s}
+.chk input:checked + .box{background:var(--blue);border-color:var(--blue)}
+.chk input:checked + .box svg{opacity:1;transform:scale(1)}
+
+/* tags */
+.tags{display:flex;flex-wrap:wrap;gap:8px;align-items:center;background:#f7f9fc;border:1.5px solid var(--line);border-radius:10px;padding:9px 11px}
+.tag{display:inline-flex;align-items:center;gap:7px;background:#dbeafe;color:#2563eb;font-size:12.5px;font-weight:600;padding:5px 10px;border-radius:7px}
+.tag b{cursor:pointer;font-weight:700;opacity:.6}
+.tag b:hover{opacity:1}
+.tags input{border:none;background:none;outline:none;font-size:13px;font-family:inherit;flex:1;min-width:90px;padding:4px}
+
+/* dropzone */
+.dropzone{border:2px dashed #c8d2e2;border-radius:12px;background:#f7f9fc;padding:26px;display:flex;flex-direction:column;align-items:center;gap:8px;text-align:center;transition:border-color .2s,background .2s;cursor:pointer}
+.dropzone:hover{border-color:var(--blue);background:#f0f5ff}
+.dropzone .dz-ic{width:44px;height:44px;border-radius:12px;background:#eef3fb;color:var(--blue);display:grid;place-items:center}
+.dropzone .dz-ic svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.7}
+.dropzone .dz-t{font-size:13px;color:var(--ink-soft)}
+.dropzone .dz-or{font-size:12px;color:var(--ink-faint)}
+.dropzone .dz-btn{font-size:13px;font-weight:600;color:var(--blue)}
+.thumbs{display:flex;gap:12px;flex-wrap:wrap}
+.thumb{position:relative;width:108px;height:84px;border-radius:10px;overflow:hidden;border:1px solid var(--line)}
+.thumb img{width:100%;height:100%;object-fit:cover}
+.thumb .rm{position:absolute;top:5px;right:5px;width:20px;height:20px;border-radius:50%;background:var(--red);color:#fff;border:none;cursor:pointer;display:grid;place-items:center;font-size:11px;line-height:1}
+.thumb .rm svg{width:11px;height:11px;stroke:currentColor;fill:none;stroke-width:2.6}
+
+/* entrance */
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.reveal{opacity:0;animation:fadeUp .55s cubic-bezier(.2,.7,.3,1) forwards;animation-delay:var(--d,0s)}
+@media (prefers-reduced-motion:reduce){.reveal{opacity:1;animation:none}*{animation:none!important;transition:none!important}}
+
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:45}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:35;width:42px;height:42px;border-radius:10px;border:1px solid var(--line);background:#fff;box-shadow:var(--shadow);cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+*:focus-visible{outline:2px solid var(--blue);outline-offset:2px}
+
+/* ---- Responsive base ---- */
+@media (max-width:1050px){.kpi-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:900px){
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block}
+  .menu-btn{display:flex}
+  .content{padding:18px 16px 40px}
+  .topbar{padding:12px 16px}
+  .float-menu{display:flex}
+  .has-float .content{padding-top:64px}
+}
+@media (max-width:560px){.kpi-grid{grid-template-columns:1fr}.form-grid{grid-template-columns:1fr}.checks{grid-template-columns:1fr 1fr}}
+</style></head><body>
+<div class="scrim" id="scrim"></div><div class="shell has-float"><button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><aside class="sidebar" id="sidebar">
+<div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
+<nav class="nav">
+<a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+<a href="{% url 'property_list' %}" class="active"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Buyers</a>
+<a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Deals</a>
+<a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> Appointments</a>
+<a href="#"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="2"/><path d="m8 12 2.5 2.5L16 9"/></svg> Tasks</a>
+<a href="#"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg> Reports</a>
+<a href="#"><svg viewBox="0 0 24 24"><path d="M4 10v4h4l6 4V6L8 10z"/><path d="M18 9a4 4 0 0 1 0 6"/></svg> Marketing</a>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+</nav>
+<div class="profile">
+  <div class="avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+  <div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_role_display }}</div></div>
+  <span class="cv"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span>
+</div>
+<a href="{% url 'logout' %}" class="logout-link" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px">Sign out</a>
+</aside><main class="main"><div class="content">
+<style>
+.view-grid{display:grid;grid-template-columns:1fr 340px;gap:22px}
+.gallery{display:grid;grid-template-columns:1fr 150px;gap:12px;margin-bottom:18px}
+.gallery .hero{width:100%;height:340px;object-fit:cover;border-radius:14px;transition:transform .5s}
+.gallery .hero-wrap{overflow:hidden;border-radius:14px}
+.gallery .hero-wrap:hover .hero{transform:scale(1.04)}
+.gallery .side{display:flex;flex-direction:column;gap:12px}
+.gallery .side .sw{position:relative;border-radius:14px;overflow:hidden;flex:1}
+.gallery .side img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery .more{position:absolute;inset:0;background:rgba(13,27,62,.6);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;cursor:pointer;transition:background .2s}
+.gallery .more:hover{background:rgba(13,27,62,.72)}
+.gallery .more b{font-size:22px}
+.gallery .more span{font-size:11.5px;font-weight:500;margin-top:2px}
+.stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;padding:18px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.spec-strip{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;padding:18px 0;border-bottom:1px solid var(--line)}
+.spec .k{font-size:11px;font-weight:600;letter-spacing:.3px;color:var(--ink-faint);text-transform:uppercase;display:flex;align-items:center;gap:6px}
+.spec .k svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.7}
+.spec .v{font-size:15px;font-weight:700;margin-top:6px}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--line);margin:18px 0;overflow-x:auto}
+.tabs button{padding:11px 14px;font-size:13.5px;font-weight:600;color:var(--ink-soft);background:none;border:none;border-bottom:2px solid transparent;cursor:pointer;white-space:nowrap;font-family:inherit;transition:color .15s,border-color .15s}
+.tabs button:hover{color:var(--ink)}
+.tabs button.active{color:var(--blue);border-bottom-color:var(--blue)}
+.tab-body p{font-size:14px;color:var(--ink-soft);margin-bottom:12px;line-height:1.7}
+.side-card .sc-h{font-size:14px;font-weight:700;padding:16px 18px;border-bottom:1px solid var(--line)}
+.info-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;font-size:13px}
+.info-row .k{color:var(--ink-soft)}
+.info-row .v{font-weight:600}
+.agent-card{margin-top:20px}
+.agent-top{display:flex;align-items:center;gap:13px;padding:16px 18px}
+.agent-top .an{font-weight:700;font-size:14px}
+.agent-top .ar{font-size:12px;color:var(--ink-soft)}
+.agent-contact{padding:0 18px 14px;display:flex;flex-direction:column;gap:9px}
+.agent-contact div{display:flex;align-items:center;gap:9px;font-size:13px;color:var(--ink-soft)}
+.agent-contact svg{width:15px;height:15px;stroke:var(--ink-faint);fill:none;stroke-width:1.7}
+.agent-card .btn{margin:0 18px 18px;width:calc(100% - 36px);justify-content:center}
+@media (max-width:980px){.view-grid{grid-template-columns:1fr}.spec-strip{grid-template-columns:repeat(3,1fr)}.stat-strip{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){.gallery{grid-template-columns:1fr}.gallery .hero{height:240px}.gallery .side{flex-direction:row}}
+</style>
+<div class="crumb"><a href="{% url 'property_list' %}">Properties</a> <svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg> {{ property.title }}</div>
+<div class="page-head">
+  <div>
+    <h2 style="display:flex;align-items:center;gap:12px">{{ property.title }} <span class="badge {% if property.status == 'active' %}b-active{% elif property.status == 'inactive' %}b-inactive{% else %}b-sold{% endif %}">{{ property.get_status_display }}</span></h2>
+    <p style="display:flex;align-items:center;gap:16px;flex-wrap:wrap">
+      <span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 21s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11Z"/><circle cx="12" cy="10" r="2.5"/></svg> {{ property.city }}, {{ property.location }}</span>
+      <span style="display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 9h18M8 3v4M16 3v4"/></svg> Added on {{ property.created_at|date:"M d, Y" }}</span>
+    </p>
+  </div>
+  <div>
+    <div class="head-actions">
+      <button class="btn btn-wa" onclick="openWaModal()"><svg viewBox="0 0 24 24" width="18" height="18"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.116.549 4.109 1.51 5.845L0 24l6.335-1.652A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 0 1-5.002-1.368l-.358-.214-3.762.981.999-3.662-.235-.374A9.82 9.82 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg> Share via WhatsApp</button>
+      <a class="btn primary" href="{% url 'property_update' property.pk %}"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg> Edit</a>
+    </div>
+    <div class="status-actions">
+      <span style="font-size:12px;color:var(--ink-faint);font-weight:500">Quick status:</span>
+      {% if property.status != 'active' %}
+      <form method="post" action="{% url 'property_set_status' property.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="status" value="active"><input type="hidden" name="next" value="{% url 'property_view' property.pk %}"><button type="submit" style="padding:5px 13px;font-size:12.5px;font-weight:600;border-radius:8px;border:1.5px solid #bbf7d0;background:#f0fdf4;color:#16a34a;cursor:pointer;font-family:inherit">✓ Mark Active</button></form>
+      {% endif %}
+      {% if property.status != 'inactive' %}
+      <form method="post" action="{% url 'property_set_status' property.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="status" value="inactive"><input type="hidden" name="next" value="{% url 'property_view' property.pk %}"><button type="submit" style="padding:5px 13px;font-size:12.5px;font-weight:600;border-radius:8px;border:1.5px solid #fde68a;background:#fffbeb;color:#d97706;cursor:pointer;font-family:inherit">⏸ Mark Inactive</button></form>
+      {% endif %}
+      {% if property.status != 'sold' %}
+      <form method="post" action="{% url 'property_set_status' property.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="status" value="sold"><input type="hidden" name="next" value="{% url 'property_view' property.pk %}"><button type="submit" style="padding:5px 13px;font-size:12.5px;font-weight:600;border-radius:8px;border:1.5px solid #c7d2fe;background:#eef2ff;color:#4338ca;cursor:pointer;font-family:inherit">✓ Mark Sold</button></form>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="view-grid">
+  <div class="card pad">
+    <div class="gallery">
+      {% with imgs=property.images.all %}
+      {% if imgs %}
+      <div class="hero-wrap"><img class="hero" src="{{ imgs.0.image }}" alt="{{ property.title }}"></div>
+      {% else %}
+      <div class="hero-wrap" style="border-radius:14px;overflow:hidden"><div style="width:100%;height:340px;background:#eef3fb;border-radius:14px;display:grid;place-items:center"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#c5d0e6" stroke-width="1.4"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></div></div>
+      {% endif %}
+      <div class="side">
+        <div class="sw">{% if imgs|length > 1 %}<img src="{{ imgs.1.image }}" alt="">{% else %}<div style="width:100%;height:100%;background:#eef3fb;border-radius:14px"></div>{% endif %}</div>
+        <div class="sw">
+          {% if imgs|length > 2 %}<img src="{{ imgs.2.image }}" alt="">{% else %}<div style="width:100%;height:100%;background:#eef3fb;border-radius:14px"></div>{% endif %}
+          {% if imgs|length > 3 %}<div class="more"><b>+{{ imgs|length|add:"-3" }}</b><span>More Photos</span></div>{% endif %}
+        </div>
+      </div>
+      {% endwith %}
+    </div>
+
+    <div class="stat-strip">
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="M12 12v9M5 21v-6m14 6v-6"/><circle cx="12" cy="7" r="3"/></svg>Price</div><div class="v">{{ property.price_display }}</div></div>
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/></svg>Property Type</div><div class="v">{{ property.get_property_type_display }}</div></div>
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>Listing Type</div><div class="v">{{ property.get_listing_type_display }}</div></div>
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="M4 20V4l16 16M4 20h16"/></svg>Size</div><div class="v">{{ property.size_display }}</div></div>
+    </div>
+    <div class="spec-strip">
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="M3 12V8a1 1 0 0 1 1-1h6v5M3 12h18v4M21 12V9h-8"/></svg>Bedrooms</div><div class="v">{% if property.bedrooms %}{{ property.bedrooms }}{% else %}—{% endif %}</div></div>
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="M5 11V6a2 2 0 0 1 4 0M4 11h16v3a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4z"/></svg>Bathrooms</div><div class="v">{% if property.bathrooms %}{{ property.bathrooms }}{% else %}—{% endif %}</div></div>
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="M4 21V7l8-4 8 4v14M4 11h16M4 16h16"/></svg>Floor</div><div class="v">{% if property.floor %}{{ property.floor }}{% else %}—{% endif %}</div></div>
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 11h18"/></svg>Parking</div><div class="v">{% if 'Parking' in property.amenities %}Yes{% else %}—{% endif %}</div></div>
+      <div class="spec"><div class="k"><svg viewBox="0 0 24 24"><path d="m12 3 2.5 5.5L20 9l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5z"/></svg>Furnished</div><div class="v">{% if 'Furnished' in property.amenities %}Yes{% else %}—{% endif %}</div></div>
+    </div>
+
+    <div class="tabs">
+      <button class="active">Overview</button><button>Details</button><button>Features &amp; Amenities</button>
+      <button>Location</button><button>Media</button><button>Documents</button><button>History</button>
+    </div>
+    <div class="tab-body">
+      <p>{{ property.description }}</p>
+    </div>
+  </div>
+
+  <div>
+    <div class="card side-card">
+      <div class="sc-h">Property Information</div>
+      <div class="info-row"><span class="k">Property ID</span><span class="v">{{ property.property_id }}</span></div>
+      <div class="info-row"><span class="k">Status</span><span class="badge {% if property.status == 'active' %}b-active{% elif property.status == 'inactive' %}b-inactive{% else %}b-sold{% endif %}">{{ property.get_status_display }}</span></div>
+      <div class="info-row"><span class="k">Added On</span><span class="v">{{ property.created_at|date:"M d, Y" }}</span></div>
+      <div class="info-row"><span class="k">Added By</span><span class="v">{% if property.created_by %}{{ property.created_by.get_full_name }}{% else %}—{% endif %}</span></div>
+      <div class="info-row"><span class="k">Last Updated</span><span class="v">{{ property.updated_at|date:"M d, Y" }}</span></div>
+    </div>
+
+    <div class="card side-card agent-card">
+      <div class="sc-h">Agent</div>
+      <div class="agent-top">
+        <div class="avatar" style="width:48px;height:48px;font-size:16px;flex:0 0 48px">{% if property.created_by %}{{ property.created_by.first_name|first|upper }}{{ property.created_by.last_name|first|upper }}{% endif %}</div>
+        <div>
+          <div class="an">{% if property.created_by %}{{ property.created_by.get_full_name }}{% else %}—{% endif %}</div>
+          <div class="ar">{% if property.created_by %}{{ property.created_by.get_role_display }}{% endif %}</div>
+        </div>
+      </div>
+      <div class="agent-contact">
+        <div><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-3 2a12 12 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2Z"/></svg> {% if property.created_by %}{{ property.created_by.phone|default:"N/A" }}{% else %}—{% endif %}</div>
+        <div><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg> {% if property.created_by %}{{ property.created_by.email }}{% else %}—{% endif %}</div>
+      </div>
+      <button class="btn primary">View Agent Profile</button>
+    </div>
+  </div>
+</div></div></main></div>
+
+<!-- WhatsApp Share Modal -->
+<div id="waOverlay" class="wa-overlay" style="display:none" onclick="if(event.target===this)closeWaModal()">
+  <div class="wa-modal">
+    <div class="wa-head">
+      <svg viewBox="0 0 24 24"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.116.549 4.109 1.51 5.845L0 24l6.335-1.652A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 0 1-5.002-1.368l-.358-.214-3.762.981.999-3.662-.235-.374A9.82 9.82 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+      <h3>Share via WhatsApp</h3>
+      <button class="wa-close" onclick="closeWaModal()">&#x2715;</button>
+    </div>
+    <div class="wa-body">
+      <label>Recipient's Phone Number (with country code)</label>
+      <div class="wa-phone-row">
+        <span class="wa-phone-cc">+</span>
+        <input type="tel" id="waPhone" placeholder="e.g. 923001234567" oninput="updateWaLink()">
+      </div>
+      <div style="font-size:11.5px;color:var(--ink-faint);margin-top:6px">Enter full number without spaces or dashes. Example: 923001234567 for Pakistan.</div>
+      <div class="wa-preview" style="margin-top:16px">
+        <div class="wa-preview-lbl">Message Preview</div>
+        <div class="wa-msg" id="waMsg"></div>
+      </div>
+    </div>
+    <div class="wa-foot">
+      <button class="btn" onclick="closeWaModal()">Cancel</button>
+      <a id="waLink" href="#" target="_blank" class="btn btn-wa" onclick="return validateWa()">
+        <svg viewBox="0 0 24 24" width="16" height="16"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z"/><path d="M12 0C5.373 0 0 5.373 0 12c0 2.116.549 4.109 1.51 5.845L0 24l6.335-1.652A11.95 11.95 0 0 0 12 24c6.627 0 12-5.373 12-12S18.627 0 12 0zm0 21.818a9.808 9.808 0 0 1-5.002-1.368l-.358-.214-3.762.981.999-3.662-.235-.374A9.82 9.82 0 0 1 2.182 12C2.182 6.57 6.57 2.182 12 2.182S21.818 6.57 21.818 12 17.43 21.818 12 21.818z"/></svg>
+        Open WhatsApp Web
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+const body=document.body,mb=document.getElementById('menuBtn'),sc=document.getElementById('scrim');
+if(mb)mb.addEventListener('click',()=>body.classList.toggle('nav-open'));
+if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
+document.querySelectorAll('.content > *, .kpi, .card').forEach((el,i)=>{el.classList.add('reveal');el.style.setProperty('--d',Math.min(i,8)*0.05+'s')});
+
+document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
+}));
+
+// ── WhatsApp Share ───────────────────────────────────────────────────────────
+// Build absolute image URLs — handles both local (/media/...) and Cloudinary (https://...) storage
+const _base = '{{ request.scheme }}://{{ request.get_host }}';
+const _rawImages = [{% for img in property.images.all %}'{{ img.image|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
+const propImages = _rawImages.map(u => u.startsWith('http') ? u : _base + u);
+
+function buildWaMsg() {
+  const lines = [
+    '🏠 *{{ property.property_id }} | {{ property.title|escapejs }}*',
+    '📍 {{ property.city|escapejs }}, {{ property.location|escapejs }}',
+    '💰 {{ property.price_display|escapejs }}',
+    '📐 {{ property.size_display|escapejs }}{% if property.bedrooms %} · {{ property.bedrooms }} Beds{% endif %}{% if property.bathrooms %} · {{ property.bathrooms }} Baths{% endif %}{% if property.floor %} · {{ property.floor|escapejs }}{% endif %}',
+    '🏷️ {{ property.get_property_type_display }} | For {{ property.get_listing_type_display }}',
+    '📋 Status: {{ property.get_status_display }}',
+  ];
+  if (propImages.length) {
+    lines.push('');
+    lines.push('📸 *Property Images (' + propImages.length + '):*');
+    propImages.forEach((url, i) => lines.push((i + 1) + '. ' + url));
+  }
+  lines.push('');
+  lines.push('📞 Contact us for more details and a viewing appointment!');
+  return lines.join('\n');
+}
+
+const waMsg = buildWaMsg();
+document.getElementById('waMsg').textContent = waMsg;
+
+function openWaModal(){
+  document.getElementById('waOverlay').style.display='flex';
+  document.getElementById('waPhone').focus();
+  updateWaLink();
+}
+function closeWaModal(){document.getElementById('waOverlay').style.display='none';}
+function updateWaLink(){
+  const phone=document.getElementById('waPhone').value.replace(/\D/g,'');
+  const url=phone?`https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(waMsg)}`:'#';
+  document.getElementById('waLink').href=url;
+}
+function validateWa(){
+  const phone=document.getElementById('waPhone').value.replace(/\D/g,'');
+  if(!phone){document.getElementById('waPhone').focus();return false;}
+  return true;
+}
+</script></body></html>
