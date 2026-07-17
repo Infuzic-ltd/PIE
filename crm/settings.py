@@ -97,11 +97,15 @@ VAPID_PUBLIC_KEY = os.environ.get(
     'VAPID_PUBLIC_KEY',
     'BGkxrNuzPqxLV5LfGmiYGQDJX4kz2KMV786WzRjujvPwF3Xau3h_Ms3CJB0ZjLajBMbzIgBt99M6qdF5oIzhPf4',
 )
-VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', """-----BEGIN EC PRIVATE KEY-----
+
+_raw_vapid_private = os.environ.get('VAPID_PRIVATE_KEY', """-----BEGIN EC PRIVATE KEY-----
 MHcCAQEEIEjeKeyhu9nBQ1bY98Uj9NUSGmypDfiRPag5Y0xZQLQooAoGCCqGSM49
 AwEHoUQDQgAEaTGs27M+rEtXkt8aaJgZAMlfiTPYoxXvzpbNGO6O8/AXddq7eH8y
 zcIkHRmMtqMExvMiAG330zqp0XmgjOE9/g==
 -----END EC PRIVATE KEY-----""")
+# Vercel stores env var newlines as literal \n — restore actual newlines
+VAPID_PRIVATE_KEY = _raw_vapid_private.replace('\\n', '\n')
+
 VAPID_ADMIN_EMAIL = os.environ.get('VAPID_ADMIN_EMAIL', 'admin@pierealestate.com')
 
 # ── Cloudinary (direct upload — URL saved to DB) ─────────────────────────────

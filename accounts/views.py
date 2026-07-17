@@ -26,16 +26,18 @@ def _send_push(subscription, title, body, url='/'):
             vapid_private_key=settings.VAPID_PRIVATE_KEY,
             vapid_claims={'sub': f'mailto:{settings.VAPID_ADMIN_EMAIL}'},
         )
-        return True
+        return True, None
     except WebPushException as e:
         if e.response and e.response.status_code == 410:
             subscription.delete()
-        return False
+        return False, str(e)
+    except Exception as e:
+        return False, str(e)
 
 
 def notify_all(title, body, url='/'):
     for sub in PushSubscription.objects.select_related('user').all():
-        _send_push(sub, title, body, url)
+        _send_push(sub, title, body, url)  # errors are swallowed per-subscription
 
 
 def _upload_images(request_files, prop):
@@ -226,12 +228,17 @@ def push_unsubscribe(request):
 @login_required
 @require_POST
 def push_test(request):
-    subs = PushSubscription.objects.filter(user=request.user)
-    if not subs.exists():
-        return JsonResponse({'error': 'no subscription found'}, status=404)
+    subs = list(PushSubscription.objects.filter(user=request.user))
+    if not subs:
+        return JsonResponse({'error': 'no subscription found — enable notifications first'}, status=404)
     sent = 0
+    errors = []
     for sub in subs:
-        ok = _send_push(sub, 'PIE Real Estate', 'Test notification works!', '/dashboard/')
+        ok, err = _send_push(sub, 'PIE Real Estate', 'Test notification works! ✓', '/dashboard/')
         if ok:
             sent += 1
+        elif err:
+            errors.append(err)
+    if sent == 0:
+        return JsonResponse({'error': errors[0] if errors else 'send failed'}, status=500)
     return JsonResponse({'status': 'sent', 'count': sent})
