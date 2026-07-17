@@ -9,21 +9,31 @@ from django.db.models import Q
 from django.conf import settings
 import cloudinary.uploader
 from pywebpush import webpush, WebPushException
+from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm
 from .models import Property, PropertyImage, PushSubscription
 
 
 # ── Push notification helper ──────────────────────────────────────────────────
 
+def _get_vapid():
+    pem = settings.VAPID_PRIVATE_KEY
+    # Restore actual newlines if Vercel stored them as literal \n
+    if '\\n' in pem:
+        pem = pem.replace('\\n', '\n')
+    return Vapid01.from_pem(pem.encode('utf-8'))
+
+
 def _send_push(subscription, title, body, url='/'):
     try:
+        vapid = _get_vapid()
         webpush(
             subscription_info={
                 'endpoint': subscription.endpoint,
                 'keys': {'p256dh': subscription.p256dh, 'auth': subscription.auth},
             },
             data=json.dumps({'title': title, 'body': body, 'url': url}),
-            vapid_private_key=settings.VAPID_PRIVATE_KEY,
+            vapid_private_key=vapid,
             vapid_claims={'sub': f'mailto:{settings.VAPID_ADMIN_EMAIL}'},
         )
         return True, None
