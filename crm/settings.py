@@ -92,6 +92,18 @@ STORAGES = {
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# ── Web Push (VAPID) ─────────────────────────────────────────────────────────
+VAPID_PUBLIC_KEY = os.environ.get(
+    'VAPID_PUBLIC_KEY',
+    'BGkxrNuzPqxLV5LfGmiYGQDJX4kz2KMV786WzRjujvPwF3Xau3h_Ms3CJB0ZjLajBMbzIgBt99M6qdF5oIzhPf4',
+)
+VAPID_PRIVATE_KEY = os.environ.get('VAPID_PRIVATE_KEY', """-----BEGIN EC PRIVATE KEY-----
+MHcCAQEEIEjeKeyhu9nBQ1bY98Uj9NUSGmypDfiRPag5Y0xZQLQooAoGCCqGSM49
+AwEHoUQDQgAEaTGs27M+rEtXkt8aaJgZAMlfiTPYoxXvzpbNGO6O8/AXddq7eH8y
+zcIkHRmMtqMExvMiAG330zqp0XmgjOE9/g==
+-----END EC PRIVATE KEY-----""")
+VAPID_ADMIN_EMAIL = os.environ.get('VAPID_ADMIN_EMAIL', 'admin@pierealestate.com')
+
 # ── Cloudinary (direct upload — URL saved to DB) ─────────────────────────────
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'm25w8okr'),

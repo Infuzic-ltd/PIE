@@ -17,4 +17,10 @@ urlpatterns = [
     path('properties/<int:pk>/delete/', views.property_delete, name='property_delete'),
     path('properties/<int:pk>/set-status/', views.property_set_status, name='property_set_status'),
     path('properties/image/<int:pk>/delete/', views.property_image_delete, name='property_image_delete'),
+
+    # Web Push
+    path('sw.js', views.service_worker, name='service_worker'),
+    path('push/subscribe/', views.push_subscribe, name='push_subscribe'),
+    path('push/unsubscribe/', views.push_unsubscribe, name='push_unsubscribe'),
+    path('push/test/', views.push_test, name='push_test'),
 ]

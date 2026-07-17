@@ -1,10 +1,41 @@
+import json
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
 from django.db.models import Q
+from django.conf import settings
 import cloudinary.uploader
+from pywebpush import webpush, WebPushException
 from .forms import SignupForm, LoginForm, PropertyForm
-from .models import Property, PropertyImage
+from .models import Property, PropertyImage, PushSubscription
+
+
+# ── Push notification helper ──────────────────────────────────────────────────
+
+def _send_push(subscription, title, body, url='/'):
+    try:
+        webpush(
+            subscription_info={
+                'endpoint': subscription.endpoint,
+                'keys': {'p256dh': subscription.p256dh, 'auth': subscription.auth},
+            },
+            data=json.dumps({'title': title, 'body': body, 'url': url}),
+            vapid_private_key=settings.VAPID_PRIVATE_KEY,
+            vapid_claims={'sub': f'mailto:{settings.VAPID_ADMIN_EMAIL}'},
+        )
+        return True
+    except WebPushException as e:
+        if e.response and e.response.status_code == 410:
+            subscription.delete()
+        return False
+
+
+def notify_all(title, body, url='/'):
+    for sub in PushSubscription.objects.select_related('user').all():
+        _send_push(sub, title, body, url)
 
 
 def _upload_images(request_files, prop):
@@ -52,7 +83,10 @@ def logout_view(request):
 
 @login_required
 def dashboard_view(request):
-    return render(request, 'accounts/dashboard.html', {'user': request.user})
+    return render(request, 'accounts/dashboard.html', {
+        'user': request.user,
+        'vapid_public_key': settings.VAPID_PUBLIC_KEY,
+    })
 
 
 # ── Properties ────────────────────────────────────────────────────────────────
@@ -149,3 +183,55 @@ def property_image_delete(request, pk):
     if request.method == 'POST':
         img.delete()
     return redirect('property_update', pk=prop_pk)
+
+
+# ── Web Push ──────────────────────────────────────────────────────────────────
+
+def service_worker(request):
+    """Serve the service worker JS from a template so it can use Django variables."""
+    from django.template.loader import render_to_string
+    from django.http import HttpResponse
+    content = render_to_string('sw.js', {}, request=request)
+    return HttpResponse(content, content_type='application/javascript')
+
+
+@login_required
+@require_POST
+def push_subscribe(request):
+    try:
+        data = json.loads(request.body)
+        endpoint = data['endpoint']
+        p256dh = data['keys']['p256dh']
+        auth = data['keys']['auth']
+        PushSubscription.objects.update_or_create(
+            endpoint=endpoint,
+            defaults={'user': request.user, 'p256dh': p256dh, 'auth': auth},
+        )
+        return JsonResponse({'status': 'subscribed'})
+    except (KeyError, json.JSONDecodeError):
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
+
+@login_required
+@require_POST
+def push_unsubscribe(request):
+    try:
+        data = json.loads(request.body)
+        PushSubscription.objects.filter(endpoint=data.get('endpoint', '')).delete()
+        return JsonResponse({'status': 'unsubscribed'})
+    except json.JSONDecodeError:
+        return JsonResponse({'error': 'invalid payload'}, status=400)
+
+
+@login_required
+@require_POST
+def push_test(request):
+    subs = PushSubscription.objects.filter(user=request.user)
+    if not subs.exists():
+        return JsonResponse({'error': 'no subscription found'}, status=404)
+    sent = 0
+    for sub in subs:
+        ok = _send_push(sub, 'PIE Real Estate', 'Test notification works!', '/dashboard/')
+        if ok:
+            sent += 1
+    return JsonResponse({'status': 'sent', 'count': sent})
