@@ -238,11 +238,74 @@ tbody tr:last-child td{border-bottom:none}
 .act-ic.ic-deactivate:hover{background:#fef3c7;color:#d97706;border-color:#fde68a}
 .tbl-foot{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;flex-wrap:wrap;gap:12px}
 .tbl-foot .showing{font-size:13px;color:var(--ink-soft)}
+
+/* ── View toggle ─────────────────────────────────────────────────────────── */
+.view-toggle{display:flex;gap:3px;padding:3px;background:#f1f4f9;border-radius:9px;border:1px solid var(--line)}
+.vt-btn{width:32px;height:30px;border:none;border-radius:7px;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--ink-faint);transition:background .15s,color .15s}
+.vt-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+.vt-btn.active{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(16,30,60,.1)}
+
+/* ── Grid cards ─────────────────────────────────────────────────────────── */
+.grid-container{display:none}
+.prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
+.pg-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s}
+.pg-card:hover{transform:translateY(-4px);box-shadow:0 16px 36px rgba(16,30,60,.12)}
+.pg-img{position:relative;height:178px;background:#eef3fb;overflow:hidden}
+.pg-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
+.pg-card:hover .pg-img img{transform:scale(1.04)}
+.pg-img .no-img{display:grid;place-items:center;width:100%;height:100%}
+.pg-img .no-img svg{width:36px;height:36px;stroke:#c4cdd8;fill:none;stroke-width:1.4}
+.pg-badges{position:absolute;top:10px;left:10px;display:flex;gap:5px}
+.pg-badges .b{padding:3px 9px;border-radius:5px;font-size:11px;font-weight:700;letter-spacing:.3px}
+.pg-badges .b-status-active{background:#dcfce7;color:#16a34a}
+.pg-badges .b-status-inactive{background:#f3f4f6;color:#6b7280}
+.pg-badges .b-status-sold{background:#fef3c7;color:#d97706}
+.pg-badges .b-rent{background:#ede9fe;color:#7c3aed}
+.pg-badges .b-sale{background:#dbeafe;color:#1d4ed8}
+.pg-actions-overlay{position:absolute;top:10px;right:10px;display:flex;gap:4px;opacity:0;transition:opacity .2s}
+.pg-card:hover .pg-actions-overlay{opacity:1}
+.pg-act{width:28px;height:28px;border-radius:7px;background:rgba(255,255,255,.92);border:none;cursor:pointer;display:grid;place-items:center;color:var(--ink-soft);text-decoration:none;transition:background .15s,color .15s;backdrop-filter:blur(4px)}
+.pg-act svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.9}
+.pg-act:hover{background:#fff;color:var(--blue)}
+.pg-act.danger:hover{color:var(--red)}
+.pg-body{padding:14px 14px 12px}
+.pg-title{font-size:14px;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-location{font-size:12px;color:var(--ink-soft);margin-top:3px;display:flex;align-items:center;gap:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pg-location svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2;flex:0 0 12px}
+.pg-price{font-size:16px;font-weight:800;color:var(--blue);margin-top:10px}
+.pg-meta{display:flex;gap:12px;margin-top:8px;padding-top:10px;border-top:1px solid var(--line)}
+.pg-meta span{display:flex;align-items:center;gap:4px;font-size:12px;color:var(--ink-soft);font-weight:500}
+.pg-meta svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.8}
+.pg-footer{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-top:1px solid var(--line);background:#fafbfd}
+.pg-date{font-size:11.5px;color:var(--ink-faint)}
+.pg-footer-acts{display:flex;gap:4px}
+.pg-footer-acts form{margin:0}
+.pg-footer-acts .fa-btn{width:28px;height:28px;border-radius:7px;border:1px solid var(--line);background:#fff;cursor:pointer;display:grid;place-items:center;color:var(--ink-soft);text-decoration:none;transition:.15s}
+.pg-footer-acts .fa-btn svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:1.9}
+.pg-footer-acts .fa-btn:hover{background:#eef3fb;color:var(--blue);border-color:var(--blue)}
+.pg-footer-acts .fa-btn.ic-activate:hover{background:#dcfce7;color:#16a34a;border-color:#bbf7d0}
+.pg-footer-acts .fa-btn.ic-deactivate:hover{background:#fef3c7;color:#d97706;border-color:#fde68a}
+.pg-footer-acts .fa-btn.danger:hover{background:#fef2f2;color:var(--red);border-color:#fecaca}
+.grid-empty{text-align:center;padding:60px 20px;color:var(--ink-soft)}
+.grid-empty svg{width:44px;height:44px;stroke:var(--ink-faint);fill:none;stroke-width:1.4;margin-bottom:14px}
+
+/* ── Active mode switching ────────────────────────────────────────────────── */
+body.view-grid .list-container{display:none}
+body.view-grid .grid-container{display:block}
+body.view-list .list-container{display:block}
+body.view-list .grid-container{display:none}
 </style>
 <div class="page-head">
   <div><h2>Properties Management</h2><p>Manage all properties in your inventory.</p></div>
-  <div class="head-actions">
-    <button class="btn"><svg viewBox="0 0 24 24"><path d="M4 5h16l-6 8v5l-4 2v-7z"/></svg> Filter</button>
+  <div class="head-actions" style="display:flex;align-items:center;gap:10px">
+    <div class="view-toggle">
+      <button class="vt-btn" id="listViewBtn" title="List view" onclick="setView('list')">
+        <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>
+      </button>
+      <button class="vt-btn" id="gridViewBtn" title="Grid view" onclick="setView('grid')">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+      </button>
+    </div>
     <a class="btn primary" href="{% url 'property_create' %}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add New Property</a>
   </div>
 </div>
@@ -274,6 +337,7 @@ tbody tr:last-child td{border-bottom:none}
   </form>
 </div>
 
+<div class="list-container">
 <div class="card table-card">
   <div class="tbl-scroll"><table>
     <thead><tr>
@@ -339,10 +403,79 @@ tbody tr:last-child td{border-bottom:none}
   <div class="tbl-foot">
     <div class="showing">Showing {{ properties|length }} of {{ total }} properties</div>
   </div>
-</div></div></main></div><script>
+</div>
+</div><!-- /list-container -->
+
+<!-- ── Grid view ─────────────────────────────────────────────────────────── -->
+<div class="grid-container">
+  {% if properties %}
+  <div class="prop-grid">
+    {% for prop in properties %}
+    {% with img=prop.get_primary_image %}
+    <div class="pg-card">
+      <div class="pg-img">
+        {% if img %}<img src="{{ img.image }}" alt="{{ prop.title }}">{% else %}<div class="no-img"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/></svg></div>{% endif %}
+        <div class="pg-badges">
+          {% if prop.status == 'active' %}<span class="b b-status-active">Active</span>
+          {% elif prop.status == 'inactive' %}<span class="b b-status-inactive">Inactive</span>
+          {% else %}<span class="b b-status-sold">Sold</span>{% endif %}
+          {% if prop.listing_type == 'rent' %}<span class="b b-rent">Rent</span>
+          {% else %}<span class="b b-sale">Sale</span>{% endif %}
+        </div>
+        <div class="pg-actions-overlay">
+          <a href="{% url 'property_view' prop.pk %}" class="pg-act" title="View"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></a>
+          <a href="{% url 'property_update' prop.pk %}" class="pg-act" title="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg></a>
+        </div>
+      </div>
+      <div class="pg-body">
+        <div class="pg-title" title="{{ prop.title }}">{{ prop.title }}</div>
+        <div class="pg-location"><svg viewBox="0 0 24 24"><path d="M12 2a7 7 0 0 1 7 7c0 5-7 13-7 13S5 14 5 9a7 7 0 0 1 7-7z"/><circle cx="12" cy="9" r="2.5"/></svg>{{ prop.city }}{% if prop.location %}, {{ prop.location }}{% endif %}</div>
+        <div class="pg-price">{{ prop.price_display }}</div>
+        <div class="pg-meta">
+          {% if prop.bedrooms %}<span><svg viewBox="0 0 24 24"><path d="M2 9V6a1 1 0 0 1 1-1h18a1 1 0 0 1 1 1v3"/><path d="M2 9h20v9H2z"/><path d="M10 9V5"/></svg>{{ prop.bedrooms }} Bed</span>{% endif %}
+          {% if prop.bathrooms %}<span><svg viewBox="0 0 24 24"><path d="M9 6 6.5 3.5a1.5 1.5 0 0 0-1-.5C4.683 3 4 3.683 4 4.5V17a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-5"/><path d="M10 5 8 3"/><path d="M2 12h20"/></svg>{{ prop.bathrooms }} Bath</span>{% endif %}
+          <span><svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/><path d="M3 9h18M9 21V9"/></svg>{{ prop.size_display }}</span>
+        </div>
+      </div>
+      <div class="pg-footer">
+        <div class="pg-date">{{ prop.created_at|date:"M d, Y" }}</div>
+        <div class="pg-footer-acts">
+          {% if prop.status == 'active' %}
+          <form method="post" action="{% url 'property_set_status' prop.pk %}">{% csrf_token %}<input type="hidden" name="status" value="inactive"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="fa-btn ic-deactivate" title="Mark Inactive"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button></form>
+          {% elif prop.status == 'inactive' %}
+          <form method="post" action="{% url 'property_set_status' prop.pk %}">{% csrf_token %}<input type="hidden" name="status" value="active"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="fa-btn ic-activate" title="Mark Active"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m8.5 12 2.5 2.5L16 9"/></svg></button></form>
+          {% else %}
+          <form method="post" action="{% url 'property_set_status' prop.pk %}">{% csrf_token %}<input type="hidden" name="status" value="active"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="fa-btn ic-activate" title="Reactivate"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button></form>
+          {% endif %}
+          <form method="post" action="{% url 'property_delete' prop.pk %}" onsubmit="return confirm('Delete this property?')">{% csrf_token %}<button type="submit" class="fa-btn danger" title="Delete"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></form>
+        </div>
+      </div>
+    </div>
+    {% endwith %}
+    {% endfor %}
+  </div>
+  {% else %}
+  <div class="grid-empty">
+    <svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/></svg>
+    <p style="font-size:15px;font-weight:700;color:var(--ink)">No properties found</p>
+    <a href="{% url 'property_create' %}" style="display:inline-block;margin-top:14px;color:var(--blue);font-weight:600;font-size:14px">Add your first property →</a>
+  </div>
+  {% endif %}
+</div>
+</div></main></div><script>
 const body=document.body,mb=document.getElementById('menuBtn'),sc=document.getElementById('scrim');
 if(mb)mb.addEventListener('click',()=>body.classList.toggle('nav-open'));
 if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
 document.querySelectorAll('.content > *, .kpi, .card').forEach((el,i)=>{el.classList.add('reveal');el.style.setProperty('--d',Math.min(i,8)*0.05+'s')});
 
+// ── View toggle ────────────────────────────────────────────────────────────
+const VKEY = 'pie_prop_view';
+function setView(mode) {
+  localStorage.setItem(VKEY, mode);
+  body.classList.toggle('view-list', mode === 'list');
+  body.classList.toggle('view-grid', mode === 'grid');
+  document.getElementById('listViewBtn').classList.toggle('active', mode === 'list');
+  document.getElementById('gridViewBtn').classList.toggle('active', mode === 'grid');
+}
+setView(localStorage.getItem(VKEY) || 'list');
 </script></body></html>
