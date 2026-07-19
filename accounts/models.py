@@ -1,6 +1,25 @@
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
+PERMISSION_LIST = [
+    ('dashboard',         'View Dashboard'),
+    ('properties_view',   'View Properties'),
+    ('properties_add',    'Add Properties'),
+    ('properties_edit',   'Edit Properties'),
+    ('properties_delete', 'Delete Properties'),
+    ('leads_view',        'View Leads'),
+    ('leads_manage',      'Manage Leads'),
+    ('reports_view',      'View Reports'),
+    ('team_view',         'View Team'),
+]
+
+PERMISSION_DEFAULTS = {
+    'admin':   [p[0] for p in PERMISSION_LIST],
+    'manager': ['dashboard', 'properties_view', 'properties_add', 'properties_edit',
+                'properties_delete', 'leads_view', 'leads_manage', 'reports_view', 'team_view'],
+    'agent':   ['dashboard', 'properties_view', 'properties_add', 'leads_view'],
+}
+
 
 class User(AbstractUser):
     ROLE_AGENT = 'agent'
@@ -16,6 +35,9 @@ class User(AbstractUser):
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_AGENT)
+    assigned_role = models.ForeignKey(
+        'Role', on_delete=models.SET_NULL, null=True, blank=True, related_name='members'
+    )
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
@@ -25,6 +47,22 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+
+    @property
+    def is_crm_admin(self):
+        return self.role == self.ROLE_ADMIN
+
+    def has_crm_permission(self, perm):
+        if self.role == self.ROLE_ADMIN:
+            return True
+        if self.assigned_role_id:
+            return perm in (self.assigned_role.permissions or [])
+        return perm in PERMISSION_DEFAULTS.get(self.role, [])
+
+    def get_effective_role_name(self):
+        if self.assigned_role_id:
+            return self.assigned_role.name
+        return self.get_role_display()
 
 
 AMENITY_LIST = [
@@ -125,6 +163,27 @@ class Property(models.Model):
     def size_display(self):
         size = int(self.area_size) if self.area_size == int(self.area_size) else self.area_size
         return f'{size:,} {self.get_area_unit_display()}'
+
+
+class Role(models.Model):
+    name = models.CharField(max_length=50, unique=True)
+    description = models.TextField(blank=True)
+    permissions = models.JSONField(default=list)
+    is_system = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+
+    def __str__(self):
+        return self.name
+
+    def has_permission(self, perm):
+        return perm in (self.permissions or [])
+
+    def permission_labels(self):
+        label_map = dict(PERMISSION_LIST)
+        return [label_map[p] for p in (self.permissions or []) if p in label_map]
 
 
 class PushSubscription(models.Model):

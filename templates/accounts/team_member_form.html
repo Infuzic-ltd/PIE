@@ -1,0 +1,221 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ action }} — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--green:#22c55e;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+.serif{font-family:'Playfair Display',serif}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--navy),#0a1530);color:#cdd6e6;padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50}
+.brand{text-align:center;padding:14px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.brand .logo{font-size:32px;font-weight:700;letter-spacing:6px;color:var(--gold);line-height:1}
+.brand .sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav::-webkit-scrollbar{width:0}
+.nav a{display:flex;align-items:center;gap:13px;padding:10px 13px;border-radius:10px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s}
+.nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.subnav a{font-size:13px;padding:8px 12px;color:#93a1c2}
+.subnav a.active{background:rgba(37,99,235,.16);color:#fff}
+.subnav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.profile{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:12px}
+.profile .nm{font-size:13px;font-weight:600;color:#fff}
+.profile .rl{font-size:11px;color:#8b97b3}
+.avatar{width:36px;height:36px;border-radius:50%;background:#3b82f6;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:0 0 36px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700;flex:1}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;align-items:center;justify-content:center;flex:0 0 40px}
+.menu-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+.content{padding:24px 26px 40px;flex:1;max-width:700px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s;white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,30,60,.1)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:26px;box-shadow:var(--shadow)}
+.card-title{font-size:16px;font-weight:700;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:13px;font-weight:600;color:var(--ink-soft)}
+input,select,textarea{width:100%;padding:10px 13px;border:1px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;transition:border-color .15s,box-shadow .15s}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.help{font-size:12px;color:var(--ink-faint);margin-top:3px}
+.field-err{font-size:12px;color:var(--red);margin-top:3px}
+.role-info{background:#eff6ff;border:1px solid #bfdbfe;border-radius:10px;padding:12px 14px;font-size:12.5px;color:#1d4ed8;margin-top:4px}
+.role-info strong{display:block;margin-bottom:4px}
+.actions-row{display:flex;gap:10px;align-items:center;margin-top:24px;padding-top:20px;border-top:1px solid var(--line)}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:18px 16px 40px}.form-grid{grid-template-columns:1fr}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<aside class="sidebar" id="sidebar">
+<div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
+<nav class="nav">
+<a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+<a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+<a href="{% url 'team_list' %}" class="active"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
+<div class="subnav">
+<a href="{% url 'team_list' %}">All Members</a>
+<a href="{% url 'team_member_create' %}" class="active">Add Member</a>
+<a href="{% url 'role_list' %}">Manage Roles</a>
+</div>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+</nav>
+<div class="profile"><div class="avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div><div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_effective_role_name }}</div></div></div>
+<a href="{% url 'logout' %}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px;transition:background .15s,color .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign out</a>
+</aside>
+
+<main class="main">
+<div class="topbar">
+  <button class="menu-btn" id="menuBtnTop"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <h1>{{ action }}</h1>
+  <a href="{% url 'team_list' %}" class="btn"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg> Back</a>
+</div>
+
+<div class="content">
+  <form method="post" novalidate>
+    {% csrf_token %}
+    <div class="card">
+      <div class="card-title">Personal Information</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>First Name</label>
+          <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" placeholder="First name">
+          {% for e in form.first_name.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Last Name</label>
+          <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" placeholder="Last name">
+          {% for e in form.last_name.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Email Address</label>
+          <input type="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="email@company.com">
+          {% for e in form.email.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label>Phone Number</label>
+          <input type="text" name="phone" value="{{ form.phone.value|default:'' }}" placeholder="+92 300 0000000">
+          {% for e in form.phone.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Access & Role</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Base Role</label>
+          <select name="role" id="baseRole">
+            <option value="agent" {% if form.role.value == 'agent' %}selected{% endif %}>Agent</option>
+            <option value="manager" {% if form.role.value == 'manager' %}selected{% endif %}>Sales Manager</option>
+            <option value="admin" {% if form.role.value == 'admin' %}selected{% endif %}>Admin</option>
+          </select>
+          {% for e in form.role.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+          <div class="help">Base role sets default permissions if no custom role is selected.</div>
+        </div>
+        <div class="form-group">
+          <label>Custom Role <span style="font-weight:400;color:var(--ink-faint)">(optional)</span></label>
+          <select name="assigned_role" id="assignedRole">
+            <option value="">— Use default role permissions —</option>
+            {% for role in form.assigned_role.field.queryset %}
+            <option value="{{ role.pk }}" {% if form.assigned_role.value|stringformat:"s" == role.pk|stringformat:"s" %}selected{% endif %}>{{ role.name }}</option>
+            {% endfor %}
+          </select>
+          {% for e in form.assigned_role.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+          <div class="role-info" id="roleInfoBox" style="display:none">
+            <strong id="roleInfoName"></strong>
+            <span id="roleInfoPerms"></span>
+          </div>
+        </div>
+        {% if form.is_active %}
+        <div class="form-group">
+          <label>Account Status</label>
+          <select name="is_active">
+            <option value="True" {% if form.is_active.value %}selected{% endif %}>Active</option>
+            <option value="False" {% if not form.is_active.value %}selected{% endif %}>Inactive</option>
+          </select>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">{% if member %}Change Password{% else %}Set Password{% endif %}</div>
+      <div class="form-group">
+        {% if member %}
+        <label>New Password <span style="font-weight:400;color:var(--ink-faint)">(leave blank to keep current)</span></label>
+        <input type="password" name="new_password" placeholder="Min. 8 characters" autocomplete="new-password">
+        {% for e in form.new_password.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+        {% else %}
+        <label>Password</label>
+        <input type="password" name="password" placeholder="Min. 8 characters" autocomplete="new-password">
+        {% for e in form.password.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
+        {% endif %}
+      </div>
+      {% if form.errors and not form.password.errors and not form.new_password.errors %}
+      <div class="field-err" style="margin-top:10px">
+        {% for field in form %}{% for e in field.errors %}{{ e }} {% endfor %}{% endfor %}
+        {% for e in form.non_field_errors %}{{ e }} {% endfor %}
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="actions-row">
+      <button type="submit" class="btn primary">
+        <svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+        {{ action }}
+      </button>
+      <a href="{% url 'team_list' %}" class="btn">Cancel</a>
+    </div>
+  </form>
+</div>
+</main>
+</div>
+
+<script>
+const menuBtn=document.getElementById('menuBtn'),menuBtnTop=document.getElementById('menuBtnTop'),scrim=document.getElementById('scrim');
+function toggleNav(){document.body.classList.toggle('nav-open')}
+menuBtn&&menuBtn.addEventListener('click',toggleNav);
+menuBtnTop&&menuBtnTop.addEventListener('click',toggleNav);
+scrim.addEventListener('click',()=>document.body.classList.remove('nav-open'));
+
+// Role info preview
+const roleData = {
+  {% for role in form.assigned_role.field.queryset %}
+  "{{ role.pk }}": { name: "{{ role.name|escapejs }}", perms: "{{ role.permission_labels|join:', '|escapejs }}" },
+  {% endfor %}
+};
+const sel = document.getElementById('assignedRole');
+const box = document.getElementById('roleInfoBox');
+const nm = document.getElementById('roleInfoName');
+const pm = document.getElementById('roleInfoPerms');
+function updateRoleInfo() {
+  const v = sel.value;
+  if (v && roleData[v]) {
+    nm.textContent = roleData[v].name;
+    pm.textContent = roleData[v].perms || 'No permissions';
+    box.style.display = 'block';
+  } else {
+    box.style.display = 'none';
+  }
+}
+sel.addEventListener('change', updateRoleInfo);
+updateRoleInfo();
+</script>
+</body></html>

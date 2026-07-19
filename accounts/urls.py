@@ -18,6 +18,18 @@ urlpatterns = [
     path('properties/<int:pk>/set-status/', views.property_set_status, name='property_set_status'),
     path('properties/image/<int:pk>/delete/', views.property_image_delete, name='property_image_delete'),
 
+    # Team management (admin only)
+    path('team/', views.team_list, name='team_list'),
+    path('team/add/', views.team_member_create, name='team_member_create'),
+    path('team/<int:pk>/edit/', views.team_member_update, name='team_member_update'),
+    path('team/<int:pk>/delete/', views.team_member_delete, name='team_member_delete'),
+
+    # Role management (admin only)
+    path('roles/', views.role_list, name='role_list'),
+    path('roles/create/', views.role_create, name='role_create'),
+    path('roles/<int:pk>/edit/', views.role_update, name='role_update'),
+    path('roles/<int:pk>/delete/', views.role_delete, name='role_delete'),
+
     # Web Push
     path('sw.js', views.service_worker, name='service_worker'),
     path('push/subscribe/', views.push_subscribe, name='push_subscribe'),

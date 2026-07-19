@@ -1,8 +1,9 @@
 import json
+from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
+from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Q
@@ -10,8 +11,34 @@ from django.conf import settings
 import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
-from .forms import SignupForm, LoginForm, PropertyForm
-from .models import Property, PropertyImage, PushSubscription
+from .forms import SignupForm, LoginForm, PropertyForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm
+from .models import Property, PropertyImage, PushSubscription, Role, User
+
+
+# ── Access decorators ─────────────────────────────────────────────────────────
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not request.user.is_authenticated:
+            return redirect('login')
+        if not request.user.is_crm_admin:
+            return render(request, 'accounts/403.html', status=403)
+        return view_func(request, *args, **kwargs)
+    return wrapper
+
+
+def permission_required(perm):
+    def decorator(view_func):
+        @wraps(view_func)
+        def wrapper(request, *args, **kwargs):
+            if not request.user.is_authenticated:
+                return redirect('login')
+            if not request.user.has_crm_permission(perm):
+                return render(request, 'accounts/403.html', status=403)
+            return view_func(request, *args, **kwargs)
+        return wrapper
+    return decorator
 
 
 # ── Push notification helper ──────────────────────────────────────────────────
@@ -79,13 +106,8 @@ def login_view(request):
 
 
 def signup_view(request):
-    if request.user.is_authenticated:
-        return redirect('dashboard')
-    form = SignupForm(request.POST or None)
-    if request.method == 'POST' and form.is_valid():
-        form.save()
-        return redirect('login')
-    return render(request, 'accounts/signup.html', {'form': form})
+    # Signup is closed — users are added by admin via Teams
+    return redirect('login')
 
 
 def logout_view(request):
@@ -234,6 +256,86 @@ def push_unsubscribe(request):
     except json.JSONDecodeError:
         return JsonResponse({'error': 'invalid payload'}, status=400)
 
+
+# ── Team management ───────────────────────────────────────────────────────────
+
+@admin_required
+def team_list(request):
+    members = User.objects.select_related('assigned_role').order_by('first_name', 'last_name')
+    return render(request, 'accounts/teams.html', {'members': members})
+
+
+@admin_required
+def team_member_create(request):
+    form = TeamMemberCreateForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('team_list')
+    return render(request, 'accounts/team_member_form.html', {'form': form, 'action': 'Add Member'})
+
+
+@admin_required
+def team_member_update(request, pk):
+    member = get_object_or_404(User, pk=pk)
+    form = TeamMemberUpdateForm(request.POST or None, instance=member)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('team_list')
+    return render(request, 'accounts/team_member_form.html', {
+        'form': form, 'member': member, 'action': 'Edit Member',
+    })
+
+
+@admin_required
+def team_member_delete(request, pk):
+    member = get_object_or_404(User, pk=pk)
+    if request.method == 'POST':
+        member.delete()
+        return redirect('team_list')
+    return render(request, 'accounts/team_confirm_delete.html', {'member': member})
+
+
+# ── Role management ───────────────────────────────────────────────────────────
+
+@admin_required
+def role_list(request):
+    roles = Role.objects.prefetch_related('members').all()
+    return render(request, 'accounts/roles.html', {'roles': roles})
+
+
+@admin_required
+def role_create(request):
+    form = RoleForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('role_list')
+    return render(request, 'accounts/role_form.html', {'form': form, 'action': 'Create Role'})
+
+
+@admin_required
+def role_update(request, pk):
+    role = get_object_or_404(Role, pk=pk)
+    form = RoleForm(request.POST or None, instance=role)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        return redirect('role_list')
+    return render(request, 'accounts/role_form.html', {
+        'form': form, 'role': role, 'action': 'Edit Role',
+    })
+
+
+@admin_required
+def role_delete(request, pk):
+    role = get_object_or_404(Role, pk=pk)
+    if role.is_system:
+        return redirect('role_list')
+    if request.method == 'POST':
+        role.delete()
+        return redirect('role_list')
+    return render(request, 'accounts/role_confirm_delete.html', {'role': role})
+
+
+# ── Web Push ──────────────────────────────────────────────────────────────────
 
 @login_required
 @require_POST

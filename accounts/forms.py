@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import authenticate
-from .models import User, Property, AMENITY_LIST
+from .models import User, Property, AMENITY_LIST, Role, PERMISSION_LIST
 
 
 class SignupForm(forms.ModelForm):
@@ -68,3 +68,70 @@ class PropertyForm(forms.ModelForm):
 
     def clean_amenities(self):
         return self.cleaned_data.get('amenities', [])
+
+
+class TeamMemberCreateForm(forms.ModelForm):
+    password = forms.CharField(widget=forms.PasswordInput, min_length=8, label='Password')
+    assigned_role = forms.ModelChoiceField(
+        queryset=Role.objects.all(), required=False,
+        empty_label='— Use default role permissions —',
+        label='Custom Role (optional)',
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'password']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = self.cleaned_data['email']
+        user.set_password(self.cleaned_data['password'])
+        if commit:
+            user.save()
+        return user
+
+
+class TeamMemberUpdateForm(forms.ModelForm):
+    new_password = forms.CharField(
+        widget=forms.PasswordInput, min_length=8, required=False,
+        label='New Password', help_text='Leave blank to keep current password.',
+    )
+    assigned_role = forms.ModelChoiceField(
+        queryset=Role.objects.all(), required=False,
+        empty_label='— Use default role permissions —',
+        label='Custom Role (optional)',
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'is_active']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        new_pass = self.cleaned_data.get('new_password')
+        if new_pass:
+            user.set_password(new_pass)
+        if commit:
+            user.save()
+        return user
+
+
+class RoleForm(forms.ModelForm):
+    permissions = forms.MultipleChoiceField(
+        choices=PERMISSION_LIST,
+        widget=forms.CheckboxSelectMultiple,
+        required=False,
+        label='Permissions',
+    )
+
+    class Meta:
+        model = Role
+        fields = ['name', 'description', 'permissions']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        if self.instance.pk and self.instance.permissions:
+            self.initial['permissions'] = self.instance.permissions
+
+    def clean_permissions(self):
+        return self.cleaned_data.get('permissions', [])
