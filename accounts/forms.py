@@ -1,6 +1,6 @@
 from django import forms
 from django.contrib.auth import authenticate
-from .models import User, Property, AMENITY_LIST, Role, PERMISSION_LIST
+from .models import User, Property, Customer, Block, AMENITY_LIST, Role, PERMISSION_LIST, Lead, LeadDocument
 
 
 class SignupForm(forms.ModelForm):
@@ -58,11 +58,19 @@ class PropertyForm(forms.ModelForm):
         model = Property
         exclude = ['created_by', 'created_at', 'updated_at']
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        # Pre-populate amenities from existing instance
         if self.instance.pk and self.instance.amenities:
             self.initial['amenities'] = self.instance.amenities
+        if user is not None:
+            if user.is_crm_admin:
+                self.fields['customer'].queryset = Customer.objects.all()
+            else:
+                self.fields['customer'].queryset = Customer.objects.filter(created_by=user)
+        self.fields['customer'].required = False
+        self.fields['customer'].empty_label = '— No customer linked —'
+        self.fields['block'].required = False
+        self.fields['block'].empty_label = '— No block —'
         for field in self.fields.values():
             field.error_messages = {'required': 'This field is required.'}
 
@@ -135,3 +143,64 @@ class RoleForm(forms.ModelForm):
 
     def clean_permissions(self):
         return self.cleaned_data.get('permissions', [])
+
+
+class BlockForm(forms.ModelForm):
+    class Meta:
+        model = Block
+        fields = ['name']
+
+
+class CustomerForm(forms.ModelForm):
+    interested_in = forms.ModelMultipleChoiceField(
+        queryset=Property.objects.none(),
+        required=False,
+        label='Interested Properties',
+        widget=forms.CheckboxSelectMultiple,
+    )
+
+    class Meta:
+        model = Customer
+        fields = ['name', 'phone', 'email', 'cnic', 'address', 'customer_type', 'budget', 'notes', 'interested_in']
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        if user is not None:
+            if user.is_crm_admin:
+                self.fields['interested_in'].queryset = Property.objects.all()
+            else:
+                self.fields['interested_in'].queryset = Property.objects.filter(created_by=user)
+        if self.instance.pk:
+            self.initial['interested_in'] = self.instance.interested_in.values_list('pk', flat=True)
+        for name, field in self.fields.items():
+            field.error_messages = {'required': 'This field is required.'}
+
+
+class LeadForm(forms.ModelForm):
+    class Meta:
+        model = Lead
+        fields = [
+            'full_name', 'email', 'phone', 'alternate_phone',
+            'lead_type', 'source', 'status', 'assigned_to',
+            'interested_in', 'area_preferences',
+            'budget_min', 'budget_max',
+            'bedrooms_min', 'bedrooms_max',
+            'bathrooms_min', 'bathrooms_max',
+            'area_sqft_min', 'area_sqft_max',
+            'other_requirements', 'notes', 'follow_up_date',
+        ]
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['assigned_to'].queryset = User.objects.filter(is_active=True)
+        self.fields['assigned_to'].empty_label = '— Unassigned —'
+        self.fields['assigned_to'].required = False
+        self.fields['follow_up_date'].required = False
+        if user and not user.is_crm_admin:
+            del self.fields['assigned_to']
+
+
+class LeadDocumentForm(forms.ModelForm):
+    class Meta:
+        model = LeadDocument
+        fields = ['document_type', 'title', 'file_url', 'amount', 'notes']

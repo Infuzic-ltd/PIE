@@ -1,0 +1,261 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Leads — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--blue-light:#3b82f6;--green:#22c55e;--orange:#f59e0b;--purple:#8b5cf6;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+.serif{font-family:'Playfair Display',serif}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--navy),#0a1530);color:#cdd6e6;padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50}
+.brand{text-align:center;padding:14px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.brand .logo{font-size:32px;font-weight:700;letter-spacing:6px;color:var(--gold);line-height:1}
+.brand .sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav::-webkit-scrollbar{width:0}
+.nav a{display:flex;align-items:center;gap:13px;padding:10px 13px;border-radius:10px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s}
+.nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.subnav a{font-size:13px;padding:8px 12px;color:#93a1c2}
+.subnav a.active{background:rgba(37,99,235,.16);color:#fff}
+.subnav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.profile{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:12px}
+.profile .nm{font-size:13px;font-weight:600;color:#fff}
+.profile .rl{font-size:11px;color:#8b97b3}
+.avatar{width:36px;height:36px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:0 0 36px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700;flex:1}
+.content{padding:24px 26px 40px;flex:1}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s;white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,30,60,.1)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;box-shadow:var(--shadow)}
+.kpi .k-label{font-size:10.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--ink-faint);margin-bottom:6px}
+.kpi .k-val{font-size:28px;font-weight:800;line-height:1}
+.kpi .k-dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px;vertical-align:middle}
+.filter-bar{display:flex;align-items:center;gap:10px;margin-bottom:18px;flex-wrap:wrap}
+.filter-bar input[type=text]{height:36px;border:1px solid var(--line);border-radius:8px;padding:0 12px 0 34px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:var(--ink);width:220px}
+.filter-bar input[type=text]:focus{border-color:var(--blue)}
+.search-wrap{position:relative}
+.search-wrap svg{position:absolute;left:10px;top:50%;transform:translateY(-50%);width:15px;height:15px;stroke:var(--ink-faint);fill:none;stroke-width:1.8;pointer-events:none}
+.filter-bar select{height:36px;border:1px solid var(--line);border-radius:8px;padding:0 28px 0 10px;font-size:13px;font-family:inherit;outline:none;background:#fff;color:var(--ink);appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6' stroke='%236b7280' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 7px center;background-size:16px;cursor:pointer}
+.filter-bar select:focus{border-color:var(--blue)}
+.clear-link{font-size:12.5px;color:var(--ink-soft);margin-left:4px}
+.clear-link:hover{color:var(--red)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{background:#f7f9fc;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line)}
+tbody tr{border-bottom:1px solid var(--line);transition:background .12s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f9fbff}
+tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
+.lead-cell{display:flex;align-items:center;gap:10px}
+.l-av{width:34px;height:34px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:12px;font-weight:700;flex:0 0 34px}
+.l-av.buyer{background:#3b82f6}.l-av.seller{background:#f97316}.l-av.investor{background:#8b5cf6}.l-av.tenant{background:#10b981}
+.l-name{font-weight:600;font-size:13.5px}
+.l-sub{font-size:11.5px;color:var(--ink-soft)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:600}
+.src-badge{padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:600;display:inline-block}
+.src-website{background:#dbeafe;color:#1d4ed8}
+.src-whatsapp{background:#dcfce7;color:#16a34a}
+.src-referral{background:#ede9fe;color:#7c3aed}
+.src-property_listing{background:#fef3c7;color:#b45309}
+.src-walk_in{background:#ccfbf1;color:#0f766e}
+.src-phone_call{background:#f1f5f9;color:#475569}
+.src-social_media{background:#fce7f3;color:#be185d}
+.src-other{background:#f1f5f9;color:#475569}
+.type-buyer{background:#dbeafe;color:#1d4ed8}
+.type-seller{background:#ffedd5;color:#c2410c}
+.type-investor{background:#ede9fe;color:#7c3aed}
+.type-tenant{background:#dcfce7;color:#16a34a}
+.st{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
+.st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
+.st-new{background:#dbeafe;color:#1d4ed8}
+.st-contacted{background:#fef3c7;color:#92400e}
+.st-qualified{background:#dcfce7;color:#166534}
+.st-follow_up{background:#ffedd5;color:#c2410c}
+.st-proposal{background:#ede9fe;color:#6d28d9}
+.st-negotiation{background:#cffafe;color:#155e75}
+.st-token{background:#fce7f3;color:#be185d}
+.st-converted{background:#d1fae5;color:#065f46}
+.st-lost{background:#f1f5f9;color:#475569}
+.assigned-cell{display:flex;align-items:center;gap:7px}
+.a-av{width:26px;height:26px;border-radius:50%;background:#64748b;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:700;flex:0 0 26px}
+.actions{display:flex;gap:5px}
+.act-ic{width:30px;height:30px;border-radius:7px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--ink-soft);cursor:pointer;transition:background .15s,color .15s;text-decoration:none}
+.act-ic svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
+.act-ic:hover{background:#f1f5fb;color:var(--ink)}
+.act-ic.danger:hover{background:#fef2f2;color:var(--red);border-color:#fecaca}
+.empty{text-align:center;padding:52px 20px;color:var(--ink-soft)}
+.empty svg{width:42px;height:42px;stroke:var(--ink-faint);fill:none;stroke-width:1.4;margin-bottom:14px}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-top:1px solid var(--line)}
+.pg-info{font-size:12.5px;color:var(--ink-soft)}
+.pg-btns{display:flex;gap:6px}
+.pg-btn{min-width:32px;height:32px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:500;cursor:pointer;display:grid;place-items:center;color:var(--ink-soft);text-decoration:none;padding:0 8px}
+.pg-btn:hover{background:#f1f5fb}
+.pg-btn.active{background:var(--blue);color:#fff;border-color:var(--blue)}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:1100px){.kpi-row{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.kpi-row{grid-template-columns:repeat(2,1fr)}.content{padding:18px 16px 40px}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<aside class="sidebar" id="sidebar">
+<div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
+<nav class="nav">
+<a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
+<a href="{% url 'lead_list' %}" class="active"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+<div class="subnav">
+<a href="{% url 'lead_list' %}" class="active">All Leads</a>
+<a href="{% url 'lead_create' %}">Add Lead</a>
+</div>
+<a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+<a href="{% url 'customer_list' %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
+{% if request.user.is_crm_admin %}
+<a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
+<div class="subnav">
+<a href="{% url 'team_list' %}">All Members</a>
+<a href="{% url 'team_member_create' %}">Add Member</a>
+<a href="{% url 'role_list' %}">Manage Roles</a>
+<a href="{% url 'block_list' %}">Manage Blocks</a>
+</div>
+{% endif %}
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+</nav>
+<div class="profile"><div class="avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div><div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_effective_role_name }}</div></div></div>
+<a href="{% url 'logout' %}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px;transition:background .15s,color .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign out</a>
+</aside>
+
+<main class="main">
+<div class="topbar">
+  <button class="float-menu" id="menuBtnTop" style="position:static;width:36px;height:36px;border-radius:9px;background:var(--navy)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <h1>Leads Management</h1>
+  <a href="{% url 'lead_create' %}" class="btn primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add New Lead</a>
+</div>
+<div class="content">
+
+<!-- KPIs -->
+<div class="kpi-row">
+  <div class="kpi"><div class="k-label">Total Leads</div><div class="k-val">{{ kpis.total }}</div></div>
+  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#3b82f6"></span>New</div><div class="k-val" style="color:#2563eb">{{ kpis.new }}</div></div>
+  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#f59e0b"></span>Contacted</div><div class="k-val" style="color:#b45309">{{ kpis.contacted }}</div></div>
+  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#10b981"></span>Qualified</div><div class="k-val" style="color:#059669">{{ kpis.qualified }}</div></div>
+  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#059669"></span>Converted</div><div class="k-val" style="color:#065f46">{{ kpis.converted }}</div></div>
+</div>
+
+<!-- Filters -->
+<form method="get" class="filter-bar">
+  <div class="search-wrap">
+    <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+    <input type="text" name="q" value="{{ filters.q }}" placeholder="Search by name, email, phone…">
+  </div>
+  <select name="status">
+    <option value="">All Status</option>
+    {% for val, label in status_choices %}<option value="{{ val }}" {% if filters.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <select name="source">
+    <option value="">All Sources</option>
+    {% for val, label in source_choices %}<option value="{{ val }}" {% if filters.source == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  {% if request.user.is_crm_admin %}
+  <select name="agent">
+    <option value="">All Agents</option>
+    {% for agent in agents %}<option value="{{ agent.pk }}" {% if filters.agent == agent.pk|stringformat:"i" %}selected{% endif %}>{{ agent.get_full_name }}</option>{% endfor %}
+  </select>
+  {% endif %}
+  <select name="lead_type">
+    <option value="">All Types</option>
+    {% for val, label in type_choices %}<option value="{{ val }}" {% if filters.lead_type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
+  <button type="submit" class="btn">Filter</button>
+  <a href="{% url 'lead_list' %}" class="clear-link">Clear</a>
+</form>
+
+<!-- Table -->
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Lead</th>
+        <th>Contact</th>
+        <th>Source</th>
+        <th>Lead Type</th>
+        <th>Budget Range</th>
+        <th>Status</th>
+        <th>Assigned To</th>
+        <th>Added On</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for lead in leads %}
+      <tr>
+        <td>
+          <div class="lead-cell">
+            <div class="l-av {{ lead.lead_type }}">{{ lead.initials }}</div>
+            <div>
+              <div class="l-name">{{ lead.full_name }}</div>
+              <div class="l-sub">{{ lead.get_lead_type_display }} Lead</div>
+            </div>
+          </div>
+        </td>
+        <td>
+          <div style="font-size:13px">{{ lead.phone }}</div>
+          {% if lead.email %}<div style="font-size:11.5px;color:var(--ink-soft)">{{ lead.email }}</div>{% endif %}
+        </td>
+        <td><span class="src-badge src-{{ lead.source }}">{{ lead.get_source_display }}</span></td>
+        <td><span class="badge type-{{ lead.lead_type }}">{{ lead.get_lead_type_display }}</span></td>
+        <td style="font-size:13px;white-space:nowrap">{{ lead.budget_display|default:"—" }}</td>
+        <td><span class="st st-{{ lead.status }}">{{ lead.get_status_display }}</span></td>
+        <td>
+          {% if lead.assigned_to %}
+          <div class="assigned-cell">
+            <div class="a-av">{{ lead.assigned_to.first_name|first|upper }}{{ lead.assigned_to.last_name|first|upper }}</div>
+            <span style="font-size:13px">{{ lead.assigned_to.get_full_name }}</span>
+          </div>
+          {% else %}<span style="color:var(--ink-faint);font-size:12px">Unassigned</span>{% endif %}
+        </td>
+        <td style="font-size:12.5px;color:var(--ink-soft);white-space:nowrap">{{ lead.created_at|date:"M d, Y" }}</td>
+        <td>
+          <div class="actions">
+            <a href="{% url 'lead_detail' lead.pk %}" class="act-ic" title="View"><svg viewBox="0 0 24 24"><path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7z"/><circle cx="12" cy="12" r="3"/></svg></a>
+            <a href="{% url 'lead_update' lead.pk %}" class="act-ic" title="Edit"><svg viewBox="0 0 24 24"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4z"/></svg></a>
+            {% if request.user.is_crm_admin or request.user == lead.created_by %}
+            <form method="post" action="{% url 'lead_delete' lead.pk %}" onsubmit="return confirm('Delete this lead?')"><button type="submit" class="act-ic danger" title="Delete" style="background:none;border:1px solid var(--line);cursor:pointer">{% csrf_token %}<svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></form>
+            {% endif %}
+          </div>
+        </td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="9" class="empty">
+        <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        <div style="font-weight:600;margin-bottom:4px">No leads found</div>
+        <div style="font-size:13px">{% if filters.q or filters.status or filters.source or filters.lead_type %}Try adjusting your filters.{% else %}<a href="{% url 'lead_create' %}" style="color:var(--blue)">Add your first lead</a>{% endif %}</div>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+</div></main></div>
+<script>
+var mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim'),sb=document.getElementById('sidebar');
+function tog(){document.body.classList.toggle('nav-open')}
+if(mb)mb.addEventListener('click',tog);
+if(mbt)mbt.addEventListener('click',tog);
+if(sc)sc.addEventListener('click',tog);
+</script>
+</body></html>

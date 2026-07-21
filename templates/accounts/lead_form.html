@@ -1,0 +1,283 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% if lead %}Edit Lead{% else %}Add Lead{% endif %} — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--blue-light:#3b82f6;--green:#22c55e;--orange:#f59e0b;--purple:#8b5cf6;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+.serif{font-family:'Playfair Display',serif}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--navy),#0a1530);color:#cdd6e6;padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50}
+.brand{text-align:center;padding:14px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.brand .logo{font-size:32px;font-weight:700;letter-spacing:6px;color:var(--gold);line-height:1}
+.brand .sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav::-webkit-scrollbar{width:0}
+.nav a{display:flex;align-items:center;gap:13px;padding:10px 13px;border-radius:10px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s}
+.nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.subnav a{font-size:13px;padding:8px 12px;color:#93a1c2}
+.subnav a.active{background:rgba(37,99,235,.16);color:#fff}
+.subnav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.profile{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:12px}
+.profile .nm{font-size:13px;font-weight:600;color:#fff}
+.profile .rl{font-size:11px;color:#8b97b3}
+.av-sm{width:36px;height:36px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:0 0 36px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.crumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+.crumb a{color:var(--blue)}
+.crumb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.topbar-actions{display:flex;gap:8px;margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 16px;border-radius:9px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-decoration:none;white-space:nowrap;font-family:inherit;transition:.12s}
+.btn:hover{background:#f7f9fc}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.content{padding:22px 24px 60px;flex:1;max-width:900px}
+.form-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:24px;box-shadow:var(--shadow);margin-bottom:18px}
+.section-title{font-size:14px;font-weight:700;color:var(--ink);margin-bottom:18px;padding-bottom:10px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:8px}
+.section-title svg{width:16px;height:16px;stroke:var(--blue);fill:none;stroke-width:1.8}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.form-grid.cols3{grid-template-columns:1fr 1fr 1fr}
+.fld{display:flex;flex-direction:column;gap:5px}
+.fld.full{grid-column:1/-1}
+.fld label{font-size:12.5px;font-weight:600;color:var(--ink-soft)}
+.fld label .req{color:var(--red)}
+.fld input,.fld select,.fld textarea{border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13.5px;font-family:inherit;outline:none;color:var(--ink);background:#fff;width:100%;transition:border-color .12s}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.08)}
+.fld select{appearance:none;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 24 24' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='m6 9 6 6 6-6' stroke='%236b7280' stroke-width='2' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 10px center;background-size:16px;padding-right:32px}
+.fld textarea{resize:vertical;min-height:80px}
+.field-err{font-size:12px;color:var(--red);margin-top:2px}
+/* Interested In Checkboxes */
+.interest-grid{display:flex;gap:8px;flex-wrap:wrap}
+.interest-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1.5px solid var(--line);background:#fff;font-size:13px;font-weight:500;cursor:pointer;transition:.12s;user-select:none;color:var(--ink-soft)}
+.interest-btn:hover{border-color:var(--blue-light);color:var(--ink)}
+.interest-btn input{display:none}
+.interest-btn.checked{border-color:var(--blue);background:#eff6ff;color:var(--blue);font-weight:600}
+/* Budget range row */
+.range-row{display:grid;grid-template-columns:1fr auto 1fr;gap:8px;align-items:center}
+.range-sep{color:var(--ink-faint);font-size:13px;text-align:center;padding-top:22px}
+/* Scrim */
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:700px){.form-grid,.form-grid.cols3{grid-template-columns:1fr}}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:16px 14px 60px}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<aside class="sidebar" id="sidebar">
+<div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
+<nav class="nav">
+<a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
+<a href="{% url 'lead_list' %}" class="active"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+<div class="subnav">
+<a href="{% url 'lead_list' %}">All Leads</a>
+<a href="{% url 'lead_create' %}" {% if not lead %}class="active"{% endif %}>Add Lead</a>
+</div>
+<a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+<a href="{% url 'customer_list' %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
+{% if request.user.is_crm_admin %}
+<a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
+<div class="subnav">
+<a href="{% url 'team_list' %}">All Members</a>
+<a href="{% url 'team_member_create' %}">Add Member</a>
+<a href="{% url 'role_list' %}">Manage Roles</a>
+<a href="{% url 'block_list' %}">Manage Blocks</a>
+</div>
+{% endif %}
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+</nav>
+<div class="profile"><div class="av-sm">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div><div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_effective_role_name }}</div></div></div>
+<a href="{% url 'logout' %}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px;transition:background .15s,color .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign out</a>
+</aside>
+
+<main class="main">
+<div class="topbar">
+  <button class="float-menu" id="menuBtnTop" style="position:static;width:36px;height:36px;border-radius:9px;background:var(--navy)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <div class="crumb">
+    <a href="{% url 'lead_list' %}">Leads</a>
+    <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+    {% if lead %}<a href="{% url 'lead_detail' lead.pk %}">{{ lead.full_name }}</a>
+    <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>Edit{% else %}Add Lead{% endif %}
+  </div>
+  <div class="topbar-actions">
+    <a href="{% if lead %}{% url 'lead_detail' lead.pk %}{% else %}{% url 'lead_list' %}{% endif %}" class="btn">Cancel</a>
+    <button form="leadForm" type="submit" class="btn primary"><svg viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v13a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> {% if lead %}Save Changes{% else %}Save Lead{% endif %}</button>
+  </div>
+</div>
+
+<div class="content">
+<form method="post" id="leadForm">{% csrf_token %}
+
+  <!-- Lead Information -->
+  <div class="form-card">
+    <div class="section-title"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Lead Information</div>
+    <div class="form-grid">
+      <div class="fld">
+        <label>Full Name <span class="req">*</span></label>
+        <input type="text" name="full_name" value="{{ form.full_name.value|default:'' }}" placeholder="Enter full name" required>
+        {% if form.full_name.errors %}<div class="field-err">{{ form.full_name.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="fld">
+        <label>Lead Type <span class="req">*</span></label>
+        <select name="lead_type">
+          {% for val, lbl in form.fields.lead_type.choices %}<option value="{{ val }}" {% if form.lead_type.value == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fld">
+        <label>Phone <span class="req">*</span></label>
+        <input type="text" name="phone" value="{{ form.phone.value|default:'' }}" placeholder="+92 300 0000000" required>
+        {% if form.phone.errors %}<div class="field-err">{{ form.phone.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="fld">
+        <label>Alternate Phone</label>
+        <input type="text" name="alternate_phone" value="{{ form.alternate_phone.value|default:'' }}" placeholder="+92 300 0000000">
+      </div>
+      <div class="fld">
+        <label>Email</label>
+        <input type="email" name="email" value="{{ form.email.value|default:'' }}" placeholder="email@example.com">
+      </div>
+      <div class="fld">
+        <label>Source <span class="req">*</span></label>
+        <select name="source">
+          {% for val, lbl in form.fields.source.choices %}<option value="{{ val }}" {% if form.source.value == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fld">
+        <label>Status</label>
+        <select name="status">
+          {% for val, lbl in form.fields.status.choices %}<option value="{{ val }}" {% if form.status.value == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
+        </select>
+      </div>
+      {% if 'assigned_to' in form.fields %}
+      <div class="fld">
+        <label>Assign To</label>
+        <select name="assigned_to">
+          <option value="">— Unassigned —</option>
+          {% for agent in form.fields.assigned_to.queryset %}<option value="{{ agent.pk }}" {% if form.assigned_to.value == agent.pk|stringformat:"i" %}selected{% endif %}>{{ agent.get_full_name }}</option>{% endfor %}
+        </select>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Requirements -->
+  <div class="form-card">
+    <div class="section-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Requirements</div>
+
+    <div class="fld" style="margin-bottom:16px">
+      <label>Interested In</label>
+      <div class="interest-grid">
+        {% for val, lbl in interest_choices %}
+        <label class="interest-btn {% if val in form.instance.interested_in %}checked{% endif %}">
+          <input type="checkbox" name="interested_in" value="{{ val }}" {% if val in form.instance.interested_in %}checked{% endif %}>
+          {% if val == 'apartment' %}🏢{% elif val == 'house' %}🏠{% elif val == 'plot' %}📐{% else %}🏪{% endif %} {{ lbl }}
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="fld full">
+        <label>Area Preferences <span style="font-size:11px;color:var(--ink-faint)">(comma-separated, e.g. DHA Phase 5, Bahria Town)</span></label>
+        <input type="text" name="area_preferences" value="{{ form.area_preferences.value|default:'' }}" placeholder="e.g. DHA Phase 5, Gulberg, Bahria Town">
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="fld">
+        <label>Budget Min (PKR)</label>
+        <input type="number" name="budget_min" value="{{ form.budget_min.value|default:'' }}" placeholder="e.g. 10000000" step="100000">
+      </div>
+      <div class="fld">
+        <label>Budget Max (PKR)</label>
+        <input type="number" name="budget_max" value="{{ form.budget_max.value|default:'' }}" placeholder="e.g. 30000000" step="100000">
+      </div>
+    </div>
+
+    <div class="form-grid cols3" style="margin-bottom:14px">
+      <div class="fld">
+        <label>Bedrooms Min</label>
+        <select name="bedrooms_min">
+          <option value="">Any</option>
+          {% for i in "12345678"|make_list %}<option value="{{ i }}" {% if form.bedrooms_min.value == i %}selected{% endif %}>{{ i }}+</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fld">
+        <label>Bedrooms Max</label>
+        <select name="bedrooms_max">
+          <option value="">Any</option>
+          {% for i in "12345678"|make_list %}<option value="{{ i }}" {% if form.bedrooms_max.value == i %}selected{% endif %}>{{ i }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fld">
+        <label>Bathrooms Min</label>
+        <select name="bathrooms_min">
+          <option value="">Any</option>
+          {% for i in "1234"|make_list %}<option value="{{ i }}" {% if form.bathrooms_min.value == i %}selected{% endif %}>{{ i }}+</option>{% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="form-grid" style="margin-bottom:14px">
+      <div class="fld">
+        <label>Area Min (Sq Ft)</label>
+        <input type="number" name="area_sqft_min" value="{{ form.area_sqft_min.value|default:'' }}" placeholder="e.g. 1000">
+      </div>
+      <div class="fld">
+        <label>Area Max (Sq Ft)</label>
+        <input type="number" name="area_sqft_max" value="{{ form.area_sqft_max.value|default:'' }}" placeholder="e.g. 3000">
+      </div>
+    </div>
+
+    <div class="fld">
+      <label>Other Requirements</label>
+      <textarea name="other_requirements" placeholder="Parking, gym, 24/7 security, ground floor…">{{ form.other_requirements.value|default:'' }}</textarea>
+    </div>
+  </div>
+
+  <!-- Notes & Follow-up -->
+  <div class="form-card">
+    <div class="section-title"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/></svg> Notes &amp; Follow-up</div>
+    <div class="form-grid">
+      <div class="fld">
+        <label>Follow-up Date</label>
+        <input type="datetime-local" name="follow_up_date" value="{% if form.follow_up_date.value %}{{ form.follow_up_date.value|date:'Y-m-d' }}T{{ form.follow_up_date.value|time:'H:i' }}{% endif %}">
+      </div>
+      <div class="fld full">
+        <label>Notes</label>
+        <textarea name="notes" placeholder="Any notes, context or observations about this lead…">{{ form.notes.value|default:'' }}</textarea>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px">
+    <button type="submit" class="btn primary"><svg viewBox="0 0 24 24" style="width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v13a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg> {% if lead %}Save Changes{% else %}Save Lead{% endif %}</button>
+    <a href="{% if lead %}{% url 'lead_detail' lead.pk %}{% else %}{% url 'lead_list' %}{% endif %}" class="btn">Cancel</a>
+  </div>
+
+</form>
+</div></main></div>
+<script>
+var mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim');
+function tog(){document.body.classList.toggle('nav-open')}
+if(mb)mb.addEventListener('click',tog);if(mbt)mbt.addEventListener('click',tog);if(sc)sc.addEventListener('click',tog);
+// Interested In toggle
+document.querySelectorAll('.interest-btn').forEach(function(lbl){
+  var cb=lbl.querySelector('input[type=checkbox]');
+  function sync(){lbl.classList.toggle('checked',cb.checked);}
+  sync();
+  cb.addEventListener('change',sync);
+  lbl.addEventListener('click',function(e){if(e.target===lbl){cb.checked=!cb.checked;sync();}});
+});
+</script>
+</body></html>

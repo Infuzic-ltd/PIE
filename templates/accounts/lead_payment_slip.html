@@ -1,0 +1,358 @@
+{% load humanize %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment Receipt – {{ doc.title }}</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 18mm 20mm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 11pt;
+    color: #1a1a2e;
+    background: #fff;
+  }
+
+  /* ── Screen-only toolbar ── */
+  .toolbar {
+    background: #0f3460;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toolbar button {
+    background: #c9a84c;
+    color: #fff;
+    border: none;
+    padding: 8px 22px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    letter-spacing: .4px;
+  }
+  .toolbar a {
+    color: #c9a84c;
+    font-size: 13px;
+    text-decoration: none;
+  }
+
+  /* ── A4 page wrapper ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    background: #fff;
+    padding: 18mm 20mm;
+    box-shadow: 0 2px 24px rgba(0,0,0,.12);
+    position: relative;
+  }
+
+  /* ── Header ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding-bottom: 14px;
+    border-bottom: 3px solid #0f3460;
+    margin-bottom: 6px;
+  }
+  .brand-name {
+    font-size: 26pt;
+    font-weight: 800;
+    color: #0f3460;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .brand-name span { color: #c9a84c; }
+  .brand-tagline {
+    font-size: 8.5pt;
+    color: #666;
+    margin-top: 3px;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+  }
+  .receipt-label {
+    text-align: right;
+  }
+  .receipt-label h2 {
+    font-size: 18pt;
+    font-weight: 700;
+    color: #0f3460;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .receipt-label .ref {
+    font-size: 9pt;
+    color: #888;
+    margin-top: 4px;
+  }
+
+  /* ── Meta row ── */
+  .meta-row {
+    display: flex;
+    justify-content: space-between;
+    margin: 18px 0;
+    font-size: 9.5pt;
+    color: #444;
+  }
+  .meta-row strong { color: #1a1a2e; }
+
+  /* ── Section heading ── */
+  .sec-heading {
+    font-size: 8pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #0f3460;
+    border-bottom: 1px solid #e0e0e0;
+    padding-bottom: 4px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Info grid ── */
+  .info-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 30px;
+    font-size: 10pt;
+    margin-bottom: 22px;
+  }
+  .info-row { display: flex; flex-direction: column; }
+  .info-label { font-size: 8pt; color: #888; text-transform: uppercase; letter-spacing: .8px; margin-bottom: 2px; }
+  .info-value { font-weight: 600; color: #1a1a2e; }
+
+  /* ── Amount box ── */
+  .amount-box {
+    background: #0f3460;
+    color: #fff;
+    border-radius: 8px;
+    padding: 20px 28px;
+    margin: 24px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .amount-label {
+    font-size: 9pt;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #c9a84c;
+    margin-bottom: 4px;
+  }
+  .amount-figure {
+    font-size: 22pt;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -0.5px;
+  }
+  .amount-words {
+    font-size: 9pt;
+    color: #c9d8ff;
+    font-style: italic;
+    margin-top: 4px;
+  }
+  .amount-type-pill {
+    background: rgba(201,168,76,.25);
+    color: #f5d080;
+    padding: 5px 14px;
+    border-radius: 20px;
+    font-size: 9pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    white-space: nowrap;
+  }
+
+  /* ── Notes ── */
+  .notes-box {
+    background: #f8f9fc;
+    border-left: 3px solid #c9a84c;
+    padding: 10px 14px;
+    font-size: 10pt;
+    color: #444;
+    margin-bottom: 28px;
+    min-height: 36px;
+  }
+
+  /* ── Signature row ── */
+  .sig-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 20px;
+    margin-top: 40px;
+  }
+  .sig-block { text-align: center; }
+  .sig-line {
+    border-top: 1.5px solid #bbb;
+    margin-bottom: 6px;
+  }
+  .sig-label { font-size: 8.5pt; color: #666; }
+
+  /* ── Footer ── */
+  .footer {
+    position: absolute;
+    bottom: 18mm;
+    left: 20mm;
+    right: 20mm;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #aaa;
+  }
+
+  /* ── Watermark ── */
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 72pt;
+    font-weight: 900;
+    color: rgba(15,52,96,.04);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: 4px;
+  }
+
+  @media print {
+    .toolbar { display: none !important; }
+    .page {
+      margin: 0;
+      box-shadow: none;
+      padding: 0;
+    }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="{% url 'lead_detail' lead.pk %}">&larr; Back to Lead</a>
+</div>
+
+<div class="page">
+
+  <div class="watermark">PIE</div>
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="brand-name">PIE<span>.</span></div>
+      <div class="brand-tagline">Real Estate Solutions</div>
+    </div>
+    <div class="receipt-label">
+      <h2>Payment Receipt</h2>
+      <div class="ref">Ref: SLIP-{{ doc.pk|stringformat:"04d" }}</div>
+    </div>
+  </div>
+
+  <!-- Meta row -->
+  <div class="meta-row">
+    <span><strong>Date:</strong> {{ doc.created_at|date:"F j, Y" }}</span>
+    <span><strong>Lead ID:</strong> PIE-LEAD-{{ lead.pk|stringformat:"04d" }}</span>
+    <span><strong>Agent:</strong> {{ lead.created_by.get_full_name|default:lead.created_by.email }}</span>
+  </div>
+
+  <!-- Received from -->
+  <div class="sec-heading">Received From</div>
+  <div class="info-grid">
+    <div class="info-row">
+      <span class="info-label">Client Name</span>
+      <span class="info-value">{{ lead.full_name }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Phone</span>
+      <span class="info-value">{{ lead.phone }}</span>
+    </div>
+    {% if lead.email %}
+    <div class="info-row">
+      <span class="info-label">Email</span>
+      <span class="info-value">{{ lead.email }}</span>
+    </div>
+    {% endif %}
+    <div class="info-row">
+      <span class="info-label">Lead Type</span>
+      <span class="info-value">{{ lead.get_lead_type_display }}</span>
+    </div>
+  </div>
+
+  <!-- Payment details -->
+  <div class="sec-heading">Payment Details</div>
+  <div class="info-grid">
+    <div class="info-row">
+      <span class="info-label">Title / Description</span>
+      <span class="info-value">{{ doc.title }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Payment Type</span>
+      <span class="info-value">{{ doc.get_document_type_display }}</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Date</span>
+      <span class="info-value">{{ doc.created_at|date:"d M Y, H:i" }}</span>
+    </div>
+  </div>
+
+  <!-- Amount box -->
+  {% if doc.amount %}
+  <div class="amount-box">
+    <div>
+      <div class="amount-label">Amount Received</div>
+      <div class="amount-figure">PKR {{ doc.amount|floatformat:"0"|intcomma }}</div>
+      <div class="amount-words">{{ doc.amount_display }}</div>
+    </div>
+    <div class="amount-type-pill">{{ doc.get_document_type_display }}</div>
+  </div>
+  {% endif %}
+
+  <!-- Notes -->
+  <div class="sec-heading">Remarks / Notes</div>
+  <div class="notes-box">
+    {% if doc.notes %}{{ doc.notes }}{% else %}&mdash;{% endif %}
+  </div>
+
+  <!-- Signatures -->
+  <div class="sig-row">
+    <div class="sig-block">
+      <div class="sig-line" style="margin-top:40px;"></div>
+      <div class="sig-label">Received By (Company)</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line" style="margin-top:40px;"></div>
+      <div class="sig-label">Authorized Signatory</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line" style="margin-top:40px;"></div>
+      <div class="sig-label">Client Signature</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>PIE Real Estate &bull; Pakistan</span>
+    <span>This is a system-generated receipt and is valid without a physical signature.</span>
+    <span>Printed: {% now "d M Y" %}</span>
+  </div>
+
+</div>
+
+<script>
+  // Auto-focus for quick Ctrl+P
+  window.addEventListener('load', function() {
+    document.querySelector('.toolbar button').focus();
+  });
+</script>
+
+</body>
+</html>

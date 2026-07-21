@@ -1,0 +1,243 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ action }} — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0d1b3e;--gold:#c9a24b;
+  --bg:#f1f4f9;--card:#ffffff;--line:#e7ecf3;
+  --ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;
+  --blue:#2563eb;--red:#ef4444;--radius:14px;
+  --shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+.serif{font-family:'Playfair Display',serif}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--navy),#0a1530);color:#cdd6e6;
+  padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50}
+.brand{text-align:center;padding:14px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.brand .logo{font-size:32px;font-weight:700;letter-spacing:6px;color:var(--gold);line-height:1}
+.brand .sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav::-webkit-scrollbar{width:0}
+.nav a{display:flex;align-items:center;gap:13px;padding:10px 13px;border-radius:10px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s}
+.nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.subnav a{font-size:13px;padding:8px 12px;color:#93a1c2}
+.subnav a.active{background:rgba(37,99,235,.16);color:#fff}
+.subnav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.profile{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:12px}
+.profile .nm{font-size:13px;font-weight:600;color:#fff}
+.profile .rl{font-size:11px;color:#8b97b3}
+.avatar{width:36px;height:36px;border-radius:50%;background:#3b82f6;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:0 0 36px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700;flex:1}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;align-items:center;justify-content:center;flex:0 0 40px}
+.menu-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+.content{padding:24px 26px 40px;flex:1}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s;white-space:nowrap}
+.btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,30,60,.1)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.form-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:28px;max-width:680px}
+.form-title{font-size:16px;font-weight:700;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--line)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group.full{grid-column:1/-1}
+label{font-size:12.5px;font-weight:600;color:var(--ink)}
+input,textarea,select{padding:9px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;color:var(--ink);background:#fff;transition:border-color .18s,box-shadow .18s;width:100%}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+textarea{resize:vertical;min-height:80px}
+.check-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:6px;max-height:220px;overflow-y:auto;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:#fafbfd}
+.check-grid label{display:flex;align-items:center;gap:8px;padding:6px 8px;border-radius:8px;cursor:pointer;font-size:13px;font-weight:400;transition:background .12s}
+.check-grid label:hover{background:#eef3fb}
+.check-grid input[type=checkbox]{width:15px;height:15px;accent-color:var(--blue);flex:0 0 15px}
+.type-btns{display:flex;gap:8px;flex-wrap:wrap}
+.type-btn{display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;background:#fff;color:var(--ink-soft);transition:all .15s}
+.type-btn:hover{border-color:var(--blue);color:var(--blue)}
+.type-btn.sel-seller{border-color:#a16207;background:#fef9c3;color:#a16207}
+.type-btn.sel-buyer{border-color:#16a34a;background:#dcfce7;color:#16a34a}
+.type-btn.sel-landlord{border-color:#7c3aed;background:#ede9fe;color:#7c3aed}
+.type-btn.sel-tenant{border-color:#1d4ed8;background:#dbeafe;color:#1d4ed8}
+.err{color:var(--red);font-size:12px;margin-top:3px}
+.form-actions{display:flex;gap:10px;margin-top:22px}
+.crumb{font-size:13px;color:var(--ink-soft);margin-bottom:18px;display:flex;align-items:center;gap:7px}
+.crumb a{color:var(--blue);font-weight:500}
+.crumb svg{width:13px;height:13px;stroke:var(--ink-faint);fill:none;stroke-width:2}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:880px){
+  .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}
+  body.nav-open .sidebar{transform:translateX(0)}
+  body.nav-open .scrim{display:block}
+  .float-menu{display:inline-flex}
+  .content{padding:18px 16px 40px}
+  .form-grid{grid-template-columns:1fr}
+}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<aside class="sidebar" id="sidebar">
+<div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
+<nav class="nav">
+<a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
+<a href="{% url 'lead_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+<a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+<a href="{% url 'customer_list' %}" class="active"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
+<div class="subnav">
+<a href="{% url 'customer_list' %}">All Customers</a>
+<a href="{% url 'customer_create' %}" {% if not customer %}class="active"{% endif %}>Add Customer</a>
+</div>
+<a href="#"><svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg> Deals</a>
+{% if request.user.is_crm_admin %}
+<a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
+<div class="subnav">
+<a href="{% url 'team_list' %}">All Members</a>
+<a href="{% url 'team_member_create' %}">Add Member</a>
+<a href="{% url 'role_list' %}">Manage Roles</a>
+<a href="{% url 'block_list' %}">Manage Blocks</a>
+</div>
+{% endif %}
+<a href="#"><svg viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5"/><path d="M9 13h6M9 17h6"/></svg> Reports</a>
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+</nav>
+<div class="profile"><div class="avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div><div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_effective_role_name }}</div></div></div>
+<a href="{% url 'logout' %}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px;transition:background .15s,color .15s"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign out</a>
+</aside>
+
+<main class="main">
+<div class="topbar">
+  <button class="menu-btn" id="menuBtnTop"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <h1>{{ action }}</h1>
+  <a href="{% url 'customer_list' %}" class="btn"><svg viewBox="0 0 24 24"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back</a>
+</div>
+
+<div class="content">
+  <div class="crumb">
+    <a href="{% url 'customer_list' %}">Customers</a>
+    <svg viewBox="0 0 24 24"><path d="M9 18l6-6-6-6"/></svg>
+    {{ action }}
+  </div>
+
+  <div class="form-card">
+    <div class="form-title">{{ action }}</div>
+    <form method="post" novalidate>
+      {% csrf_token %}
+      <div class="form-grid">
+        <!-- Basic info -->
+        <div class="form-group">
+          <label for="{{ form.name.id_for_label }}">Full Name *</label>
+          {{ form.name }}
+          {% for e in form.name.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.phone.id_for_label }}">Phone *</label>
+          {{ form.phone }}
+          {% for e in form.phone.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.email.id_for_label }}">Email</label>
+          {{ form.email }}
+          {% for e in form.email.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.cnic.id_for_label }}">CNIC</label>
+          {{ form.cnic }}
+          {% for e in form.cnic.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group full">
+          <label for="{{ form.address.id_for_label }}">Address</label>
+          {{ form.address }}
+          {% for e in form.address.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Customer type -->
+        <div class="form-group full">
+          <label>Customer Type *</label>
+          <div class="type-btns" id="typeBtns">
+            {% for val, label in form.customer_type.field.choices %}
+            <button type="button" class="type-btn {% if form.customer_type.value == val %}sel-{{ val }}{% endif %}" data-val="{{ val }}">{{ label }}</button>
+            {% endfor %}
+          </div>
+          <input type="hidden" name="customer_type" id="customerTypeInput" value="{{ form.customer_type.value|default:'buyer' }}">
+          {% for e in form.customer_type.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Budget (shown for buyer/tenant) -->
+        <div class="form-group full" id="budgetGroup">
+          <label for="{{ form.budget.id_for_label }}">Budget</label>
+          {{ form.budget }}
+          <div style="font-size:12px;color:var(--ink-faint);margin-top:4px">Enter amount in PKR. e.g. 1500000 for 15 Lakh.</div>
+          {% for e in form.budget.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Interested properties (buyer/tenant) -->
+        {% if form.interested_in.field.queryset.exists %}
+        <div class="form-group full" id="interestedGroup">
+          <label>Interested Properties</label>
+          <div class="check-grid">
+            {% for choice in form.interested_in %}
+            <label>{{ choice.tag }} {{ choice.choice_label }}</label>
+            {% endfor %}
+          </div>
+          {% for e in form.interested_in.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        {% endif %}
+
+        <div class="form-group full">
+          <label for="{{ form.notes.id_for_label }}">Notes</label>
+          {{ form.notes }}
+          {% for e in form.notes.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="submit" class="btn primary">Save Customer</button>
+        <a href="{% url 'customer_list' %}" class="btn">Cancel</a>
+      </div>
+    </form>
+  </div>
+</div>
+</main>
+</div>
+
+<script>
+const body=document.body,mb=document.getElementById('menuBtn'),mt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim');
+if(mb)mb.addEventListener('click',()=>body.classList.toggle('nav-open'));
+if(mt)mt.addEventListener('click',()=>body.classList.toggle('nav-open'));
+if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
+
+// Customer type toggle buttons
+const typeInput = document.getElementById('customerTypeInput');
+const budgetGroup = document.getElementById('budgetGroup');
+const interestedGroup = document.getElementById('interestedGroup');
+const supplyTypes = ['seller','landlord'];
+
+function updateTypeUI(val) {
+  document.querySelectorAll('#typeBtns .type-btn').forEach(b => {
+    b.className = 'type-btn';
+    if(b.dataset.val === val) b.classList.add('sel-'+val);
+  });
+  typeInput.value = val;
+  // Show budget and interested only for demand-side customers
+  const isDemand = !supplyTypes.includes(val);
+  if(budgetGroup) budgetGroup.style.display = isDemand ? '' : 'none';
+  if(interestedGroup) interestedGroup.style.display = isDemand ? '' : 'none';
+}
+
+document.querySelectorAll('#typeBtns .type-btn').forEach(b => {
+  b.addEventListener('click', () => updateTypeUI(b.dataset.val));
+});
+
+updateTypeUI(typeInput.value || 'buyer');
+</script>
+</body></html>
