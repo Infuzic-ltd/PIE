@@ -44,6 +44,7 @@ urlpatterns = [
     path('leads/<int:pk>/note/', views.lead_add_note, name='lead_add_note'),
     path('leads/<int:pk>/document/', views.lead_add_document, name='lead_add_document'),
     path('leads/<int:pk>/status/', views.lead_status_update, name='lead_status_update'),
+    path('leads/<int:pk>/whatsapp/', views.lead_whatsapp_send, name='lead_whatsapp_send'),
     path('leads/<int:pk>/invoice/', views.lead_print_invoice, name='lead_print_invoice'),
     path('leads/<int:pk>/slip/<int:doc_pk>/', views.lead_print_slip, name='lead_print_slip'),
 

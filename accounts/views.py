@@ -1,5 +1,6 @@
 import json
 import re
+import requests
 from urllib.parse import quote
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
@@ -695,6 +696,56 @@ def lead_status_update(request, pk):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({'ok': True, 'status': lead.status, 'label': lead.get_status_display(), 'color': lead.status_color()})
     return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def lead_whatsapp_send(request, pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    if not lead.phone:
+        return JsonResponse({'ok': False, 'error': 'Lead has no phone number.'}, status=400)
+
+    recommendations = lead.get_recommended_properties(limit=5)
+    lines = [f"Hi {lead.full_name}! \U0001f44b Here are top properties from PIE Real Estate matching your requirements:\n"]
+    for i, prop in enumerate(recommendations, 1):
+        prop_url = request.build_absolute_uri(f'/properties/{prop.pk}/')
+        price = f"PKR {float(prop.price):,.0f}" if prop.price else 'Price on request'
+        details = f"  \U0001f4cd {prop.location}, {prop.city}\n  \U0001f4b0 {price}"
+        if prop.bedrooms:
+            details += f"\n  \U0001f6cf {prop.bedrooms} Bed"
+        if prop.bathrooms:
+            details += f" · \U0001f6bf {prop.bathrooms} Bath"
+        if hasattr(prop, 'match_pct'):
+            details += f"\n  ✓ {prop.match_pct}% match"
+        details += f"\n  \U0001f517 {prop_url}"
+        lines.append(f"*{i}. {prop.title}*\n{details}")
+    lines.append("\nInterested? Call us anytime. — PIE Real Estate")
+    message = "\n\n".join(lines)
+
+    # Normalize phone: strip non-digits, ensure 92 prefix
+    digits = re.sub(r'\D', '', lead.phone)
+    if digits.startswith('0') and len(digits) == 11:
+        digits = '92' + digits[1:]
+
+    try:
+        resp = requests.post(
+            settings.WHATSAPP_API_URL,
+            json={'phone': digits, 'message': message},
+            timeout=15,
+        )
+        if resp.ok:
+            LeadActivity.objects.create(
+                lead=lead,
+                activity_type=LeadActivity.TYPE_NOTE,
+                description=f'WhatsApp message sent with {len(recommendations)} recommended properties.',
+                created_by=request.user,
+            )
+            return JsonResponse({'ok': True})
+        return JsonResponse({'ok': False, 'error': f'API error {resp.status_code}: {resp.text[:200]}'}, status=502)
+    except requests.exceptions.ConnectionError:
+        return JsonResponse({'ok': False, 'error': 'WhatsApp API server not reachable. Is it running on localhost:3000?'}, status=503)
+    except Exception as e:
+        return JsonResponse({'ok': False, 'error': str(e)}, status=500)
 
 
 @login_required

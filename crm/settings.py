@@ -109,6 +109,9 @@ VAPID_PRIVATE_KEY = _raw_vapid_private.replace('\\n', '\n')
 
 VAPID_ADMIN_EMAIL = os.environ.get('VAPID_ADMIN_EMAIL', 'admin@pierealestate.com')
 
+# ── WhatsApp local API ────────────────────────────────────────────────────────
+WHATSAPP_API_URL = os.environ.get('WHATSAPP_API_URL', 'http://localhost:3000/send-message')
+
 # ── Cloudinary (direct upload — URL saved to DB) ─────────────────────────────
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'm25w8okr'),
