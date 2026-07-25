@@ -228,6 +228,7 @@ tbody td{padding:14px 16px;border-bottom:1px solid var(--line);font-size:13.5px;
 tbody tr{transition:background .15s}
 tbody tr:hover{background:#f8fafc}
 tbody tr:last-child td{border-bottom:none}
+tbody tr.row-link{cursor:pointer}
 .chk-td{width:40px}
 .prop-cell{display:flex;align-items:center;gap:12px}
 .prop-cell img{width:48px;height:48px;border-radius:9px;object-fit:cover;flex:0 0 48px}
@@ -256,6 +257,7 @@ tbody tr:last-child td{border-bottom:none}
 .prop-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(268px,1fr));gap:16px}
 .pg-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s}
 .pg-card:hover{transform:translateY(-4px);box-shadow:0 16px 36px rgba(16,30,60,.12)}
+.pg-card.row-link{cursor:pointer}
 .pg-img{position:relative;height:178px;background:#eef3fb;overflow:hidden}
 .pg-img img{width:100%;height:100%;object-fit:cover;transition:transform .4s}
 .pg-card:hover .pg-img img{transform:scale(1.04)}
@@ -352,7 +354,7 @@ body.view-list .grid-container{display:none}
     </tr></thead>
     <tbody>
 {% for prop in properties %}
-<tr>
+<tr class="row-link" data-href="{% url 'property_view' prop.pk %}">
   <td class="chk-td"><label class="chk"><input type="checkbox"><span class="box"><svg viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></svg></span></label></td>
   <td>
     <div class="prop-cell">
@@ -418,7 +420,7 @@ body.view-list .grid-container{display:none}
   <div class="prop-grid">
     {% for prop in properties %}
     {% with img=prop.get_primary_image %}
-    <div class="pg-card">
+    <div class="pg-card row-link" data-href="{% url 'property_view' prop.pk %}">
       <div class="pg-img">
         {% if img %}<img src="{{ img.image }}" alt="{{ prop.title }}">{% else %}<div class="no-img"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/></svg></div>{% endif %}
         <div class="pg-badges">
@@ -473,6 +475,14 @@ const body=document.body,mb=document.getElementById('menuBtn'),sc=document.getEl
 if(mb)mb.addEventListener('click',()=>body.classList.toggle('nav-open'));
 if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
 document.querySelectorAll('.content > *, .kpi, .card').forEach((el,i)=>{el.classList.add('reveal');el.style.setProperty('--d',Math.min(i,8)*0.05+'s')});
+
+// ── Click anywhere on a row/card to view its details ────────────────────────
+document.querySelectorAll('.row-link[data-href]').forEach(el=>{
+  el.addEventListener('click', e=>{
+    if(e.target.closest('a,button,form,input,label,select,textarea')) return;
+    window.location = el.dataset.href;
+  });
+});
 
 // ── View toggle ────────────────────────────────────────────────────────────
 const VKEY = 'pie_prop_view';

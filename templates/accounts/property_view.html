@@ -231,12 +231,12 @@ a{color:inherit}
 <style>
 .view-grid{display:grid;grid-template-columns:1fr 340px;gap:22px}
 .gallery{display:grid;grid-template-columns:1fr 150px;gap:12px;margin-bottom:18px}
-.gallery .hero{width:100%;height:340px;object-fit:cover;border-radius:14px;transition:transform .5s}
+.gallery .hero{width:100%;height:340px;object-fit:cover;border-radius:14px;transition:transform .5s;cursor:pointer}
 .gallery .hero-wrap{overflow:hidden;border-radius:14px}
 .gallery .hero-wrap:hover .hero{transform:scale(1.04)}
 .gallery .side{display:flex;flex-direction:column;gap:12px}
 .gallery .side .sw{position:relative;border-radius:14px;overflow:hidden;flex:1}
-.gallery .side img{width:100%;height:100%;object-fit:cover;display:block}
+.gallery .side img{width:100%;height:100%;object-fit:cover;display:block;cursor:pointer}
 .gallery .more{position:absolute;inset:0;background:rgba(13,27,62,.6);color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:700;cursor:pointer;transition:background .2s}
 .gallery .more:hover{background:rgba(13,27,62,.72)}
 .gallery .more b{font-size:22px}
@@ -251,6 +251,43 @@ a{color:inherit}
 .tabs button:hover{color:var(--ink)}
 .tabs button.active{color:var(--blue);border-bottom-color:var(--blue)}
 .tab-body p{font-size:14px;color:var(--ink-soft);margin-bottom:12px;line-height:1.7}
+.tab-empty{color:var(--ink-faint);font-size:13.5px;text-align:center;padding:24px 0}
+.amenity-chips{display:flex;flex-wrap:wrap;gap:8px}
+.amenity-chip{display:inline-flex;align-items:center;gap:6px;background:#eef3fb;color:var(--blue);font-size:12.5px;font-weight:600;padding:6px 12px;border-radius:20px}
+.amenity-chip svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.4}
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.media-grid img{width:100%;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer;transition:opacity .15s}
+.media-grid img:hover{opacity:.85}
+/* Lightbox */
+.lightbox-overlay{display:none;position:fixed;inset:0;background:rgba(8,16,36,.92);z-index:300;align-items:center;justify-content:center}
+.lightbox-overlay.open{display:flex}
+.lightbox-img{max-width:88vw;max-height:86vh;object-fit:contain;border-radius:8px;box-shadow:0 20px 60px rgba(0,0,0,.5)}
+.lightbox-close{position:absolute;top:18px;right:22px;width:42px;height:42px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:24px;cursor:pointer;display:grid;place-items:center;line-height:1;transition:background .15s}
+.lightbox-close:hover{background:rgba(255,255,255,.22)}
+.lightbox-nav{position:absolute;top:50%;transform:translateY(-50%);width:50px;height:50px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;cursor:pointer;display:grid;place-items:center;transition:background .15s}
+.lightbox-nav:hover{background:rgba(255,255,255,.22)}
+.lightbox-nav svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2.2}
+.lightbox-prev{left:18px}
+.lightbox-next{right:18px}
+.lightbox-counter{position:absolute;bottom:22px;left:50%;transform:translateX(-50%);color:#fff;font-size:13px;font-weight:600;background:rgba(255,255,255,.12);padding:6px 14px;border-radius:20px}
+@media (max-width:560px){.lightbox-nav{width:40px;height:40px}.lightbox-nav svg{width:20px;height:20px}.lightbox-close{width:36px;height:36px;top:10px;right:10px}}
+/* Documents */
+.doc-list{display:flex;flex-direction:column;gap:8px}
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fafbfc}
+.doc-icon{width:34px;height:34px;border-radius:8px;background:#dbeafe;display:grid;place-items:center;flex:0 0 34px}
+.doc-icon svg{width:16px;height:16px;stroke:#2563eb;fill:none;stroke-width:1.8}
+.doc-info{flex:1;min-width:0}
+.doc-title{font-size:13px;font-weight:600}
+.doc-sub{font-size:11.5px;color:var(--ink-soft)}
+/* History timeline */
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:12px;padding:10px 0;position:relative}
+.tl-item:not(:last-child)::before{content:'';position:absolute;left:16px;top:34px;bottom:0;width:1px;background:var(--line)}
+.tl-icon{width:33px;height:33px;border-radius:50%;background:#f1f5f9;display:grid;place-items:center;font-size:14px;flex:0 0 33px;border:2px solid var(--line);z-index:1}
+.tl-body{flex:1;min-width:0}
+.tl-desc{font-size:13px;color:var(--ink);line-height:1.5}
+.tl-time{font-size:11.5px;color:var(--ink-faint);margin-top:2px}
+.tl-who{font-size:12px;color:var(--ink-soft);font-weight:500}
 .side-card .sc-h{font-size:14px;font-weight:700;padding:16px 18px;border-bottom:1px solid var(--line)}
 .info-row{display:flex;align-items:center;justify-content:space-between;padding:11px 18px;font-size:13px}
 .info-row .k{color:var(--ink-soft)}
@@ -300,15 +337,15 @@ a{color:inherit}
     <div class="gallery">
       {% with imgs=property.images.all %}
       {% if imgs %}
-      <div class="hero-wrap"><img class="hero" src="{{ imgs.0.image }}" alt="{{ property.title }}"></div>
+      <div class="hero-wrap"><img class="hero" src="{{ imgs.0.image }}" alt="{{ property.title }}" onclick="openLightbox(0)"></div>
       {% else %}
       <div class="hero-wrap" style="border-radius:14px;overflow:hidden"><div style="width:100%;height:340px;background:#eef3fb;border-radius:14px;display:grid;place-items:center"><svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#c5d0e6" stroke-width="1.4"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></div></div>
       {% endif %}
       <div class="side">
-        <div class="sw">{% if imgs|length > 1 %}<img src="{{ imgs.1.image }}" alt="">{% else %}<div style="width:100%;height:100%;background:#eef3fb;border-radius:14px"></div>{% endif %}</div>
+        <div class="sw">{% if imgs|length > 1 %}<img src="{{ imgs.1.image }}" alt="" onclick="openLightbox(1)">{% else %}<div style="width:100%;height:100%;background:#eef3fb;border-radius:14px"></div>{% endif %}</div>
         <div class="sw">
-          {% if imgs|length > 2 %}<img src="{{ imgs.2.image }}" alt="">{% else %}<div style="width:100%;height:100%;background:#eef3fb;border-radius:14px"></div>{% endif %}
-          {% if imgs|length > 3 %}<div class="more"><b>+{{ imgs|length|add:"-3" }}</b><span>More Photos</span></div>{% endif %}
+          {% if imgs|length > 2 %}<img src="{{ imgs.2.image }}" alt="" onclick="openLightbox(2)">{% else %}<div style="width:100%;height:100%;background:#eef3fb;border-radius:14px"></div>{% endif %}
+          {% if imgs|length > 3 %}<div class="more" onclick="openLightbox(3)"><b>+{{ imgs|length|add:"-3" }}</b><span>More Photos</span></div>{% endif %}
         </div>
       </div>
       {% endwith %}
@@ -329,11 +366,90 @@ a{color:inherit}
     </div>
 
     <div class="tabs">
-      <button class="active">Overview</button><button>Details</button><button>Features &amp; Amenities</button>
-      <button>Location</button><button>Media</button><button>Documents</button><button>History</button>
+      <button class="active" data-tab="overview">Overview</button><button data-tab="details">Details</button><button data-tab="features">Features &amp; Amenities</button>
+      <button data-tab="location">Location</button><button data-tab="media">Media</button><button data-tab="documents">Documents</button><button data-tab="history">History</button>
     </div>
-    <div class="tab-body">
-      <p>{{ property.description }}</p>
+
+    <div class="tab-panel" data-panel="overview">
+      <div class="tab-body"><p>{{ property.description }}</p></div>
+    </div>
+
+    <div class="tab-panel" data-panel="details" style="display:none">
+      <div class="info-row"><span class="k">Property Type</span><span class="v">{{ property.get_property_type_display }}</span></div>
+      <div class="info-row"><span class="k">Listing Type</span><span class="v">For {{ property.get_listing_type_display }}</span></div>
+      <div class="info-row"><span class="k">Price</span><span class="v">{{ property.price_display }}</span></div>
+      <div class="info-row"><span class="k">Area Size</span><span class="v">{{ property.size_display }}</span></div>
+      <div class="info-row"><span class="k">Bedrooms</span><span class="v">{% if property.bedrooms %}{{ property.bedrooms }}{% else %}—{% endif %}</span></div>
+      <div class="info-row"><span class="k">Bathrooms</span><span class="v">{% if property.bathrooms %}{{ property.bathrooms }}{% else %}—{% endif %}</span></div>
+      <div class="info-row"><span class="k">Floor / Level</span><span class="v">{% if property.floor %}{{ property.floor }}{% else %}—{% endif %}</span></div>
+      <div class="info-row"><span class="k">Added On</span><span class="v">{{ property.created_at|date:"M d, Y" }}</span></div>
+    </div>
+
+    <div class="tab-panel" data-panel="features" style="display:none">
+      {% if property.amenities %}
+      <div class="amenity-chips">
+        {% for amenity in property.amenities %}
+        <span class="amenity-chip"><svg viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></svg>{{ amenity }}</span>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="tab-empty">No features or amenities listed for this property.</div>
+      {% endif %}
+    </div>
+
+    <div class="tab-panel" data-panel="location" style="display:none">
+      <div class="info-row"><span class="k">City</span><span class="v">{{ property.city }}</span></div>
+      <div class="info-row"><span class="k">Area / Location</span><span class="v">{{ property.location }}</span></div>
+      {% if property.block %}<div class="info-row"><span class="k">Block</span><span class="v">{{ property.block.name }}</span></div>{% endif %}
+      <div class="info-row" style="align-items:flex-start"><span class="k">Full Address</span><span class="v">{{ property.address }}</span></div>
+    </div>
+
+    <div class="tab-panel" data-panel="media" style="display:none">
+      {% with imgs=property.images.all %}
+      {% if imgs %}
+      <div class="media-grid">
+        {% for img in imgs %}<img src="{{ img.image }}" alt="{{ property.title }}" onclick="openLightbox({{ forloop.counter0 }})">{% endfor %}
+      </div>
+      {% else %}
+      <div class="tab-empty">No images uploaded for this property yet.</div>
+      {% endif %}
+      {% endwith %}
+    </div>
+
+    <div class="tab-panel" data-panel="documents" style="display:none">
+      <div class="doc-list">
+        {% for doc in property.documents.all %}
+        <div class="doc-item">
+          <div class="doc-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+          <div class="doc-info">
+            <div class="doc-title">{{ doc.title }}</div>
+            <div class="doc-sub">{{ doc.get_document_type_display }} · {{ doc.created_at|date:"M d, Y" }}</div>
+          </div>
+          <a href="{{ doc.file_url }}" target="_blank" class="btn" style="font-size:11px;padding:5px 9px">View</a>
+        </div>
+        {% empty %}
+        <div class="tab-empty">No documents uploaded yet.</div>
+        {% endfor %}
+      </div>
+      <div style="margin-top:14px"><a href="{% url 'property_update' property.pk %}?tab=documents" class="btn" style="font-size:12.5px">+ Manage Documents</a></div>
+    </div>
+
+    <div class="tab-panel" data-panel="history" style="display:none">
+      <div class="timeline">
+        {% for act in property.activities.all %}
+        <div class="tl-item">
+          <div class="tl-icon">{% if act.activity_type == 'created' %}🎯{% elif act.activity_type == 'updated' %}✏️{% elif act.activity_type == 'status_change' %}🔄{% elif act.activity_type == 'document' %}📎{% else %}💬{% endif %}</div>
+          <div class="tl-body">
+            <div class="tl-desc">{{ act.description }}</div>
+            <div class="tl-time">{{ act.created_at|date:"M d, Y" }} at {{ act.created_at|time:"P" }}
+              {% if act.created_by %} · <span class="tl-who">{{ act.created_by.get_full_name }}</span>{% endif %}
+            </div>
+          </div>
+        </div>
+        {% empty %}
+        <div class="tab-empty">No activity recorded yet.</div>
+        {% endfor %}
+      </div>
     </div>
   </div>
 
@@ -397,6 +513,15 @@ a{color:inherit}
   </div>
 </div></div></main></div>
 
+<!-- Media Lightbox -->
+<div id="lightboxOverlay" class="lightbox-overlay" onclick="if(event.target===this)closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()" title="Close">&#x2715;</button>
+  <button class="lightbox-nav lightbox-prev" onclick="lightboxNav(-1)" title="Previous"><svg viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></svg></button>
+  <img id="lightboxImg" class="lightbox-img" src="" alt="{{ property.title }}">
+  <button class="lightbox-nav lightbox-next" onclick="lightboxNav(1)" title="Next"><svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg></button>
+  <div class="lightbox-counter" id="lightboxCounter"></div>
+</div>
+
 <!-- WhatsApp Share Modal -->
 <div id="waOverlay" class="wa-overlay" style="display:none" onclick="if(event.target===this)closeWaModal()">
   <div class="wa-modal">
@@ -433,15 +558,50 @@ if(mb)mb.addEventListener('click',()=>body.classList.toggle('nav-open'));
 if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
 document.querySelectorAll('.content > *, .kpi, .card').forEach((el,i)=>{el.classList.add('reveal');el.style.setProperty('--d',Math.min(i,8)*0.05+'s')});
 
-document.querySelectorAll('.tabs button').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.tabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-}));
+const viewTabBtns=document.querySelectorAll('.tabs button');
+const viewPanels=document.querySelectorAll('.tab-panel');
+function activateViewTab(tab){
+  viewTabBtns.forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  viewPanels.forEach(p=>{p.style.display = (p.dataset.panel===tab) ? '' : 'none';});
+}
+viewTabBtns.forEach(b=>b.addEventListener('click',()=>activateViewTab(b.dataset.tab)));
+const initialViewTab=new URLSearchParams(location.search).get('tab');
+if(initialViewTab && document.querySelector(`.tab-panel[data-panel="${initialViewTab}"]`)) activateViewTab(initialViewTab);
 
 // ── WhatsApp Share ───────────────────────────────────────────────────────────
 // Build absolute image URLs — handles both local (/media/...) and Cloudinary (https://...) storage
 const _base = '{{ request.scheme }}://{{ request.get_host }}';
 const _rawImages = [{% for img in property.images.all %}'{{ img.image|escapejs }}'{% if not forloop.last %},{% endif %}{% endfor %}];
 const propImages = _rawImages.map(u => u.startsWith('http') ? u : _base + u);
+
+// ── Media Lightbox ───────────────────────────────────────────────────────────
+let lightboxIdx = 0;
+function openLightbox(idx){
+  if(!propImages.length) return;
+  lightboxIdx = idx;
+  updateLightbox();
+  document.getElementById('lightboxOverlay').classList.add('open');
+}
+function closeLightbox(){
+  document.getElementById('lightboxOverlay').classList.remove('open');
+}
+function lightboxNav(dir){
+  lightboxIdx = (lightboxIdx + dir + propImages.length) % propImages.length;
+  updateLightbox();
+}
+function updateLightbox(){
+  document.getElementById('lightboxImg').src = propImages[lightboxIdx];
+  document.getElementById('lightboxCounter').textContent = (lightboxIdx+1) + ' / ' + propImages.length;
+  const multi = propImages.length > 1;
+  document.querySelector('.lightbox-prev').style.display = multi ? '' : 'none';
+  document.querySelector('.lightbox-next').style.display = multi ? '' : 'none';
+}
+document.addEventListener('keydown', e=>{
+  if(!document.getElementById('lightboxOverlay').classList.contains('open')) return;
+  if(e.key === 'Escape') closeLightbox();
+  if(e.key === 'ArrowLeft') lightboxNav(-1);
+  if(e.key === 'ArrowRight') lightboxNav(1);
+});
 
 function buildWaMsg() {
   const lines = [

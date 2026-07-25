@@ -14,7 +14,7 @@ import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
-from .models import Property, PropertyImage, PushSubscription, Role, User, Customer, Block, Lead, LeadActivity, LeadDocument
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Role, User, Customer, Block, Lead, LeadActivity, LeadDocument
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -171,6 +171,12 @@ def property_create(request):
         prop.created_by = request.user
         prop.save()
         _upload_images(request.FILES, prop)
+        PropertyActivity.objects.create(
+            property=prop,
+            activity_type=PropertyActivity.TYPE_CREATED,
+            description=f'Property listed by {request.user.get_full_name() or request.user.email}.',
+            created_by=request.user,
+        )
         return redirect('property_view', pk=prop.pk)
     return render(request, 'accounts/property_create.html', {
         'form': form,
@@ -181,7 +187,7 @@ def property_create(request):
 @login_required
 def property_view(request, pk):
     prop = get_object_or_404(
-        Property.objects.prefetch_related('images').select_related('customer', 'created_by', 'block'),
+        Property.objects.prefetch_related('images', 'documents', 'activities__created_by').select_related('customer', 'created_by', 'block'),
         pk=pk,
     )
     can_see_customer = request.user.is_crm_admin or request.user == prop.created_by
@@ -193,11 +199,19 @@ def property_view(request, pk):
 
 @login_required
 def property_update(request, pk):
-    prop = get_object_or_404(Property, pk=pk)
+    prop = get_object_or_404(
+        Property.objects.prefetch_related('images', 'documents'), pk=pk,
+    )
     form = PropertyForm(request.POST or None, instance=prop, user=request.user)
     if request.method == 'POST' and form.is_valid():
         form.save()
         _upload_images(request.FILES, prop)
+        PropertyActivity.objects.create(
+            property=prop,
+            activity_type=PropertyActivity.TYPE_UPDATED,
+            description=f'Property details updated by {request.user.get_full_name() or request.user.email}.',
+            created_by=request.user,
+        )
         return redirect('property_view', pk=prop.pk)
     return render(request, 'accounts/property_update.html', {
         'form': form,
@@ -220,9 +234,16 @@ def property_set_status(request, pk):
     if request.method == 'POST':
         prop = get_object_or_404(Property, pk=pk)
         new_status = request.POST.get('status')
-        if new_status in (Property.STATUS_ACTIVE, Property.STATUS_INACTIVE, Property.STATUS_SOLD):
+        if new_status in (Property.STATUS_ACTIVE, Property.STATUS_INACTIVE, Property.STATUS_SOLD) and new_status != prop.status:
+            old_display = prop.get_status_display()
             prop.status = new_status
             prop.save()
+            PropertyActivity.objects.create(
+                property=prop,
+                activity_type=PropertyActivity.TYPE_STATUS,
+                description=f'Status changed from {old_display} to {prop.get_status_display()} by {request.user.get_full_name() or request.user.email}.',
+                created_by=request.user,
+            )
     return redirect(request.POST.get('next', 'property_list'))
 
 
@@ -232,7 +253,51 @@ def property_image_delete(request, pk):
     prop_pk = img.property.pk
     if request.method == 'POST':
         img.delete()
-    return redirect('property_update', pk=prop_pk)
+    next_url = request.GET.get('next') or request.POST.get('next')
+    return redirect(next_url) if next_url else redirect('property_update', pk=prop_pk)
+
+
+@login_required
+@require_POST
+def property_add_document(request, pk):
+    prop = get_object_or_404(Property, pk=pk)
+    title = request.POST.get('title', '').strip()
+    doc_type = request.POST.get('document_type') or PropertyDocument.TYPE_OTHER
+    f = request.FILES.get('file')
+    if title and f:
+        result = cloudinary.uploader.upload(f, folder='pie-crm/documents', resource_type='auto')
+        doc = PropertyDocument.objects.create(
+            property=prop,
+            document_type=doc_type,
+            title=title,
+            file_url=result['secure_url'],
+            uploaded_by=request.user,
+        )
+        PropertyActivity.objects.create(
+            property=prop,
+            activity_type=PropertyActivity.TYPE_DOCUMENT,
+            description=f'{doc.get_document_type_display()} "{doc.title}" uploaded by {request.user.get_full_name() or request.user.email}.',
+            created_by=request.user,
+        )
+    next_url = request.GET.get('next') or request.POST.get('next')
+    return redirect(next_url) if next_url else redirect('property_update', pk=prop.pk)
+
+
+@login_required
+@require_POST
+def property_document_delete(request, pk):
+    doc = get_object_or_404(PropertyDocument, pk=pk)
+    prop = doc.property
+    title = doc.title
+    doc.delete()
+    PropertyActivity.objects.create(
+        property=prop,
+        activity_type=PropertyActivity.TYPE_DOCUMENT,
+        description=f'Document "{title}" removed by {request.user.get_full_name() or request.user.email}.',
+        created_by=request.user,
+    )
+    next_url = request.GET.get('next') or request.POST.get('next')
+    return redirect(next_url) if next_url else redirect('property_update', pk=prop.pk)
 
 
 # ── Web Push ──────────────────────────────────────────────────────────────────

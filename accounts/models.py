@@ -533,3 +533,68 @@ class PropertyImage(models.Model):
 
     def __str__(self):
         return f'Image for {self.property.title}'
+
+
+class PropertyDocument(models.Model):
+    TYPE_TITLE_DEED = 'title_deed'
+    TYPE_AGREEMENT = 'agreement'
+    TYPE_NOC = 'noc'
+    TYPE_TAX_CERTIFICATE = 'tax_certificate'
+    TYPE_FLOOR_PLAN = 'floor_plan'
+    TYPE_OTHER = 'other'
+
+    TYPE_CHOICES = [
+        (TYPE_TITLE_DEED, 'Title Deed'),
+        (TYPE_AGREEMENT, 'Agreement'),
+        (TYPE_NOC, 'NOC'),
+        (TYPE_TAX_CERTIFICATE, 'Tax Certificate'),
+        (TYPE_FLOOR_PLAN, 'Floor Plan'),
+        (TYPE_OTHER, 'Other'),
+    ]
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='documents')
+    document_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_OTHER)
+    title = models.CharField(max_length=200)
+    file_url = models.URLField(max_length=500)
+    uploaded_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.title} ({self.property.title})'
+
+
+class PropertyActivity(models.Model):
+    TYPE_CREATED = 'created'
+    TYPE_UPDATED = 'updated'
+    TYPE_STATUS = 'status_change'
+    TYPE_DOCUMENT = 'document'
+
+    TYPE_CHOICES = [
+        (TYPE_CREATED, 'Property Created'),
+        (TYPE_UPDATED, 'Details Updated'),
+        (TYPE_STATUS, 'Status Changed'),
+        (TYPE_DOCUMENT, 'Document Added'),
+    ]
+
+    TYPE_ICONS = {
+        TYPE_CREATED: '🎯',
+        TYPE_UPDATED: '✏️',
+        TYPE_STATUS: '🔄',
+        TYPE_DOCUMENT: '📎',
+    }
+
+    property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='activities')
+    activity_type = models.CharField(max_length=30, choices=TYPE_CHOICES)
+    description = models.TextField()
+    created_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'Property Activities'
+
+    def __str__(self):
+        return f'{self.property} – {self.get_activity_type_display()}'

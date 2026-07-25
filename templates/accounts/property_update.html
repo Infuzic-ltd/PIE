@@ -181,6 +181,18 @@ a{color:inherit}
 .sp-btn:hover{border-color:var(--blue);color:var(--blue)}
 .sp-btn.active{border-color:var(--blue);background:var(--blue);color:#fff}
 .sp-btn.sp-custom.active{border-color:var(--ink-soft);background:var(--ink-soft);color:#fff}
+
+/* ---- Tab panels ---- */
+.tab-panel{margin-bottom:0}
+
+/* ---- Documents tab ---- */
+.doc-list{display:flex;flex-direction:column;gap:8px;margin-top:16px}
+.doc-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:8px;background:#fafbfc}
+.doc-icon{width:34px;height:34px;border-radius:8px;background:#dbeafe;display:grid;place-items:center;flex:0 0 34px}
+.doc-icon svg{width:16px;height:16px;stroke:#2563eb;fill:none;stroke-width:1.8}
+.doc-info{flex:1;min-width:0}
+.doc-title{font-size:13px;font-weight:600}
+.doc-sub{font-size:11.5px;color:var(--ink-soft)}
 </style></head><body>
 <div class="scrim" id="scrim"></div><div class="shell has-float"><button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><aside class="sidebar" id="sidebar">
 <div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
@@ -250,106 +262,179 @@ a{color:inherit}
   </div>
 </div>
 
-<form id="property-edit-form" method="post" enctype="multipart/form-data" novalidate>
-{% csrf_token %}
 <div class="edit-grid">
   <div class="subtabs">
-    <button type="button" class="active">Basic Information</button>
-    <button type="button">Property Details</button>
-    <button type="button">Features &amp; Amenities</button>
-    <button type="button">Location</button>
-    <button type="button">Media</button>
-    <button type="button">Pricing &amp; Taxes</button>
-    <button type="button">Documents</button>
-    <button type="button">Additional Information</button>
+    <button type="button" class="active" data-tab="basic">Basic Information</button>
+    <button type="button" data-tab="details">Property Details</button>
+    <button type="button" data-tab="features">Features &amp; Amenities</button>
+    <button type="button" data-tab="location">Location</button>
+    <button type="button" data-tab="media">Media</button>
+    <button type="button" data-tab="pricing">Pricing &amp; Taxes</button>
+    <button type="button" data-tab="documents">Documents</button>
+    <button type="button" data-tab="additional">Additional Information</button>
   </div>
 
   <div>
-    <div class="card pad">
-      <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Basic Information</h3>
-      <div class="form-grid">
-        <div class="fld full"><label>Property Title <span class="req">*</span></label><div class="ctrl"><input name="title" value="{{ form.title.value|default:'' }}"></div></div>
+    <form id="property-edit-form" method="post" enctype="multipart/form-data" novalidate>
+    {% csrf_token %}
 
-        <div class="fld"><label>Property Type <span class="req">*</span></label><div class="ctrl"><select name="property_type"><option value="apartment" {% if form.property_type.value == 'apartment' %}selected{% endif %}>Apartment</option><option value="house" {% if form.property_type.value == 'house' %}selected{% endif %}>House</option><option value="commercial" {% if form.property_type.value == 'commercial' %}selected{% endif %}>Commercial</option><option value="plot" {% if form.property_type.value == 'plot' %}selected{% endif %}>Plot</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+    <div class="tab-panel" data-panel="basic">
+      <div class="card pad">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Basic Information</h3>
+        <div class="form-grid">
+          <div class="fld full"><label>Property Title <span class="req">*</span></label><div class="ctrl"><input name="title" value="{{ form.title.value|default:'' }}"></div></div>
 
-        <div class="fld"><label>For Sale / Rent <span class="req">*</span></label><div class="ctrl"><select name="listing_type"><option value="sale" {% if form.listing_type.value == 'sale' %}selected{% endif %}>For Sale</option><option value="rent" {% if form.listing_type.value == 'rent' %}selected{% endif %}>For Rent</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+          <div class="fld"><label>Property Type <span class="req">*</span></label><div class="ctrl"><select name="property_type"><option value="apartment" {% if form.property_type.value == 'apartment' %}selected{% endif %}>Apartment</option><option value="house" {% if form.property_type.value == 'house' %}selected{% endif %}>House</option><option value="commercial" {% if form.property_type.value == 'commercial' %}selected{% endif %}>Commercial</option><option value="plot" {% if form.property_type.value == 'plot' %}selected{% endif %}>Plot</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
 
-        <div class="fld"><label>Status</label><div class="ctrl"><select name="status"><option value="active" {% if form.status.value == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if form.status.value == 'inactive' %}selected{% endif %}>Inactive</option><option value="sold" {% if form.status.value == 'sold' %}selected{% endif %}>Sold / Closed</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+          <div class="fld"><label>For Sale / Rent <span class="req">*</span></label><div class="ctrl"><select name="listing_type"><option value="sale" {% if form.listing_type.value == 'sale' %}selected{% endif %}>For Sale</option><option value="rent" {% if form.listing_type.value == 'rent' %}selected{% endif %}>For Rent</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
 
-        <div class="fld"><label>Price <span class="req">*</span></label><div class="ctrl prefix"><span class="pfx">PKR</span><input name="price" value="{{ form.price.value|default:'' }}"></div></div>
+          <div class="fld"><label>Status</label><div class="ctrl"><select name="status"><option value="active" {% if form.status.value == 'active' %}selected{% endif %}>Active</option><option value="inactive" {% if form.status.value == 'inactive' %}selected{% endif %}>Inactive</option><option value="sold" {% if form.status.value == 'sold' %}selected{% endif %}>Sold / Closed</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
 
-        <div class="fld"><label>Area Size <span class="req">*</span></label>
-          <div class="size-presets">
-            <button type="button" class="sp-btn" data-size="120" data-unit="sqyd">120 Sq Yd</button>
-            <button type="button" class="sp-btn" data-size="160" data-unit="sqyd">160 Sq Yd</button>
-            <button type="button" class="sp-btn" data-size="240" data-unit="sqyd">240 Sq Yd</button>
-            <button type="button" class="sp-btn sp-custom">Custom</button>
-          </div>
-          <div class="ctrl unit" style="margin-top:8px">
-            <input name="area_size" id="areaSizeInput" value="{{ form.area_size.value|default:'' }}">
-            <select name="area_unit" id="areaUnitSel" class="unit-sel">
-              <option value="sqft" {% if form.area_unit.value == 'sqft' %}selected{% endif %}>Sq. Ft</option>
-              <option value="sqyd" {% if form.area_unit.value == 'sqyd' %}selected{% endif %}>Sq. Yd</option>
-              <option value="marla" {% if form.area_unit.value == 'marla' %}selected{% endif %}>Marla</option>
-              <option value="kanal" {% if form.area_unit.value == 'kanal' %}selected{% endif %}>Kanal</option>
-            </select>
-          </div>
+          <div class="fld"><label>Property ID</label><div class="ctrl"><input value="{{ property.property_id }}" readonly></div></div>
+          <div class="fld"><label>Added On</label><div class="ctrl"><input type="text" value="{{ property.created_at|date:'m/d/Y' }}" readonly></div></div>
         </div>
-
-        <div class="fld"><label>Bedrooms</label><div class="ctrl"><select name="bedrooms"><option value="">Select</option>{% for n in "123456789" %}<option value="{{ n }}" {% if form.bedrooms.value == n %}selected{% endif %}>{{ n }}</option>{% endfor %}<option value="10" {% if form.bedrooms.value == '10' %}selected{% endif %}>10+</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
-
-        <div class="fld"><label>Bathrooms</label><div class="ctrl"><select name="bathrooms"><option value="">Select</option>{% for n in "12345678" %}<option value="{{ n }}" {% if form.bathrooms.value == n %}selected{% endif %}>{{ n }}</option>{% endfor %}</select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
-
-        <div class="fld"><label>Floor / Level</label><div class="ctrl"><select name="floor"><option value="">Not applicable</option><option value="Whole House" {% if form.floor.value == 'Whole House' %}selected{% endif %}>Whole House / Building</option><option value="Ground Floor" {% if form.floor.value == 'Ground Floor' %}selected{% endif %}>Ground Floor</option><option value="Basement" {% if form.floor.value == 'Basement' %}selected{% endif %}>Basement</option><option value="1st Floor" {% if form.floor.value == '1st Floor' %}selected{% endif %}>1st Floor</option><option value="2nd Floor" {% if form.floor.value == '2nd Floor' %}selected{% endif %}>2nd Floor</option><option value="3rd Floor" {% if form.floor.value == '3rd Floor' %}selected{% endif %}>3rd Floor</option><option value="4th Floor" {% if form.floor.value == '4th Floor' %}selected{% endif %}>4th Floor</option><option value="5th Floor" {% if form.floor.value == '5th Floor' %}selected{% endif %}>5th Floor</option><option value="6th Floor+" {% if form.floor.value == '6th Floor+' %}selected{% endif %}>6th Floor+</option><option value="Top Floor / Penthouse" {% if form.floor.value == 'Top Floor / Penthouse' %}selected{% endif %}>Top Floor / Penthouse</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
-
-        <div class="fld"><label>City <span class="req">*</span></label><div class="ctrl"><input name="city" value="{{ form.city.value|default:'' }}"></div></div>
-
-        <div class="fld"><label>Area / Location <span class="req">*</span></label><div class="ctrl"><input name="location" value="{{ form.location.value|default:'' }}"></div></div>
-
-        <div class="fld"><label>Block</label><div class="ctrl"><select name="block"><option value="">— No block —</option>{% for b in blocks %}<option value="{{ b.pk }}" {% if form.block.value == b.pk|stringformat:"i" %}selected{% endif %}>{{ b.name }}</option>{% endfor %}</select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>{% if request.user.is_crm_admin %}<div class="add-block-row"><input type="text" class="add-block-inp" placeholder="Add new block…" maxlength="50"><button type="button" class="add-block-btn">+</button><span class="add-block-msg"></span></div>{% endif %}</div>
-
-        <div class="fld full"><label>Address <span class="req">*</span></label><div class="ctrl"><textarea name="address" style="min-height:70px">{{ form.address.value|default:'' }}</textarea></div></div>
-
-        <div class="fld full"><label>Description <span class="req">*</span></label><div class="ctrl"><textarea name="description">{{ form.description.value|default:'' }}</textarea></div></div>
-
-        <div class="fld"><label>Property ID</label><div class="ctrl"><input value="{{ property.property_id }}" readonly></div></div>
-        <div class="fld"><label>Added On</label><div class="ctrl"><input type="text" value="{{ property.created_at|date:'m/d/Y' }}" readonly></div></div>
       </div>
     </div>
 
-    <div class="card pad" style="margin-top:22px">
-      <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Customer</h3>
-      <div class="fld full" style="margin-bottom:0">
-        <label>Linked Customer <span style="color:var(--ink-faint);font-weight:400">(optional)</span></label>
-        <div class="ctrl">{{ form.customer }}</div>
-        <div style="margin-top:6px;font-size:12px;color:var(--ink-faint)">Only the assigned agent and admin can see customer details. <a href="{% url 'customer_create' %}?next={{ request.path }}" style="color:var(--blue)">+ Create new customer</a></div>
-      </div>
-    </div>
-
-    <div class="card pad" style="margin-top:22px">
-      <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Media — Add More Images</h3>
-      <div style="display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start">
-        <label class="dropzone">
-          <span class="dz-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
-          <span class="dz-t">Drag &amp; Drop images here</span>
-          <span class="dz-or">or</span>
-          <span class="dz-btn">Choose Files</span>
-          <input type="file" name="images" accept="image/*" multiple hidden>
-        </label>
-        <div class="thumbs" id="thumbs">
-          {% for img in property.images.all %}
-          <div class="thumb">
-            <img src="{{ img.image }}" alt="">
-            <form method="post" action="{% url 'property_image_delete' img.pk %}" style="display:contents">
-              {% csrf_token %}
-              <button type="submit" class="rm" onclick="return confirm('Remove image?')"><svg viewBox="0 0 24 24"><path d="M6 6 18 18M18 6 6 18"/></svg></button>
-            </form>
+    <div class="tab-panel" data-panel="details" style="display:none">
+      <div class="card pad">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Property Details</h3>
+        <div class="form-grid">
+          <div class="fld"><label>Area Size <span class="req">*</span></label>
+            <div class="size-presets">
+              <button type="button" class="sp-btn" data-size="120" data-unit="sqyd">120 Sq Yd</button>
+              <button type="button" class="sp-btn" data-size="160" data-unit="sqyd">160 Sq Yd</button>
+              <button type="button" class="sp-btn" data-size="240" data-unit="sqyd">240 Sq Yd</button>
+              <button type="button" class="sp-btn sp-custom">Custom</button>
+            </div>
+            <div class="ctrl unit" style="margin-top:8px">
+              <input name="area_size" id="areaSizeInput" value="{{ form.area_size.value|default:'' }}">
+              <select name="area_unit" id="areaUnitSel" class="unit-sel">
+                <option value="sqft" {% if form.area_unit.value == 'sqft' %}selected{% endif %}>Sq. Ft</option>
+                <option value="sqyd" {% if form.area_unit.value == 'sqyd' %}selected{% endif %}>Sq. Yd</option>
+                <option value="marla" {% if form.area_unit.value == 'marla' %}selected{% endif %}>Marla</option>
+                <option value="kanal" {% if form.area_unit.value == 'kanal' %}selected{% endif %}>Kanal</option>
+              </select>
+            </div>
           </div>
-          {% empty %}
-          <p style="font-size:13px;color:#8a94a6">No images yet.</p>
+
+          <div class="fld"><label>Bedrooms</label><div class="ctrl"><select name="bedrooms"><option value="">Select</option>{% for n in "123456789" %}<option value="{{ n }}" {% if form.bedrooms.value == n %}selected{% endif %}>{{ n }}</option>{% endfor %}<option value="10" {% if form.bedrooms.value == '10' %}selected{% endif %}>10+</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+
+          <div class="fld"><label>Bathrooms</label><div class="ctrl"><select name="bathrooms"><option value="">Select</option>{% for n in "12345678" %}<option value="{{ n }}" {% if form.bathrooms.value == n %}selected{% endif %}>{{ n }}</option>{% endfor %}</select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+
+          <div class="fld"><label>Floor / Level</label><div class="ctrl"><select name="floor"><option value="">Not applicable</option><option value="Whole House" {% if form.floor.value == 'Whole House' %}selected{% endif %}>Whole House / Building</option><option value="Ground Floor" {% if form.floor.value == 'Ground Floor' %}selected{% endif %}>Ground Floor</option><option value="Basement" {% if form.floor.value == 'Basement' %}selected{% endif %}>Basement</option><option value="1st Floor" {% if form.floor.value == '1st Floor' %}selected{% endif %}>1st Floor</option><option value="2nd Floor" {% if form.floor.value == '2nd Floor' %}selected{% endif %}>2nd Floor</option><option value="3rd Floor" {% if form.floor.value == '3rd Floor' %}selected{% endif %}>3rd Floor</option><option value="4th Floor" {% if form.floor.value == '4th Floor' %}selected{% endif %}>4th Floor</option><option value="5th Floor" {% if form.floor.value == '5th Floor' %}selected{% endif %}>5th Floor</option><option value="6th Floor+" {% if form.floor.value == '6th Floor+' %}selected{% endif %}>6th Floor+</option><option value="Top Floor / Penthouse" {% if form.floor.value == 'Top Floor / Penthouse' %}selected{% endif %}>Top Floor / Penthouse</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="features" style="display:none">
+      <div class="card pad">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Features &amp; Amenities</h3>
+        <div class="checks">
+          {% for amenity in form.amenities %}
+          <label class="chk">
+            {{ amenity.tag }}
+            <span class="box"><svg viewBox="0 0 24 24"><path d="m5 12 4 4 10-10"/></svg></span>
+            {{ amenity.choice_label }}
+          </label>
           {% endfor %}
         </div>
       </div>
+    </div>
+
+    <div class="tab-panel" data-panel="location" style="display:none">
+      <div class="card pad">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Location</h3>
+        <div class="form-grid">
+          <div class="fld"><label>City <span class="req">*</span></label><div class="ctrl"><input name="city" value="{{ form.city.value|default:'' }}"></div></div>
+          <div class="fld"><label>Area / Location <span class="req">*</span></label><div class="ctrl"><input name="location" value="{{ form.location.value|default:'' }}"></div></div>
+          <div class="fld"><label>Block</label><div class="ctrl"><select name="block"><option value="">— No block —</option>{% for b in blocks %}<option value="{{ b.pk }}" {% if form.block.value == b.pk|stringformat:"i" %}selected{% endif %}>{{ b.name }}</option>{% endfor %}</select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div>{% if request.user.is_crm_admin %}<div class="add-block-row"><input type="text" class="add-block-inp" placeholder="Add new block…" maxlength="50"><button type="button" class="add-block-btn">+</button><span class="add-block-msg"></span></div>{% endif %}</div>
+          <div class="fld full"><label>Address <span class="req">*</span></label><div class="ctrl"><textarea name="address" style="min-height:70px">{{ form.address.value|default:'' }}</textarea></div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="media" style="display:none">
+      <div class="card pad">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Media — Property Images</h3>
+        <div style="display:grid;grid-template-columns:260px 1fr;gap:18px;align-items:start">
+          <label class="dropzone">
+            <span class="dz-ic"><svg viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></span>
+            <span class="dz-t">Drag &amp; Drop images here</span>
+            <span class="dz-or">or</span>
+            <span class="dz-btn">Choose Files</span>
+            <input type="file" name="images" accept="image/*" multiple hidden>
+          </label>
+          <div class="thumbs" id="thumbs">
+            {% for img in property.images.all %}
+            <div class="thumb">
+              <img src="{{ img.image }}" alt="">
+              <button type="button" class="rm" onclick="quickPost('{% url 'property_image_delete' img.pk %}','Remove image?','media')"><svg viewBox="0 0 24 24"><path d="M6 6 18 18M18 6 6 18"/></svg></button>
+            </div>
+            {% empty %}
+            <p style="font-size:13px;color:#8a94a6">No images yet.</p>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="pricing" style="display:none">
+      <div class="card pad">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Pricing &amp; Taxes</h3>
+        <div class="form-grid">
+          <div class="fld"><label>Price <span class="req">*</span></label><div class="ctrl prefix"><span class="pfx">PKR</span><input name="price" value="{{ form.price.value|default:'' }}"></div></div>
+        </div>
+        <div class="tip" style="margin-top:18px"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v4h1"/></svg> Tax fields are not currently tracked for properties — only the sale/rent price shown above is stored.</div>
+      </div>
+    </div>
+
+    <div class="tab-panel" data-panel="additional" style="display:none">
+      <div class="card pad">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Additional Information</h3>
+        <div class="fld full" style="margin-bottom:18px"><label>Description <span class="req">*</span></label><div class="ctrl"><textarea name="description">{{ form.description.value|default:'' }}</textarea></div></div>
+        <div class="fld full" style="margin-bottom:0">
+          <label>Linked Customer <span style="color:var(--ink-faint);font-weight:400">(optional)</span></label>
+          <div class="ctrl">{{ form.customer }}</div>
+          <div style="margin-top:6px;font-size:12px;color:var(--ink-faint)">Only the assigned agent and admin can see customer details. <a href="{% url 'customer_create' %}?next={{ request.path }}" style="color:var(--blue)">+ Create new customer</a></div>
+        </div>
+      </div>
+    </div>
+
+    </form>
+
+    <div class="tab-panel" data-panel="documents" style="display:none">
+      <form class="card pad" method="post" action="{% url 'property_add_document' property.pk %}" enctype="multipart/form-data">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{% url 'property_update' property.pk %}?tab=documents">
+        <h3 style="font-size:17px;font-weight:700;margin-bottom:18px">Documents</h3>
+        <div class="form-grid">
+          <div class="fld"><label>Document Type</label><div class="ctrl"><select name="document_type"><option value="title_deed">Title Deed</option><option value="agreement">Agreement</option><option value="noc">NOC</option><option value="tax_certificate">Tax Certificate</option><option value="floor_plan">Floor Plan</option><option value="other" selected>Other</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+          <div class="fld"><label>Title <span class="req">*</span></label><div class="ctrl"><input name="title" placeholder="e.g. Title Deed Copy"></div></div>
+          <div class="fld full"><label>File <span class="req">*</span></label><div class="ctrl"><input type="file" name="file" style="padding:9px 13px"></div></div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;margin-top:14px">
+          <button type="submit" class="btn primary"><svg viewBox="0 0 24 24"><path d="M12 16V4m0 0 4 4m-4-4-4 4"/><path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"/></svg> Upload Document</button>
+        </div>
+
+        <div class="doc-list">
+          {% for doc in property.documents.all %}
+          <div class="doc-item">
+            <div class="doc-icon"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg></div>
+            <div class="doc-info">
+              <div class="doc-title">{{ doc.title }}</div>
+              <div class="doc-sub">{{ doc.get_document_type_display }} · {{ doc.created_at|date:"M d, Y" }}</div>
+            </div>
+            <div style="display:flex;gap:6px;align-items:center;flex-shrink:0">
+              <a href="{{ doc.file_url }}" target="_blank" class="btn" style="font-size:11px;padding:5px 9px">View</a>
+              <button type="button" class="btn" style="font-size:11px;padding:5px 9px;color:#ef4444" onclick="quickPost('{% url 'property_document_delete' doc.pk %}','Remove this document?','documents')">Delete</button>
+            </div>
+          </div>
+          {% empty %}
+          <div style="color:var(--ink-faint);font-size:13px;text-align:center;padding:14px 0">No documents uploaded yet.</div>
+          {% endfor %}
+        </div>
+      </form>
     </div>
   </div>
 
@@ -377,16 +462,38 @@ a{color:inherit}
     </div>
   </div>
 </div>
-</form>
+
+<!-- Shared hidden form used to fire single-button POST actions (image/document delete) without nesting <form> tags -->
+<form id="quickPostForm" method="post" style="display:none">{% csrf_token %}</form>
+
 </div></main></div><script>
 const body=document.body,mb=document.getElementById('menuBtn'),sc=document.getElementById('scrim');
 if(mb)mb.addEventListener('click',()=>body.classList.toggle('nav-open'));
 if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
 document.querySelectorAll('.content > *, .kpi, .card').forEach((el,i)=>{el.classList.add('reveal');el.style.setProperty('--d',Math.min(i,8)*0.05+'s')});
 
-document.querySelectorAll('.subtabs button').forEach(b=>b.addEventListener('click',()=>{
-  document.querySelectorAll('.subtabs button').forEach(x=>x.classList.remove('active'));b.classList.add('active');
-}));
+function quickPost(url, confirmMsg, tab){
+  if(confirmMsg && !confirm(confirmMsg)) return;
+  const f=document.getElementById('quickPostForm');
+  if(tab){
+    const next=`{% url 'property_update' property.pk %}?tab=${tab}`;
+    url += (url.includes('?')?'&':'?') + 'next=' + encodeURIComponent(next);
+  }
+  f.action=url;
+  f.submit();
+}
+
+// ── Tab switching ─────────────────────────────────────────────────────────
+const tabBtns=document.querySelectorAll('.subtabs button');
+const panels=document.querySelectorAll('.tab-panel');
+function activateTab(tab){
+  tabBtns.forEach(b=>b.classList.toggle('active', b.dataset.tab===tab));
+  panels.forEach(p=>{p.style.display = (p.dataset.panel===tab) ? '' : 'none';});
+}
+tabBtns.forEach(b=>b.addEventListener('click',()=>activateTab(b.dataset.tab)));
+const initialTab=new URLSearchParams(location.search).get('tab');
+if(initialTab && document.querySelector(`.tab-panel[data-panel="${initialTab}"]`)) activateTab(initialTab);
+
 document.querySelectorAll('#tags [data-x]').forEach(x=>x.addEventListener('click',()=>x.closest('.tag').remove()));
 const ti=document.querySelector('#tags input');
 if(ti)ti.addEventListener('keydown',e=>{if(e.key==='Enter'&&ti.value.trim()){e.preventDefault();
@@ -441,7 +548,7 @@ if(fileInput&&thumbsBox&&dz){
   syncPreset();
 })();
 (function(){
-  var csrf=document.querySelector('[name=csrfmiddlewaretoken]').value;
+  var csrf=document.querySelector('#property-edit-form [name=csrfmiddlewaretoken]').value;
   document.querySelectorAll('.add-block-row').forEach(function(row){
     var inp=row.querySelector('.add-block-inp');
     var btn=row.querySelector('.add-block-btn');

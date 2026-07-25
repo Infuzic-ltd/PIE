@@ -17,6 +17,8 @@ urlpatterns = [
     path('properties/<int:pk>/delete/', views.property_delete, name='property_delete'),
     path('properties/<int:pk>/set-status/', views.property_set_status, name='property_set_status'),
     path('properties/image/<int:pk>/delete/', views.property_image_delete, name='property_image_delete'),
+    path('properties/<int:pk>/document/', views.property_add_document, name='property_add_document'),
+    path('properties/document/<int:pk>/delete/', views.property_document_delete, name='property_document_delete'),
 
     # Team management (admin only)
     path('team/', views.team_list, name='team_list'),
