@@ -221,6 +221,37 @@ a{color:inherit;text-decoration:none}
     {% if lead.follow_up_date %}<div class="info-row"><span class="k">Follow-up</span><span class="v">{{ lead.follow_up_date|date:"M d, Y P" }}</span></div>{% endif %}
   </div>
 
+  <!-- Team / Collaborators -->
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M2 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/><path d="M22 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg> Team on this Lead</div>
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:{% if can_manage_collaborators %}14px{% else %}0{% endif %}">
+      {% if lead.assigned_to %}
+      <span class="chip" style="background:#dbeafe;color:#1d4ed8">{{ lead.assigned_to.get_full_name }} <span style="opacity:.7;font-weight:500">(Primary)</span></span>
+      {% endif %}
+      {% for collab in collaborators %}
+      <span class="chip" style="display:inline-flex;align-items:center;gap:6px">
+        {{ collab.get_full_name }}
+        {% if can_manage_collaborators %}
+        <form method="post" action="{% url 'lead_remove_collaborator' lead.pk collab.pk %}" style="display:inline" onsubmit="return confirm('Remove {{ collab.get_full_name|escapejs }} from this lead?')">{% csrf_token %}<button type="submit" style="border:none;background:none;color:var(--red);cursor:pointer;font-size:13px;line-height:1;padding:0" title="Remove">&times;</button></form>
+        {% endif %}
+      </span>
+      {% endfor %}
+      {% if not lead.assigned_to and not collaborators %}
+      <span style="color:var(--ink-faint);font-size:13px">No agents assigned yet.</span>
+      {% endif %}
+    </div>
+    {% if can_manage_collaborators and eligible_agents %}
+    <form method="post" action="{% url 'lead_add_collaborator' lead.pk %}" style="display:flex;gap:8px">
+      {% csrf_token %}
+      <select name="agent_id" style="flex:1;border:1px solid var(--line);border-radius:8px;padding:7px 10px;font-size:13px;font-family:inherit;outline:none;color:var(--ink)">
+        <option value="">Select an agent to add…</option>
+        {% for agent in eligible_agents %}<option value="{{ agent.pk }}">{{ agent.get_full_name }}</option>{% endfor %}
+      </select>
+      <button type="submit" class="btn primary" style="font-size:12.5px;padding:7px 14px">+ Add Agent</button>
+    </form>
+    {% endif %}
+  </div>
+
   <!-- Requirements -->
   <div class="card">
     <div class="card-title"><svg viewBox="0 0 24 24"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg> Requirements</div>
@@ -390,6 +421,7 @@ a{color:inherit;text-decoration:none}
             {% elif act.activity_type == 'property' %}🏠
             {% elif act.activity_type == 'token' %}💰
             {% elif act.activity_type == 'follow_up' %}📅
+            {% elif act.activity_type == 'collaborator' %}👥
             {% else %}💬{% endif %}
           </div>
           <div class="tl-body">

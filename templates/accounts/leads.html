@@ -156,6 +156,17 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
   <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#059669"></span>Converted</div><div class="k-val" style="color:#065f46">{{ kpis.converted }}</div></div>
 </div>
 
+<!-- Check existing lead by phone -->
+<div class="card" style="padding:14px 18px;margin-bottom:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+  <div style="font-size:13px;font-weight:600;white-space:nowrap;display:flex;align-items:center;gap:6px">
+    <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m21 21-4.35-4.35"/></svg>
+    Check existing lead by phone
+  </div>
+  <input type="text" id="phoneCheckInput" placeholder="e.g. 0300 1234567" style="height:36px;border:1px solid var(--line);border-radius:8px;padding:0 12px;font-size:13px;font-family:inherit;outline:none;flex:1;min-width:180px;max-width:260px">
+  <button type="button" class="btn" onclick="checkLeadPhone()">Check</button>
+  <span id="phoneCheckResult" style="font-size:12.5px"></span>
+</div>
+
 <!-- Filters -->
 <form method="get" class="filter-bar">
   <div class="search-wrap">
@@ -257,5 +268,33 @@ function tog(){document.body.classList.toggle('nav-open')}
 if(mb)mb.addEventListener('click',tog);
 if(mbt)mbt.addEventListener('click',tog);
 if(sc)sc.addEventListener('click',tog);
+
+// ── Check existing lead by phone ─────────────────────────────────────────────
+const leadCheckUrl = '{% url "lead_check_phone" %}';
+const leadBaseUrl = '{% url "lead_list" %}';
+function checkLeadPhone(){
+  const val = document.getElementById('phoneCheckInput').value.trim();
+  const resultEl = document.getElementById('phoneCheckResult');
+  if(!val){ resultEl.textContent=''; return; }
+  resultEl.textContent = 'Checking…';
+  resultEl.style.color = 'var(--ink-soft)';
+  fetch(`${leadCheckUrl}?phone=${encodeURIComponent(val)}`)
+    .then(r=>r.json())
+    .then(data=>{
+      if(!data.exists){
+        resultEl.textContent = '✓ No existing lead for this number — safe to add.';
+        resultEl.style.color = '#16a34a';
+      } else {
+        let html = `⚠ Already exists — assigned to <strong>${data.assigned_to}</strong>`;
+        if (data.status) html += ` (${data.status})`;
+        if (data.lead_id) html += ` — <a href="${leadBaseUrl}${data.lead_id}/" style="color:var(--blue);font-weight:600">View lead</a>`;
+        resultEl.innerHTML = html;
+        resultEl.style.color = '#b45309';
+      }
+    })
+    .catch(()=>{ resultEl.textContent = 'Error checking phone.'; resultEl.style.color = 'var(--red)'; });
+}
+var phoneCheckInput = document.getElementById('phoneCheckInput');
+if(phoneCheckInput) phoneCheckInput.addEventListener('keydown', function(e){ if(e.key==='Enter'){ e.preventDefault(); checkLeadPhone(); } });
 </script>
 </body></html>

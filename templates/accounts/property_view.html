@@ -83,6 +83,12 @@ a{color:inherit}
 .wa-phone-row input{flex:1;border:none;background:none;padding:10px 13px;font-size:14px;font-family:inherit;outline:none;color:var(--ink)}
 .wa-preview{margin-top:16px;background:#e7fce8;border:1px solid #b7efbb;border-radius:10px;padding:14px}
 .wa-preview-lbl{font-size:11px;font-weight:700;letter-spacing:.4px;color:#16a34a;text-transform:uppercase;margin-bottom:8px}
+.wa-img-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(64px,1fr));gap:8px}
+.wa-img-chk{position:relative;display:block;border-radius:8px;overflow:hidden;cursor:pointer;border:2px solid transparent}
+.wa-img-chk img{width:100%;height:64px;object-fit:cover;display:block;opacity:.45;transition:opacity .15s}
+.wa-img-chk input{position:absolute;top:5px;left:5px;width:16px;height:16px;z-index:2;accent-color:#25d366}
+.wa-img-chk.is-checked{border-color:#25d366}
+.wa-img-chk.is-checked img{opacity:1}
 .wa-msg{font-size:13px;color:#1a2332;white-space:pre-wrap;line-height:1.6}
 .wa-foot{padding:14px 22px 20px;display:flex;gap:10px;justify-content:flex-end;border-top:1px solid var(--line)}
 .status-actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:10px}
@@ -537,6 +543,21 @@ a{color:inherit}
         <input type="tel" id="waPhone" placeholder="e.g. 923001234567" oninput="updateWaLink()">
       </div>
       <div style="font-size:11.5px;color:var(--ink-faint);margin-top:6px">Enter full number without spaces or dashes. Example: 923001234567 for Pakistan.</div>
+      {% with imgs=property.images.all %}
+      {% if imgs %}
+      <div style="margin-top:18px">
+        <label>Select images to include ({{ imgs|length }} available)</label>
+        <div class="wa-img-grid" id="waImgGrid">
+          {% for img in imgs %}
+          <label class="wa-img-chk">
+            <input type="checkbox" class="wa-img-cb" value="{{ forloop.counter0 }}" checked onchange="refreshWaMsg()">
+            <img src="{{ img.image }}" alt="">
+          </label>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+      {% endwith %}
       <div class="wa-preview" style="margin-top:16px">
         <div class="wa-preview-lbl">Message Preview</div>
         <div class="wa-msg" id="waMsg"></div>
@@ -603,7 +624,8 @@ document.addEventListener('keydown', e=>{
   if(e.key === 'ArrowRight') lightboxNav(1);
 });
 
-function buildWaMsg() {
+function buildWaMsg(selectedImages) {
+  const imgs = selectedImages || [];
   const lines = [
     '🏠 *{{ property.property_id }} | {{ property.title|escapejs }}*',
     '📍 {{ property.city|escapejs }}, {{ property.location|escapejs }}',
@@ -612,28 +634,43 @@ function buildWaMsg() {
     '🏷️ {{ property.get_property_type_display }} | For {{ property.get_listing_type_display }}',
     '📋 Status: {{ property.get_status_display }}',
   ];
-  if (propImages.length) {
+  if (imgs.length) {
     lines.push('');
-    lines.push('📸 *Property Images (' + propImages.length + '):*');
-    propImages.forEach((url, i) => lines.push((i + 1) + '. ' + url));
+    lines.push('📸 *Property Images (' + imgs.length + '):*');
+    imgs.forEach((url, i) => lines.push((i + 1) + '. ' + url));
   }
   lines.push('');
   lines.push('📞 Contact us for more details and a viewing appointment!');
   return lines.join('\n');
 }
 
-const waMsg = buildWaMsg();
-document.getElementById('waMsg').textContent = waMsg;
+let currentWaMsg = buildWaMsg(propImages);
+document.getElementById('waMsg').textContent = currentWaMsg;
+
+function selectedWaImages(){
+  return Array.from(document.querySelectorAll('.wa-img-cb:checked'))
+    .map(cb => propImages[parseInt(cb.value, 10)])
+    .filter(Boolean);
+}
+function refreshWaMsg(){
+  currentWaMsg = buildWaMsg(selectedWaImages());
+  document.getElementById('waMsg').textContent = currentWaMsg;
+  document.querySelectorAll('.wa-img-chk').forEach(label => {
+    label.classList.toggle('is-checked', label.querySelector('input').checked);
+  });
+  updateWaLink();
+}
+refreshWaMsg();
 
 function openWaModal(){
   document.getElementById('waOverlay').style.display='flex';
   document.getElementById('waPhone').focus();
-  updateWaLink();
+  refreshWaMsg();
 }
 function closeWaModal(){document.getElementById('waOverlay').style.display='none';}
 function updateWaLink(){
   const phone=document.getElementById('waPhone').value.replace(/\D/g,'');
-  const url=phone?`https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(waMsg)}`:'#';
+  const url=phone?`https://web.whatsapp.com/send?phone=${phone}&text=${encodeURIComponent(currentWaMsg)}`:'#';
   document.getElementById('waLink').href=url;
 }
 function validateWa(){

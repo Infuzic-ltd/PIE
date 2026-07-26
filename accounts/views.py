@@ -1,5 +1,6 @@
 import json
 import re
+from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
@@ -8,13 +9,15 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from django.db.models import Q
+from django.db.models import Q, Sum, Count
 from django.conf import settings
+from django.urls import reverse
+from django.utils import timezone
 import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Role, User, Customer, Block, Lead, LeadActivity, LeadDocument
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Role, User, Customer, Block, Lead, LeadActivity, LeadDocument, AgentTarget
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -117,12 +120,98 @@ def logout_view(request):
     return redirect('login')
 
 
+def _pkr_millions(value):
+    return f'PKR {float(value or 0) / 1_000_000:.1f}M'
+
+
+def _agent_performance(year, month):
+    """Build a revenue-ranked performance list for every active agent for a given month."""
+    agents = User.objects.filter(role=User.ROLE_AGENT, is_active=True).order_by('first_name', 'last_name')
+    targets = {t.agent_id: t for t in AgentTarget.objects.filter(year=year, month=month)}
+    sold_qs = (
+        Property.objects.filter(status=Property.STATUS_SOLD, sold_at__year=year, sold_at__month=month)
+        .values('created_by')
+        .annotate(deals=Count('id'), revenue=Sum('price'))
+    )
+    sold_map = {row['created_by']: row for row in sold_qs if row['created_by'] is not None}
+
+    rows = []
+    for agent in agents:
+        target = targets.get(agent.pk)
+        sold = sold_map.get(agent.pk, {})
+        deals_actual = sold.get('deals', 0)
+        revenue_actual = sold.get('revenue') or 0
+        deals_target = target.deals_target if target else 0
+        revenue_target = target.revenue_target if target else Decimal('0')
+        pct = int(min(float(revenue_actual) / float(revenue_target) * 100, 100)) if revenue_target else (100 if revenue_actual else 0)
+        rows.append({
+            'agent': agent,
+            'deals_actual': deals_actual,
+            'revenue_actual': revenue_actual,
+            'revenue_actual_display': _pkr_millions(revenue_actual),
+            'deals_target': deals_target,
+            'revenue_target': revenue_target,
+            'revenue_target_display': _pkr_millions(revenue_target),
+            'pct': pct,
+        })
+    rows.sort(key=lambda r: r['revenue_actual'], reverse=True)
+    return rows
+
+
 @login_required
 def dashboard_view(request):
+    today = timezone.localdate()
+    performance = _agent_performance(today.year, today.month)
     return render(request, 'accounts/dashboard.html', {
         'user': request.user,
         'vapid_public_key': settings.VAPID_PUBLIC_KEY,
+        'agent_performance': performance[:5],
     })
+
+
+@login_required
+def agent_performance_list(request):
+    today = timezone.localdate()
+    try:
+        year = int(request.GET.get('year', today.year))
+        month = int(request.GET.get('month', today.month))
+    except ValueError:
+        year, month = today.year, today.month
+    if month < 1 or month > 12:
+        month = today.month
+    performance = _agent_performance(year, month)
+    return render(request, 'accounts/agent_performance.html', {
+        'performance': performance,
+        'year': year,
+        'month': month,
+        'month_label': AgentTarget.MONTH_NAMES[month],
+        'month_choices': list(enumerate(AgentTarget.MONTH_NAMES))[1:],
+        'year_choices': range(today.year - 2, today.year + 2),
+    })
+
+
+@admin_required
+@require_POST
+def set_agent_target(request):
+    agent = get_object_or_404(User, pk=request.POST.get('agent_id'), role=User.ROLE_AGENT)
+    try:
+        year = int(request.POST.get('year'))
+        month = int(request.POST.get('month'))
+    except (TypeError, ValueError):
+        return redirect('agent_performance')
+    try:
+        deals_target = int(request.POST.get('deals_target') or 0)
+    except ValueError:
+        deals_target = 0
+    try:
+        revenue_target = Decimal(request.POST.get('revenue_target') or 0)
+    except InvalidOperation:
+        revenue_target = Decimal('0')
+    AgentTarget.objects.update_or_create(
+        agent=agent, year=year, month=month,
+        defaults={'deals_target': deals_target, 'revenue_target': revenue_target, 'set_by': request.user},
+    )
+    return redirect(f"{reverse('agent_performance')}?year={year}&month={month}")
 
 
 # ── Properties ────────────────────────────────────────────────────────────────
@@ -202,9 +291,13 @@ def property_update(request, pk):
     prop = get_object_or_404(
         Property.objects.prefetch_related('images', 'documents'), pk=pk,
     )
+    old_status = prop.status
     form = PropertyForm(request.POST or None, instance=prop, user=request.user)
     if request.method == 'POST' and form.is_valid():
         form.save()
+        if prop.status == Property.STATUS_SOLD and old_status != Property.STATUS_SOLD:
+            prop.sold_at = timezone.now()
+            prop.save(update_fields=['sold_at'])
         _upload_images(request.FILES, prop)
         PropertyActivity.objects.create(
             property=prop,
@@ -237,6 +330,8 @@ def property_set_status(request, pk):
         if new_status in (Property.STATUS_ACTIVE, Property.STATUS_INACTIVE, Property.STATUS_SOLD) and new_status != prop.status:
             old_display = prop.get_status_display()
             prop.status = new_status
+            if new_status == Property.STATUS_SOLD:
+                prop.sold_at = timezone.now()
             prop.save()
             PropertyActivity.objects.create(
                 property=prop,
@@ -544,10 +639,10 @@ def block_create_ajax(request):
 
 def _lead_qs(request):
     if request.user.is_crm_admin:
-        return Lead.objects.select_related('assigned_to', 'created_by')
+        return Lead.objects.select_related('assigned_to', 'created_by').prefetch_related('collaborators')
     return Lead.objects.filter(
-        Q(created_by=request.user) | Q(assigned_to=request.user)
-    ).select_related('assigned_to', 'created_by')
+        Q(created_by=request.user) | Q(assigned_to=request.user) | Q(collaborators=request.user)
+    ).distinct().select_related('assigned_to', 'created_by').prefetch_related('collaborators')
 
 
 @login_required
@@ -635,6 +730,19 @@ def lead_detail(request, pk):
     documents = lead.documents.select_related('uploaded_by').order_by('-created_at')
     doc_form = LeadDocumentForm()
 
+    collaborators = lead.collaborators.all()
+    is_collaborator = any(c.pk == request.user.pk for c in collaborators)
+    can_manage_collaborators = request.user.is_crm_admin or request.user == lead.created_by or request.user == lead.assigned_to
+    existing_agent_ids = {c.pk for c in collaborators}
+    if lead.assigned_to_id:
+        existing_agent_ids.add(lead.assigned_to_id)
+    if lead.created_by_id:
+        existing_agent_ids.add(lead.created_by_id)
+    eligible_agents = (
+        User.objects.filter(is_active=True).exclude(pk__in=existing_agent_ids).order_by('first_name', 'last_name')
+        if can_manage_collaborators else User.objects.none()
+    )
+
     # Build WhatsApp share URL for top-5 recommended properties
     whatsapp_url = ''
     if lead.phone and recommendations:
@@ -666,8 +774,11 @@ def lead_detail(request, pk):
         'documents': documents,
         'doc_form': doc_form,
         'status_choices': Lead.STATUS_CHOICES,
-        'can_edit': request.user.is_crm_admin or request.user == lead.created_by or request.user == lead.assigned_to,
+        'can_edit': request.user.is_crm_admin or request.user == lead.created_by or request.user == lead.assigned_to or is_collaborator,
         'whatsapp_url': whatsapp_url,
+        'collaborators': collaborators,
+        'can_manage_collaborators': can_manage_collaborators,
+        'eligible_agents': eligible_agents,
     })
 
 
@@ -702,6 +813,77 @@ def lead_delete(request, pk):
         lead.delete()
         return redirect('lead_list')
     return render(request, 'accounts/lead_confirm_delete.html', {'lead': lead})
+
+
+@login_required
+def lead_check_phone(request):
+    """Reveal only whether a lead already exists for this phone number and who owns it —
+    used so an agent can avoid creating a duplicate lead for a customer another agent already has."""
+    raw = request.GET.get('phone', '').strip()
+    digits = re.sub(r'\D', '', raw)
+    if len(digits) < 6:
+        return JsonResponse({'exists': False})
+
+    found = None
+    for lead in Lead.objects.select_related('assigned_to', 'created_by').all():
+        for candidate in (lead.phone, lead.alternate_phone):
+            if candidate and re.sub(r'\D', '', candidate) == digits:
+                found = lead
+                break
+        if found:
+            break
+
+    if not found:
+        return JsonResponse({'exists': False})
+
+    owner = found.assigned_to or found.created_by
+    can_access = (
+        request.user.is_crm_admin or
+        found.created_by_id == request.user.id or
+        found.assigned_to_id == request.user.id or
+        found.collaborators.filter(pk=request.user.id).exists()
+    )
+    return JsonResponse({
+        'exists': True,
+        'assigned_to': owner.get_full_name() if owner else 'Unassigned',
+        'status': found.get_status_display(),
+        'lead_id': found.pk if can_access else None,
+    })
+
+
+@login_required
+@require_POST
+def lead_add_collaborator(request, pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    can_manage = request.user.is_crm_admin or request.user == lead.created_by or request.user == lead.assigned_to
+    if can_manage:
+        agent = User.objects.filter(pk=request.POST.get('agent_id'), is_active=True).first()
+        if agent and agent != lead.assigned_to:
+            lead.collaborators.add(agent)
+            LeadActivity.objects.create(
+                lead=lead,
+                activity_type=LeadActivity.TYPE_COLLABORATOR,
+                description=f'{agent.get_full_name()} added as a collaborator by {request.user.get_full_name() or request.user.email}.',
+                created_by=request.user,
+            )
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def lead_remove_collaborator(request, pk, user_pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    can_manage = request.user.is_crm_admin or request.user == lead.created_by or request.user == lead.assigned_to
+    if can_manage:
+        agent = get_object_or_404(User, pk=user_pk)
+        lead.collaborators.remove(agent)
+        LeadActivity.objects.create(
+            lead=lead,
+            activity_type=LeadActivity.TYPE_COLLABORATOR,
+            description=f'{agent.get_full_name()} removed as a collaborator by {request.user.get_full_name() or request.user.email}.',
+            created_by=request.user,
+        )
+    return redirect('lead_detail', pk=pk)
 
 
 @login_required

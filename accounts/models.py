@@ -221,6 +221,10 @@ class Lead(models.Model):
     assigned_to = models.ForeignKey(
         'User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_leads'
     )
+    collaborators = models.ManyToManyField(
+        'User', blank=True, related_name='collab_leads',
+        help_text='Additional agents working on this lead alongside the primary assigned agent.',
+    )
     created_by = models.ForeignKey(
         'User', on_delete=models.SET_NULL, null=True, related_name='created_leads'
     )
@@ -312,6 +316,7 @@ class LeadActivity(models.Model):
     TYPE_TOKEN = 'token'
     TYPE_FOLLOW_UP = 'follow_up'
     TYPE_CONTACTED = 'contacted'
+    TYPE_COLLABORATOR = 'collaborator'
 
     TYPE_CHOICES = [
         (TYPE_CREATED, 'Lead Created'),
@@ -322,6 +327,7 @@ class LeadActivity(models.Model):
         (TYPE_TOKEN, 'Token Recorded'),
         (TYPE_FOLLOW_UP, 'Follow-up Scheduled'),
         (TYPE_CONTACTED, 'Contacted'),
+        (TYPE_COLLABORATOR, 'Collaborator Updated'),
     ]
 
     TYPE_ICONS = {
@@ -333,6 +339,7 @@ class LeadActivity(models.Model):
         TYPE_TOKEN: '💰',
         TYPE_FOLLOW_UP: '📅',
         TYPE_CONTACTED: '📞',
+        TYPE_COLLABORATOR: '👥',
     }
 
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='activities')
@@ -463,6 +470,7 @@ class Property(models.Model):
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+    sold_at = models.DateTimeField(null=True, blank=True)
 
     class Meta:
         ordering = ['-created_at']
@@ -598,3 +606,29 @@ class PropertyActivity(models.Model):
 
     def __str__(self):
         return f'{self.property} – {self.get_activity_type_display()}'
+
+
+class AgentTarget(models.Model):
+    MONTH_NAMES = [
+        '', 'January', 'February', 'March', 'April', 'May', 'June',
+        'July', 'August', 'September', 'October', 'November', 'December',
+    ]
+
+    agent = models.ForeignKey('User', on_delete=models.CASCADE, related_name='targets')
+    year = models.PositiveSmallIntegerField()
+    month = models.PositiveSmallIntegerField()
+    deals_target = models.PositiveIntegerField(default=0)
+    revenue_target = models.DecimalField(max_digits=14, decimal_places=2, default=0)
+    set_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, related_name='+')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-year', '-month']
+        unique_together = ('agent', 'year', 'month')
+
+    def __str__(self):
+        return f'{self.agent} — {self.month_label()}'
+
+    def month_label(self):
+        return f'{self.MONTH_NAMES[self.month]} {self.year}'

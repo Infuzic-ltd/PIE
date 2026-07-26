@@ -87,6 +87,7 @@
   .agent{display:grid;grid-template-columns:30px 110px 1fr auto;align-items:center;gap:11px;padding:7px 9px;margin:0 -9px;border-radius:10px;transition:background .18s}
   .agent:hover{background:#f6f9fd}
   .agent img{width:30px;height:30px;border-radius:50%;object-fit:cover}
+  .agent-av{width:30px;height:30px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:11px;font-weight:700;flex:0 0 30px}
   .agent .nm{font-size:13px;font-weight:600}
   .agent .bar-track{height:7px;background:#eef1f6;border-radius:6px;overflow:hidden}
   .agent .bar-fill{height:100%;border-radius:6px;transform-origin:left;animation:growW 1s cubic-bezier(.2,.7,.3,1) both;animation-delay:.15s}
@@ -273,37 +274,21 @@
       <div class="card pad">
         <div class="card-h">AGENT PERFORMANCE (TOP 5)</div>
         <div class="agents">
+          {% for row in agent_performance %}
           <div class="agent">
-            <img src="https://i.pravatar.cc/60?img=11" alt="">
-            <span class="nm">John Smith</span>
-            <div><div class="deals">24 Deals</div><div class="bar-track"><div class="bar-fill" style="width:100%;background:#3b82f6"></div></div></div>
-            <span class="pkr">PKR 28.5M</span>
+            <div class="agent-av">{{ row.agent.first_name|first|upper }}{{ row.agent.last_name|first|upper }}</div>
+            <span class="nm">{{ row.agent.get_full_name }}</span>
+            <div>
+              <div class="deals">{{ row.deals_actual }} Deal{{ row.deals_actual|pluralize }}{% if row.deals_target %} / {{ row.deals_target }} target{% endif %}</div>
+              <div class="bar-track"><div class="bar-fill" style="width:{{ row.pct }}%;background:{% cycle '#3b82f6' '#22c55e' '#8b5cf6' '#f59e0b' '#ef4444' %}"></div></div>
+            </div>
+            <span class="pkr">{{ row.revenue_actual_display }}</span>
           </div>
-          <div class="agent">
-            <img src="https://i.pravatar.cc/60?img=5" alt="">
-            <span class="nm">Sarah Johnson</span>
-            <div><div class="deals">19 Deals</div><div class="bar-track"><div class="bar-fill" style="width:79%;background:#22c55e"></div></div></div>
-            <span class="pkr">PKR 21.3M</span>
-          </div>
-          <div class="agent">
-            <img src="https://i.pravatar.cc/60?img=13" alt="">
-            <span class="nm">Ali Khan</span>
-            <div><div class="deals">15 Deals</div><div class="bar-track"><div class="bar-fill" style="width:62%;background:#8b5cf6"></div></div></div>
-            <span class="pkr">PKR 17.2M</span>
-          </div>
-          <div class="agent">
-            <img src="https://i.pravatar.cc/60?img=20" alt="">
-            <span class="nm">Fatima Ahmed</span>
-            <div><div class="deals">11 Deals</div><div class="bar-track"><div class="bar-fill" style="width:46%;background:#f59e0b"></div></div></div>
-            <span class="pkr">PKR 12.8M</span>
-          </div>
-          <div class="agent">
-            <img src="https://i.pravatar.cc/60?img=33" alt="">
-            <span class="nm">Bilal Hassan</span>
-            <div><div class="deals">9 Deals</div><div class="bar-track"><div class="bar-fill" style="width:37%;background:#ef4444"></div></div></div>
-            <span class="pkr">PKR 9.7M</span>
-          </div>
+          {% empty %}
+          <div style="color:var(--ink-faint);font-size:13px;text-align:center;padding:24px 0">No agents to show yet.</div>
+          {% endfor %}
         </div>
+        <a href="{% url 'agent_performance' %}" class="viewall">View More →</a>
       </div>
 
       <div class="card pad">

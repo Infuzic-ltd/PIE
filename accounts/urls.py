@@ -8,6 +8,8 @@ urlpatterns = [
     path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('agents/performance/', views.agent_performance_list, name='agent_performance'),
+    path('agents/performance/set-target/', views.set_agent_target, name='set_agent_target'),
 
     # Properties
     path('properties/', views.property_list, name='property_list'),
@@ -40,6 +42,7 @@ urlpatterns = [
     # Leads
     path('leads/', views.lead_list, name='lead_list'),
     path('leads/add/', views.lead_create, name='lead_create'),
+    path('leads/check-phone/', views.lead_check_phone, name='lead_check_phone'),
     path('leads/<int:pk>/', views.lead_detail, name='lead_detail'),
     path('leads/<int:pk>/edit/', views.lead_update, name='lead_update'),
     path('leads/<int:pk>/delete/', views.lead_delete, name='lead_delete'),
@@ -48,6 +51,8 @@ urlpatterns = [
     path('leads/<int:pk>/status/', views.lead_status_update, name='lead_status_update'),
     path('leads/<int:pk>/invoice/', views.lead_print_invoice, name='lead_print_invoice'),
     path('leads/<int:pk>/slip/<int:doc_pk>/', views.lead_print_slip, name='lead_print_slip'),
+    path('leads/<int:pk>/collaborator/add/', views.lead_add_collaborator, name='lead_add_collaborator'),
+    path('leads/<int:pk>/collaborator/<int:user_pk>/remove/', views.lead_remove_collaborator, name='lead_remove_collaborator'),
 
     # Customers
     path('customers/', views.customer_list, name='customer_list'),
