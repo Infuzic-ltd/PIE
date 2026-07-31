@@ -157,6 +157,15 @@ a{color:inherit;text-decoration:none}
         <select name="status">
           {% for val, lbl in form.fields.status.choices %}<option value="{{ val }}" {% if form.status.value == val %}selected{% endif %}>{{ lbl }}</option>{% endfor %}
         </select>
+        {% if form.status.errors %}<div class="field-err">{{ form.status.errors.0 }}</div>{% endif %}
+      </div>
+      <div class="fld">
+        <label>Negotiating Property</label>
+        <select name="property">
+          <option value="">— No property linked yet —</option>
+          {% for prop in form.fields.property.queryset %}<option value="{{ prop.pk }}" {% if form.property.value|stringformat:"s" == prop.pk|stringformat:"s" %}selected{% endif %}>{{ prop.title }} — {{ prop.location }}{% if prop.block %} ({{ prop.block.name }}){% endif %}</option>{% endfor %}
+        </select>
+        {% if form.property.errors %}<div class="field-err">{{ form.property.errors.0 }}</div>{% endif %}
       </div>
       {% if 'assigned_to' in form.fields %}
       <div class="fld">

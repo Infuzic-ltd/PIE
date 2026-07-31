@@ -116,6 +116,30 @@ a{color:inherit;text-decoration:none}
 .scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
 .float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
 .float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+/* Messages */
+.msg-list{margin-bottom:16px}
+.msg{padding:11px 16px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:8px;background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
+/* Document progress */
+.progress-wrap{margin-top:10px}
+.progress-track{height:8px;border-radius:20px;background:#f1f5f9;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;transition:width .25s}
+.progress-label{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-soft);margin-bottom:6px}
+.missing-docs{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.missing-chip{display:inline-flex;align-items:center;gap:5px;padding:3px 6px 3px 10px;border-radius:20px;font-size:11.5px;font-weight:600;background:#fef2f2;color:#b91c1c;border:none;cursor:pointer;font-family:inherit;transition:background .12s}
+.missing-chip:hover{background:#fee2e2}
+.missing-chip svg{width:12px;height:12px;stroke:currentColor;fill:none;stroke-width:2.2}
+/* Property card */
+.prop-link{display:flex;align-items:center;gap:10px;padding:10px 12px;border:1px solid var(--line);border-radius:10px}
+.prop-link .name{font-size:13.5px;font-weight:600}
+.prop-link .meta{font-size:11.5px;color:var(--ink-soft)}
+/* Modal */
+.modal-scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.55);z-index:100;align-items:center;justify-content:center}
+.modal-scrim.open{display:flex}
+.modal-box{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(8,16,36,.3)}
+.modal-box h3{font-size:15px;font-weight:700;margin-bottom:6px}
+.modal-box p{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
+.modal-box select{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);margin-bottom:14px}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end}
 @media(max-width:960px){.body-grid{grid-template-columns:1fr}}
 @media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:18px 16px 40px}}
 </style>
@@ -167,6 +191,12 @@ a{color:inherit;text-decoration:none}
 
 <div class="content">
 
+{% if messages %}
+<div class="msg-list">
+  {% for message in messages %}<div class="msg">{{ message }}</div>{% endfor %}
+</div>
+{% endif %}
+
 <!-- Lead Header -->
 <div class="lead-header">
   <div class="av-lg" style="background:{% if lead.lead_type == 'buyer' %}#3b82f6{% elif lead.lead_type == 'seller' %}#f97316{% elif lead.lead_type == 'investor' %}#8b5cf6{% else %}#10b981{% endif %}">{{ lead.initials }}</div>
@@ -193,8 +223,9 @@ a{color:inherit;text-decoration:none}
     <div style="font-size:11.5px;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Update Status</div>
     <div style="display:flex;flex-direction:column;gap:4px">
       {% for val, label in status_choices %}
-      <form method="post" action="{% url 'lead_status_update' lead.pk %}">{% csrf_token %}
+      <form method="post" action="{% url 'lead_status_update' lead.pk %}" class="status-form" data-status="{{ val }}">{% csrf_token %}
         <input type="hidden" name="status" value="{{ val }}">
+        <input type="hidden" name="property_id" value="{{ lead.property_id|default:'' }}" class="status-property-input">
         <button type="submit" style="width:100%;text-align:left;padding:5px 10px;border-radius:6px;border:1.5px solid {% if lead.status == val %}{{ lead.status_color }}{% else %}var(--line){% endif %};background:{% if lead.status == val %}{{ lead.status_color }}1a{% else %}#fff{% endif %};font-size:12px;font-weight:{% if lead.status == val %}700{% else %}500{% endif %};color:{% if lead.status == val %}{{ lead.status_color }}{% else %}var(--ink-soft){% endif %};cursor:pointer;font-family:inherit;transition:.12s">{{ label }}</button>
       </form>
       {% endfor %}
@@ -206,6 +237,46 @@ a{color:inherit;text-decoration:none}
 <div class="body-grid">
 <!-- Left Column -->
 <div>
+  <!-- Negotiating Property & Document Progress -->
+  {% if lead.property or lead.status == 'negotiation' or lead.status == 'token' or lead.status == 'converted' %}
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Negotiating Property</div>
+    {% if lead.property %}
+    <a href="{% url 'property_view' lead.property.pk %}" class="prop-link">
+      <div>
+        <div class="name">{{ lead.property.title }}</div>
+        <div class="meta">{{ lead.property.location }}, {{ lead.property.city }}{% if lead.property.block %} · {{ lead.property.block.name }}{% endif %} · {{ lead.property.price_display }}</div>
+      </div>
+    </a>
+    {% if can_edit %}<div style="margin-top:8px"><a href="{% url 'lead_update' lead.pk %}" style="font-size:12px;color:var(--blue);font-weight:600">Change linked property</a></div>{% endif %}
+    {% else %}
+    <div style="color:var(--ink-faint);font-size:13px">No property linked yet.{% if can_edit %} It will be requested when this lead moves to Negotiation, or set one from <a href="{% url 'lead_update' lead.pk %}" style="color:var(--blue);font-weight:600">Edit Lead</a>.{% endif %}</div>
+    {% endif %}
+
+    {% if document_progress %}
+    <div class="progress-wrap">
+      <div class="progress-label">
+        <span>Mandatory Documents</span>
+        <span style="font-weight:700;color:{{ lead.document_progress_color }}">{{ document_progress.done }}/{{ document_progress.total }}</span>
+      </div>
+      <div class="progress-track"><div class="progress-fill" style="width:{{ document_progress.pct }}%;background:{{ lead.document_progress_color }}"></div></div>
+      {% if missing_documents %}
+      <div class="missing-docs">
+        {% for doc in missing_documents %}
+        <button type="button" class="missing-chip" onclick="openDocFormFor('{{ doc.pk }}', '{{ doc.name|escapejs }}')">
+          Missing: {{ doc.name }}
+          <svg viewBox="0 0 24 24"><path d="M12 3v13"/><path d="m7 8 5-5 5 5"/><path d="M5 21h14"/></svg>
+        </button>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div style="font-size:12px;color:var(--green);font-weight:600;margin-top:8px">All mandatory documents provided — ready to Convert.</div>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
   <!-- Lead Information -->
   <div class="card">
     <div class="card-title"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Lead Information</div>
@@ -306,14 +377,25 @@ a{color:inherit;text-decoration:none}
     </div>
     <!-- Add Document Form -->
     <div class="doc-form" id="docForm">
-      <form method="post" action="{% url 'lead_add_document' lead.pk %}">{% csrf_token %}
+      <form method="post" action="{% url 'lead_add_document' lead.pk %}" enctype="multipart/form-data">{% csrf_token %}
         <div class="form-row">
           <div class="fld"><label>Document Type</label><select name="document_type">{% for val, label in doc_form.document_type.field.choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}</select></div>
-          <div class="fld"><label>Title</label><input type="text" name="title" placeholder="e.g. Payment Slip #1"></div>
+          <div class="fld"><label>Title</label><input type="text" name="title" id="docTitleInput" placeholder="e.g. Payment Slip #1"></div>
         </div>
+        {% if doc_form.requirement.field.queryset %}
+        <div class="form-row">
+          <div class="fld" style="grid-column:1/-1">
+            <label>Satisfies Mandatory Requirement</label>
+            <select name="requirement" id="docRequirementSelect">
+              <option value="">— Not a mandatory requirement —</option>
+              {% for req in doc_form.requirement.field.queryset %}<option value="{{ req.pk }}">{{ req.name }}</option>{% endfor %}
+            </select>
+          </div>
+        </div>
+        {% endif %}
         <div class="form-row">
           <div class="fld"><label>Amount (PKR) — optional</label><input type="number" name="amount" step="0.01" placeholder="0.00"></div>
-          <div class="fld"><label>File URL — optional</label><input type="url" name="file_url" placeholder="https://..."></div>
+          <div class="fld"><label>Upload File (PDF or Image) <span style="color:var(--red)">*</span></label><input type="file" name="file" accept=".pdf,image/*" required></div>
         </div>
         <div class="fld" style="margin-bottom:10px"><label>Notes</label><textarea name="notes" rows="2" placeholder="Any notes…"></textarea></div>
         <div style="display:flex;gap:8px">
@@ -441,10 +523,86 @@ a{color:inherit;text-decoration:none}
 </div>
 
 </div></main></div>
+
+<!-- Property picker modal (shown the first time a lead moves to Negotiation) -->
+<div class="modal-scrim" id="propModalScrim">
+  <div class="modal-box">
+    <h3>Select the Negotiating Property</h3>
+    <p>Choose which property this lead is negotiating on before moving it to Negotiation.</p>
+    <select id="propModalSelect">
+      <option value="">— Select a property —</option>
+      {% for prop in negotiation_properties %}
+      <option value="{{ prop.pk }}">{{ prop.title }} — {{ prop.location }}{% if prop.block %} ({{ prop.block.name }}){% endif %}</option>
+      {% endfor %}
+    </select>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="propModalCancel">Cancel</button>
+      <button type="button" class="btn primary" id="propModalConfirm">Confirm &amp; Move to Negotiation</button>
+    </div>
+  </div>
+</div>
+
 <script>
 var mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim'),sb=document.getElementById('sidebar');
 function tog(){document.body.classList.toggle('nav-open')}
 if(mb)mb.addEventListener('click',tog);if(mbt)mbt.addEventListener('click',tog);if(sc)sc.addEventListener('click',tog);
 function toggleDocForm(){var f=document.getElementById('docForm');f.classList.toggle('open');}
+function openDocFormFor(reqId, reqName){
+  var f=document.getElementById('docForm');
+  f.classList.add('open');
+  var sel=document.getElementById('docRequirementSelect');
+  if(sel) sel.value=reqId;
+  var title=document.getElementById('docTitleInput');
+  if(title && !title.value) title.value=reqName;
+  f.scrollIntoView({behavior:'smooth', block:'center'});
+  if(title) title.focus();
+}
+
+// Negotiation property requirement + Converted document gate
+var LEAD_HAS_PROPERTY = {{ lead.property_id|yesno:"true,false" }};
+var missingDocNames = [{% for doc in missing_documents %}"{{ doc.name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+
+var propModalScrim = document.getElementById('propModalScrim');
+var propModalSelect = document.getElementById('propModalSelect');
+var propModalCancel = document.getElementById('propModalCancel');
+var propModalConfirm = document.getElementById('propModalConfirm');
+var pendingForm = null;
+
+function openPropertyModal(form){
+  pendingForm = form;
+  propModalSelect.value = '';
+  propModalScrim.classList.add('open');
+}
+function closePropertyModal(){
+  propModalScrim.classList.remove('open');
+  pendingForm = null;
+}
+if(propModalCancel) propModalCancel.addEventListener('click', closePropertyModal);
+if(propModalScrim) propModalScrim.addEventListener('click', function(e){ if(e.target === propModalScrim) closePropertyModal(); });
+if(propModalConfirm) propModalConfirm.addEventListener('click', function(){
+  if(!propModalSelect.value){
+    alert('Please select a property to continue.');
+    return;
+  }
+  if(pendingForm){
+    pendingForm.querySelector('.status-property-input').value = propModalSelect.value;
+    var f = pendingForm;
+    closePropertyModal();
+    f.submit();
+  }
+});
+
+document.querySelectorAll('.status-form').forEach(function(form){
+  form.addEventListener('submit', function(e){
+    var status = form.dataset.status;
+    if(status === 'negotiation' && !LEAD_HAS_PROPERTY){
+      e.preventDefault();
+      openPropertyModal(form);
+    } else if(status === 'converted' && missingDocNames.length){
+      e.preventDefault();
+      alert('Add the required documents for this lead\'s property block before marking it Converted:\n' + missingDocNames.join(', '));
+    }
+  });
+});
 </script>
 </body></html>

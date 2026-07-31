@@ -6,6 +6,7 @@ from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
@@ -17,7 +18,7 @@ import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Role, User, Customer, Block, Lead, LeadActivity, LeadDocument, AgentTarget
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, AgentTarget
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -610,7 +611,7 @@ def block_list(request):
     if request.method == 'POST' and form.is_valid():
         form.save()
         return redirect('block_list')
-    blocks = Block.objects.all()
+    blocks = Block.objects.prefetch_related('required_documents')
     return render(request, 'accounts/blocks.html', {'blocks': blocks, 'form': form})
 
 
@@ -633,6 +634,24 @@ def block_create_ajax(request):
         return JsonResponse({'error': f'"{name}" already exists.'}, status=400)
     block = Block.objects.create(name=name)
     return JsonResponse({'id': block.pk, 'name': block.name})
+
+
+@admin_required
+@require_POST
+def block_required_document_add(request, pk):
+    block = get_object_or_404(Block, pk=pk)
+    name = request.POST.get('name', '').strip()
+    if name:
+        BlockRequiredDocument.objects.get_or_create(block=block, name=name)
+    return redirect('block_list')
+
+
+@admin_required
+@require_POST
+def block_required_document_delete(request, pk):
+    doc = get_object_or_404(BlockRequiredDocument, pk=pk)
+    doc.delete()
+    return redirect('block_list')
 
 
 # ── Lead Management ────────────────────────────────────────────────────────────
@@ -727,8 +746,11 @@ def lead_detail(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)
     recommendations = lead.get_recommended_properties(limit=5)
     activities = lead.activities.select_related('created_by').order_by('-created_at')
-    documents = lead.documents.select_related('uploaded_by').order_by('-created_at')
-    doc_form = LeadDocumentForm()
+    documents = lead.documents.select_related('uploaded_by', 'requirement').order_by('-created_at')
+    doc_form = LeadDocumentForm(lead=lead)
+    document_progress = lead.document_progress()
+    missing_documents = lead.missing_required_documents()
+    negotiation_properties = Property.objects.filter(status=Property.STATUS_ACTIVE).select_related('block').order_by('title')
 
     collaborators = lead.collaborators.all()
     is_collaborator = any(c.pk == request.user.pk for c in collaborators)
@@ -773,6 +795,9 @@ def lead_detail(request, pk):
         'activities': activities,
         'documents': documents,
         'doc_form': doc_form,
+        'document_progress': document_progress,
+        'missing_documents': missing_documents,
+        'negotiation_properties': negotiation_properties,
         'status_choices': Lead.STATUS_CHOICES,
         'can_edit': request.user.is_crm_admin or request.user == lead.created_by or request.user == lead.assigned_to or is_collaborator,
         'whatsapp_url': whatsapp_url,
@@ -786,6 +811,7 @@ def lead_detail(request, pk):
 def lead_update(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)
     old_status = lead.status
+    old_property_id = lead.property_id
     form = LeadForm(request.POST or None, instance=lead, user=request.user)
     if request.method == 'POST' and form.is_valid():
         updated = form.save(commit=False)
@@ -797,6 +823,13 @@ def lead_update(request, pk):
                 lead=updated,
                 activity_type=LeadActivity.TYPE_STATUS,
                 description=f'Status changed from {old_status.replace("_", " ").title()} to {updated.get_status_display()}.',
+                created_by=request.user,
+            )
+        if updated.property_id and updated.property_id != old_property_id:
+            LeadActivity.objects.create(
+                lead=updated,
+                activity_type=LeadActivity.TYPE_PROPERTY,
+                description=f'Property "{updated.property.title}" linked to this lead by {request.user.get_full_name() or request.user.email}.',
                 created_by=request.user,
             )
         return redirect('lead_detail', pk=lead.pk)
@@ -901,13 +934,23 @@ def lead_add_note(request, pk):
     return redirect('lead_detail', pk=pk)
 
 
+def _is_pdf_or_image(f):
+    return f.content_type == 'application/pdf' or f.content_type.startswith('image/')
+
+
 @login_required
 @require_POST
 def lead_add_document(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)
-    form = LeadDocumentForm(request.POST)
+    form = LeadDocumentForm(request.POST, lead=lead)
+    f = request.FILES.get('file')
     if form.is_valid():
+        if not (f and _is_pdf_or_image(f)):
+            messages.error(request, 'Upload a PDF or image file for this document.')
+            return redirect('lead_detail', pk=pk)
         doc = form.save(commit=False)
+        result = cloudinary.uploader.upload(f, folder='pie-crm/documents', resource_type='auto')
+        doc.file_url = result['secure_url']
         doc.lead = lead
         doc.uploaded_by = request.user
         doc.save()
@@ -929,18 +972,48 @@ def lead_status_update(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)
     new_status = request.POST.get('status', '')
     valid = [s for s, _ in Lead.STATUS_CHOICES]
-    if new_status in valid and new_status != lead.status:
-        old = lead.get_status_display()
-        lead.status = new_status
-        lead.save(update_fields=['status', 'updated_at'])
+    is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if new_status not in valid or new_status == lead.status:
+        return redirect('lead_detail', pk=pk)
+
+    if new_status == Lead.STATUS_NEGOTIATION and not lead.property_id:
+        prop = Property.objects.filter(pk=request.POST.get('property_id')).first()
+        if not prop:
+            error = 'Select the property being negotiated before moving this lead to Negotiation.'
+            if is_ajax:
+                return JsonResponse({'ok': False, 'error': error}, status=400)
+            messages.error(request, error)
+            return redirect('lead_detail', pk=pk)
+        lead.property = prop
         LeadActivity.objects.create(
             lead=lead,
-            activity_type=LeadActivity.TYPE_STATUS,
-            description=f'Status changed from {old} to {lead.get_status_display()}.',
+            activity_type=LeadActivity.TYPE_PROPERTY,
+            description=f'Property "{prop.title}" linked to this lead by {request.user.get_full_name() or request.user.email}.',
             created_by=request.user,
         )
-        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            return JsonResponse({'ok': True, 'status': lead.status, 'label': lead.get_status_display(), 'color': lead.status_color()})
+
+    if new_status == Lead.STATUS_CONVERTED:
+        missing = lead.missing_required_documents()
+        if missing:
+            names = ', '.join(d.name for d in missing)
+            error = f"Add the required documents for this lead's property block before marking it Converted: {names}."
+            if is_ajax:
+                return JsonResponse({'ok': False, 'error': error}, status=400)
+            messages.error(request, error)
+            return redirect('lead_detail', pk=pk)
+
+    old = lead.get_status_display()
+    lead.status = new_status
+    lead.save(update_fields=['status', 'property', 'updated_at'])
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_STATUS,
+        description=f'Status changed from {old} to {lead.get_status_display()}.',
+        created_by=request.user,
+    )
+    if is_ajax:
+        return JsonResponse({'ok': True, 'status': lead.status, 'label': lead.get_status_display(), 'color': lead.status_color()})
     return redirect('lead_detail', pk=pk)
 
 

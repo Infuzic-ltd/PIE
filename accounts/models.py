@@ -131,6 +131,19 @@ class Block(models.Model):
         return self.name
 
 
+class BlockRequiredDocument(models.Model):
+    block = models.ForeignKey(Block, on_delete=models.CASCADE, related_name='required_documents')
+    name = models.CharField(max_length=150)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['name']
+        unique_together = ('block', 'name')
+
+    def __str__(self):
+        return f'{self.name} ({self.block.name})'
+
+
 class Lead(models.Model):
     STATUS_NEW = 'new'
     STATUS_CONTACTED = 'contacted'
@@ -215,6 +228,10 @@ class Lead(models.Model):
     area_sqft_max = models.IntegerField(null=True, blank=True)
     other_requirements = models.TextField(blank=True)
     token_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    property = models.ForeignKey(
+        'Property', on_delete=models.SET_NULL, null=True, blank=True, related_name='leads',
+        help_text='The property this lead is negotiating on.',
+    )
     notes = models.TextField(blank=True)
     follow_up_date = models.DateTimeField(null=True, blank=True)
     last_contacted = models.DateTimeField(null=True, blank=True)
@@ -306,6 +323,47 @@ class Lead(models.Model):
             return 80
         return min(int(score * 100 / total), 98)
 
+    def required_documents_qs(self, prop=None):
+        prop = prop if prop is not None else self.property
+        if prop and prop.block_id:
+            return prop.block.required_documents.all()
+        return BlockRequiredDocument.objects.none()
+
+    def missing_required_documents(self, prop=None):
+        required = list(self.required_documents_qs(prop))
+        if not required or not self.pk:
+            return required
+        fulfilled_ids = set(
+            self.documents.exclude(requirement_id__isnull=True).values_list('requirement_id', flat=True)
+        )
+        return [r for r in required if r.pk not in fulfilled_ids]
+
+    def document_progress(self):
+        required = list(self.required_documents_qs())
+        if not required:
+            return None
+        total = len(required)
+        missing = len(self.missing_required_documents())
+        done = total - missing
+        return {
+            'done': done,
+            'total': total,
+            'pct': int(done * 100 / total),
+        }
+
+    def document_progress_color(self):
+        progress = self.document_progress()
+        if progress is None:
+            return None
+        if progress['pct'] >= 100:
+            return '#22c55e'
+        if progress['pct'] >= 50:
+            return '#f59e0b'
+        return '#ef4444'
+
+    def can_mark_converted(self, prop=None):
+        return len(self.missing_required_documents(prop)) == 0
+
 
 class LeadActivity(models.Model):
     TYPE_CREATED = 'created'
@@ -376,6 +434,11 @@ class LeadDocument(models.Model):
     file_url = models.URLField(blank=True)
     amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     notes = models.TextField(blank=True)
+    requirement = models.ForeignKey(
+        'BlockRequiredDocument', on_delete=models.SET_NULL, null=True, blank=True,
+        related_name='lead_documents',
+        help_text='The block-mandated document requirement this document satisfies, if any.',
+    )
     uploaded_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

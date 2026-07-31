@@ -38,6 +38,8 @@ urlpatterns = [
     path('blocks/', views.block_list, name='block_list'),
     path('blocks/add-ajax/', views.block_create_ajax, name='block_create_ajax'),
     path('blocks/<int:pk>/delete/', views.block_delete, name='block_delete'),
+    path('blocks/<int:pk>/documents/add/', views.block_required_document_add, name='block_required_document_add'),
+    path('blocks/documents/<int:pk>/delete/', views.block_required_document_delete, name='block_required_document_delete'),
 
     # Leads
     path('leads/', views.lead_list, name='lead_list'),

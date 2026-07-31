@@ -1,6 +1,9 @@
 from django import forms
 from django.contrib.auth import authenticate
-from .models import User, Property, Customer, Block, AMENITY_LIST, Role, PERMISSION_LIST, Lead, LeadDocument
+from .models import (
+    User, Property, Customer, Block, BlockRequiredDocument, AMENITY_LIST, Role, PERMISSION_LIST,
+    Lead, LeadDocument,
+)
 
 
 class SignupForm(forms.ModelForm):
@@ -146,9 +149,34 @@ class RoleForm(forms.ModelForm):
 
 
 class BlockForm(forms.ModelForm):
+    required_documents = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={'rows': 3}),
+        label='Mandatory Documents',
+        help_text='One document name per line, e.g. NOC, Allotment Letter, Possession Letter.',
+    )
+
     class Meta:
         model = Block
         fields = ['name']
+
+    def clean_required_documents(self):
+        raw = self.cleaned_data.get('required_documents', '')
+        names = [line.strip() for line in raw.splitlines() if line.strip()]
+        seen, deduped = set(), []
+        for name in names:
+            key = name.lower()
+            if key not in seen:
+                seen.add(key)
+                deduped.append(name)
+        return deduped
+
+    def save(self, commit=True):
+        block = super().save(commit=commit)
+        if commit:
+            for name in self.cleaned_data.get('required_documents', []):
+                BlockRequiredDocument.objects.get_or_create(block=block, name=name)
+        return block
 
 
 class CustomerForm(forms.ModelForm):
@@ -187,7 +215,7 @@ class LeadForm(forms.ModelForm):
             'bedrooms_min', 'bedrooms_max',
             'bathrooms_min', 'bathrooms_max',
             'area_sqft_min', 'area_sqft_max',
-            'other_requirements', 'notes', 'follow_up_date',
+            'other_requirements', 'notes', 'follow_up_date', 'property',
         ]
 
     def __init__(self, *args, user=None, **kwargs):
@@ -196,11 +224,43 @@ class LeadForm(forms.ModelForm):
         self.fields['assigned_to'].empty_label = '— Unassigned —'
         self.fields['assigned_to'].required = False
         self.fields['follow_up_date'].required = False
+        self.fields['property'].queryset = Property.objects.all().select_related('block')
+        self.fields['property'].empty_label = '— No property linked yet —'
+        self.fields['property'].required = False
+        self.fields['property'].label = 'Negotiating Property'
         if user and not user.is_crm_admin:
             del self.fields['assigned_to']
+
+    def clean(self):
+        cleaned = super().clean()
+        status = cleaned.get('status')
+        prop = cleaned.get('property')
+        if status == Lead.STATUS_NEGOTIATION and not prop:
+            self.add_error(
+                'property',
+                'Select the property being negotiated before moving this lead to Negotiation.',
+            )
+        if status == Lead.STATUS_CONVERTED:
+            missing = self.instance.missing_required_documents(prop=prop)
+            if missing:
+                names = ', '.join(d.name for d in missing)
+                self.add_error(
+                    'status',
+                    f"Add the required documents for this lead's property block before marking it Converted: {names}.",
+                )
+        return cleaned
 
 
 class LeadDocumentForm(forms.ModelForm):
     class Meta:
         model = LeadDocument
-        fields = ['document_type', 'title', 'file_url', 'amount', 'notes']
+        fields = ['document_type', 'title', 'amount', 'notes', 'requirement']
+
+    def __init__(self, *args, lead=None, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['requirement'].required = False
+        self.fields['requirement'].empty_label = '— Not a mandatory requirement —'
+        self.fields['requirement'].queryset = (
+            lead.required_documents_qs() if lead is not None else BlockRequiredDocument.objects.none()
+        )
+        self.fields['requirement'].label = 'Satisfies Requirement'

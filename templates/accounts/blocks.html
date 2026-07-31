@@ -54,6 +54,18 @@ a{color:inherit;text-decoration:none}
 .field-row input{flex:1;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13.5px;font-family:inherit;transition:border-color .18s}
 .field-row input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
 .err{color:var(--red);font-size:12px;margin-top:5px}
+.fld-label{font-size:12.5px;font-weight:600;color:var(--ink-soft);display:block;margin:16px 0 6px}
+.fld-hint{font-size:11.5px;color:var(--ink-faint);margin-top:5px}
+textarea.docs-input{width:100%;padding:10px 12px;border:1.5px solid var(--line);border-radius:10px;font-size:13px;font-family:inherit;resize:vertical;transition:border-color .18s}
+textarea.docs-input:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.1)}
+.doc-chips{display:flex;flex-wrap:wrap;gap:6px;margin-top:8px}
+.doc-chip{display:inline-flex;align-items:center;gap:6px;padding:4px 6px 4px 10px;border-radius:20px;font-size:12px;font-weight:500;background:#fef3c7;color:#92400e}
+.doc-chip button{border:none;background:none;color:#92400e;opacity:.7;cursor:pointer;font-size:13px;line-height:1;padding:2px}
+.doc-chip button:hover{opacity:1}
+.doc-add-form{display:flex;gap:6px;margin-top:8px}
+.doc-add-form input{flex:1;padding:6px 9px;border:1.5px solid var(--line);border-radius:8px;font-size:12.5px;font-family:inherit}
+.doc-add-form button{padding:6px 10px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600;cursor:pointer}
+.no-docs{color:var(--ink-faint);font-size:12px}
 table{width:100%;border-collapse:collapse}
 thead th{background:#f7f9fc;padding:10px 16px;text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line)}
 tbody tr{border-bottom:1px solid var(--line);transition:background .15s}
@@ -126,6 +138,11 @@ tbody td{padding:12px 16px;font-size:13.5px;vertical-align:middle}
           <button type="submit" class="btn primary"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add</button>
         </div>
         {% for e in form.name.errors %}<div class="err">{{ e }}</div>{% endfor %}
+
+        <label class="fld-label" for="id_required_documents">Mandatory Documents</label>
+        <textarea class="docs-input" id="id_required_documents" name="required_documents" rows="3" placeholder="One document per line, e.g.&#10;NOC&#10;Allotment Letter&#10;Possession Letter">{{ form.required_documents.value|default:'' }}</textarea>
+        <div class="fld-hint">Leads negotiating on a property in this block must have all of these documents before they can be marked Converted.</div>
+        {% for e in form.required_documents.errors %}<div class="err">{{ e }}</div>{% endfor %}
       </form>
       <div style="margin-top:16px;padding:14px;background:#f7f9fc;border-radius:10px;font-size:12.5px;color:var(--ink-soft)">
         Blocks are used in property listings to specify which block or sector a property belongs to. Examples: Block A, Block B, Sector 1, Phase 2.
@@ -139,6 +156,7 @@ tbody td{padding:12px 16px;font-size:13.5px;vertical-align:middle}
           <tr>
             <th>Block Name</th>
             <th>Properties</th>
+            <th>Mandatory Documents</th>
             <th>Actions</th>
           </tr>
         </thead>
@@ -147,6 +165,22 @@ tbody td{padding:12px 16px;font-size:13.5px;vertical-align:middle}
           <tr>
             <td style="font-weight:600">{{ b.name }}</td>
             <td><span class="badge-count">{{ b.properties.count }}</span></td>
+            <td style="min-width:220px">
+              <div class="doc-chips">
+                {% for doc in b.required_documents.all %}
+                <span class="doc-chip">{{ doc.name }}
+                  <form method="post" action="{% url 'block_required_document_delete' doc.pk %}" onsubmit="return confirm('Remove mandatory document {{ doc.name|escapejs }}?')">{% csrf_token %}<button type="submit" title="Remove">&times;</button></form>
+                </span>
+                {% empty %}
+                <span class="no-docs">No mandatory documents set</span>
+                {% endfor %}
+              </div>
+              <form method="post" action="{% url 'block_required_document_add' b.pk %}" class="doc-add-form">
+                {% csrf_token %}
+                <input type="text" name="name" placeholder="Add document name…">
+                <button type="submit">+ Add</button>
+              </form>
+            </td>
             <td>
               <form method="post" action="{% url 'block_delete' b.pk %}" onsubmit="return confirm('Delete block {{ b.name }}? Properties using it will lose this block.')">
                 {% csrf_token %}
@@ -155,7 +189,7 @@ tbody td{padding:12px 16px;font-size:13.5px;vertical-align:middle}
             </td>
           </tr>
           {% empty %}
-          <tr><td colspan="3" class="empty-row">No blocks yet. Add your first block above.</td></tr>
+          <tr><td colspan="4" class="empty-row">No blocks yet. Add your first block above.</td></tr>
           {% endfor %}
         </tbody>
       </table>
