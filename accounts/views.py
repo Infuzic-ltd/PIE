@@ -101,6 +101,10 @@ def _upload_images(request_files, prop):
         )
 
 
+def website_homepage(request):
+    return render(request, 'website/homepage.html')
+
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')

@@ -41,9 +41,9 @@ ROOT_URLCONF = 'crm.urls'
 
 AUTH_USER_MODEL = 'accounts.User'
 
-LOGIN_URL = '/login/'
-LOGIN_REDIRECT_URL = '/dashboard/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGIN_URL = '/crm/login/'
+LOGIN_REDIRECT_URL = '/crm/dashboard/'
+LOGOUT_REDIRECT_URL = '/crm/login/'
 
 TEMPLATES = [
     {
@@ -85,6 +85,7 @@ USE_TZ = True
 # ── Static files ─────────────────────────────────────────────────────────────
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 STORAGES = {
     'staticfiles': {
         'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',

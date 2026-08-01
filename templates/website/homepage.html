@@ -1,0 +1,846 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PIE Real Estate — Find Your Dream Property</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #16213a;
+    --navy-2: #101a2e;
+    --navy-3: #0c1424;
+    --gold: #eaa33b;
+    --gold-dark: #d6902a;
+    --bg-light: #f6f7fb;
+    --white: #ffffff;
+    --text-dark: #16213a;
+    --text-gray: #6b7280;
+    --text-mute: #9aa1ac;
+    --border: #e8eaf0;
+    --shadow: 0 10px 30px rgba(16,26,46,.08);
+    --radius-lg: 20px;
+    --radius-md: 14px;
+    --radius-sm: 10px;
+  }
+
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  html{ scroll-behavior:smooth; }
+  body{
+    font-family:'Inter', sans-serif;
+    color:var(--text-dark);
+    background:var(--white);
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3,h4{ font-family:'Poppins', sans-serif; color:var(--text-dark); line-height:1.15; }
+  a{ text-decoration:none; color:inherit; }
+  ul{ list-style:none; }
+  button{ font-family:inherit; cursor:pointer; border:none; background:none; }
+  img{ display:block; max-width:100%; }
+  .wrap{ max-width:1280px; margin:0 auto; padding:0 40px; }
+  section{ padding:90px 0; }
+
+  /* ---------- Buttons ---------- */
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    padding:15px 28px; border-radius:10px; font-weight:600; font-size:15px;
+    transition:all .25s ease; white-space:nowrap;
+  }
+  .btn-gold{ background:var(--gold); color:var(--navy); }
+  .btn-gold:hover{ background:var(--gold-dark); transform:translateY(-2px); }
+  .btn-outline{ background:transparent; color:var(--white); border:1.5px solid rgba(255,255,255,.5); }
+  .btn-outline:hover{ background:rgba(255,255,255,.12); }
+  .btn-outline-dark{ background:transparent; color:var(--navy); border:1.5px solid var(--border); }
+  .btn-outline-dark:hover{ background:var(--bg-light); }
+  .btn-sm{ padding:11px 20px; font-size:13.5px; }
+
+  /* =========================================================
+     NAV
+  ========================================================= */
+  .nav{
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    display:flex; align-items:center; justify-content:space-between;
+    padding:20px 40px; transition:.3s;
+  }
+  .nav.solid{ background:var(--white); box-shadow:0 2px 20px rgba(16,26,46,.08); padding:14px 40px; }
+  .logo{ font-family:'Poppins',sans-serif; }
+  .logo .pie{ font-size:26px; font-weight:800; color:var(--gold); letter-spacing:1px; }
+  .logo .sub{ display:block; font-size:9.5px; letter-spacing:3px; margin-top:-4px; color:var(--white); opacity:.85; }
+  .nav.solid .logo .sub{ color:var(--text-gray); opacity:1; }
+
+  .nav-links{ display:flex; gap:34px; }
+  .nav-links a{
+    font-size:14.5px; font-weight:500; color:rgba(255,255,255,.85);
+    padding-bottom:6px; border-bottom:2px solid transparent; transition:.2s;
+  }
+  .nav.solid .nav-links a{ color:var(--text-dark); }
+  .nav-links a.active, .nav-links a:hover{ color:var(--gold); border-color:var(--gold); }
+  .nav.solid .nav-links a.active, .nav.solid .nav-links a:hover{ color:var(--gold-dark); }
+
+  .nav-right{ display:flex; align-items:center; gap:16px; }
+  .phone-pill{
+    display:flex; align-items:center; gap:8px;
+    border:1.5px solid rgba(255,255,255,.35); border-radius:30px;
+    padding:10px 18px; font-size:14px; font-weight:500; color:var(--white);
+  }
+  .nav.solid .phone-pill{ border-color:var(--border); color:var(--text-dark); }
+  .menu-toggle{ display:none; color:var(--white); font-size:26px; }
+  .nav.solid .menu-toggle{ color:var(--text-dark); }
+
+  /* =========================================================
+     HERO
+  ========================================================= */
+  .hero{
+    position:relative;
+    min-height:92vh;
+    display:flex; flex-direction:column; justify-content:center;
+    padding:140px 40px 80px;
+    color:var(--white);
+    overflow:hidden;
+  }
+  .hero::before{
+    content:"";
+    position:absolute; inset:0;
+    background-image:
+      linear-gradient(180deg, rgba(10,15,28,.78) 0%, rgba(10,15,28,.72) 45%, rgba(10,15,28,.92) 100%),
+      url('{% static "website/images/naya_nazimabad.jpg" %}');
+    background-size:cover; background-position:center;
+    z-index:0;
+  }
+  .hero > *{ position:relative; z-index:1; }
+  .hero-inner{ max-width:1280px; margin:0 auto; width:100%; text-align:center; }
+
+  .badge{
+    display:inline-flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.1); border:1px solid rgba(255,255,255,.2);
+    padding:9px 18px; border-radius:30px; font-size:12.5px; font-weight:600;
+    letter-spacing:.5px; margin-bottom:26px; color:var(--white);
+    text-shadow:0 1px 8px rgba(0,0,0,.5);
+  }
+
+  .hero h1{
+    font-size:56px; font-weight:700; line-height:1.15; margin-bottom:20px;
+    text-shadow:0 2px 10px rgba(0,0,0,.25);
+  }
+  .hero h1 span{ color:var(--gold); }
+  .hero > .hero-inner > p{
+    font-size:17px; color:rgba(255,255,255,.9); line-height:1.6; max-width:560px; margin:0 auto 36px;
+    text-shadow:0 1px 10px rgba(0,0,0,.45);
+  }
+  .hero-cta{ display:flex; gap:16px; margin-bottom:56px; justify-content:center; }
+
+  /* Search card */
+  .search-card{
+    background:rgba(9,14,26,.72);
+    backdrop-filter:blur(10px);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:var(--radius-lg);
+    padding:26px 30px 30px;
+    max-width:980px; margin:0 auto; text-align:left;
+  }
+  .search-tabs{ display:flex; gap:28px; margin-bottom:22px; }
+  .search-tabs button{
+    font-size:14.5px; font-weight:600; color:rgba(255,255,255,.55);
+    padding-bottom:10px; border-bottom:2px solid transparent;
+  }
+  .search-tabs button.active{ color:var(--white); border-color:var(--gold); }
+
+  .search-fields{
+    display:grid; grid-template-columns:1fr 1fr 1fr auto; gap:14px; align-items:end;
+  }
+  .field label{
+    display:block; font-size:11.5px; color:rgba(255,255,255,.5); margin-bottom:8px; font-weight:600; letter-spacing:.3px;
+  }
+  .field .input-wrap{
+    display:flex; align-items:center; gap:8px;
+    background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.12);
+    border-radius:10px; padding:13px 14px;
+  }
+  .field .input-wrap svg{ flex-shrink:0; opacity:.6; width:16px; height:16px; }
+  .field input, .field select{
+    background:transparent; border:none; outline:none; color:var(--white);
+    font-size:14px; width:100%; font-family:inherit;
+  }
+  .field input::placeholder{ color:rgba(255,255,255,.4); }
+  .field select option{ color:#111; }
+  .search-submit{
+    display:flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--gold); color:var(--navy); font-weight:700; font-size:14.5px;
+    padding:15px 24px; border-radius:10px; white-space:nowrap; transition:.2s;
+  }
+  .search-submit:hover{ background:var(--gold-dark); }
+
+  .popular{
+    display:flex; align-items:center; gap:12px; margin-top:20px; flex-wrap:wrap;
+    font-size:13px; color:rgba(255,255,255,.55);
+  }
+  .popular .tag{
+    color:rgba(255,255,255,.8); background:rgba(255,255,255,.06);
+    padding:6px 13px; border-radius:20px; font-size:12.5px; transition:.2s;
+  }
+  .popular .tag:hover{ background:rgba(255,255,255,.14); color:var(--white); }
+
+  .scroll-cue{
+    position:absolute; bottom:28px; left:50%; transform:translateX(-50%);
+    color:rgba(255,255,255,.6); font-size:12px; display:flex; flex-direction:column;
+    align-items:center; gap:6px; letter-spacing:1px;
+  }
+  .scroll-cue .line{ width:1px; height:30px; background:rgba(255,255,255,.35); position:relative; overflow:hidden; }
+  .scroll-cue .line::after{
+    content:""; position:absolute; top:-100%; left:0; width:100%; height:100%; background:var(--gold);
+    animation:scrollLine 1.8s ease-in-out infinite;
+  }
+  @keyframes scrollLine{ to{ top:100%; } }
+
+  /* =========================================================
+     SECTION HEADERS (shared)
+  ========================================================= */
+  .section-head{
+    display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:44px; gap:20px; flex-wrap:wrap;
+  }
+  .section-head.center{ flex-direction:column; align-items:center; text-align:center; }
+  .eyebrow{ font-size:14px; color:var(--gold-dark); font-weight:600; margin-bottom:8px; display:block; letter-spacing:.4px; }
+  .section-head h2{ font-size:34px; font-weight:700; }
+  .section-head p.sub{ font-size:15px; color:var(--text-gray); margin-top:12px; max-width:520px; }
+
+  /* =========================================================
+     WHY CHOOSE
+  ========================================================= */
+  .why-choose{ background:var(--bg-light); }
+  .why-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:24px; }
+  .why-card{
+    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:32px 26px; transition:.25s;
+  }
+  .why-card:hover{ box-shadow:var(--shadow); transform:translateY(-4px); border-color:transparent; }
+  .why-card .ic{
+    width:52px; height:52px; border-radius:14px; background:#fdf3e4; color:var(--gold-dark);
+    display:flex; align-items:center; justify-content:center; margin-bottom:20px;
+  }
+  .why-card h4{ font-size:17px; margin-bottom:10px; }
+  .why-card p{ font-size:13.5px; color:var(--text-gray); line-height:1.6; }
+
+  .stats-bar{
+    margin-top:64px; background:linear-gradient(120deg, var(--navy-2), var(--navy-3));
+    border-radius:var(--radius-lg); padding:44px 56px; display:flex; justify-content:space-between;
+    position:relative; overflow:hidden;
+  }
+  .stats-bar .house-icon{ position:absolute; right:24px; bottom:-20px; opacity:.07; width:160px; }
+  .stat{ text-align:center; }
+  .stat h3{ color:var(--gold); font-size:38px; font-weight:700; }
+  .stat p{ color:rgba(255,255,255,.65); font-size:13px; margin-top:6px; letter-spacing:.3px; }
+
+  /* =========================================================
+     FEATURED PROPERTIES
+  ========================================================= */
+  .filters{ display:flex; gap:10px; margin-bottom:36px; flex-wrap:wrap; justify-content:center; }
+  .filter-pill{
+    padding:10px 22px; border-radius:30px; font-size:13.5px; font-weight:600;
+    background:var(--bg-light); color:var(--text-gray); transition:.2s;
+  }
+  .filter-pill.active{ background:var(--gold); color:var(--navy); }
+  .filter-pill:hover:not(.active){ background:#eef0f5; }
+
+  .property-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:26px; }
+  .property-card{
+    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
+    overflow:hidden; transition:.25s; position:relative;
+  }
+  .property-card:hover{ box-shadow:var(--shadow); transform:translateY(-4px); }
+  .property-media{ position:relative; height:190px; overflow:hidden; }
+  .property-media img{ width:100%; height:100%; object-fit:cover; transition:.4s; }
+  .property-card:hover .property-media img{ transform:scale(1.06); }
+  .fav-btn{
+    position:absolute; top:12px; right:12px; width:32px; height:32px; border-radius:50%;
+    background:rgba(255,255,255,.9); display:flex; align-items:center; justify-content:center;
+    color:#b4b8c2; font-size:13px; transition:.2s;
+  }
+  .fav-btn.active{ color:#e0475a; }
+  .featured-tag{
+    position:absolute; top:12px; left:12px; background:var(--gold); color:var(--navy);
+    font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px;
+    display:flex; align-items:center; gap:4px;
+  }
+  .draft-tag{
+    position:absolute; top:12px; left:12px; background:rgba(22,33,58,.85); color:#fff;
+    font-size:11px; font-weight:700; padding:6px 12px; border-radius:20px;
+  }
+  .price-tag{
+    position:absolute; bottom:12px; left:12px; background:rgba(10,15,28,.78); color:var(--gold);
+    font-size:14.5px; font-weight:700; padding:7px 13px; border-radius:8px;
+  }
+  .property-info{ padding:20px; }
+  .property-info h3{ font-size:16.5px; font-weight:600; margin-bottom:8px; }
+  .property-loc{
+    font-size:13px; color:var(--text-gray); display:flex; align-items:center; gap:5px; margin-bottom:16px;
+  }
+  .property-stats{
+    display:flex; gap:16px; font-size:12.5px; color:var(--text-gray);
+    border-top:1px solid var(--border); padding-top:14px;
+  }
+  .property-stats span{ display:flex; align-items:center; gap:5px; }
+  .view-all-wrap{ text-align:center; margin-top:44px; }
+
+  /* =========================================================
+     AGENTS
+  ========================================================= */
+  .agents{ background:var(--bg-light); }
+  .agents-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:24px; }
+  .agent-card{
+    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
+    overflow:hidden; text-align:center; padding-bottom:22px; transition:.25s;
+  }
+  .agent-card:hover{ box-shadow:var(--shadow); transform:translateY(-4px); }
+  .agent-photo{ height:200px; overflow:hidden; }
+  .agent-photo img{ width:100%; height:100%; object-fit:cover; }
+  .agent-card h4{ font-size:15.5px; margin-top:18px; }
+  .agent-card .role{ font-size:12px; color:var(--text-gray); margin-bottom:10px; }
+  .agent-card .phone{ font-size:12.5px; color:var(--text-gray); margin-bottom:14px; }
+  .agent-social{ display:flex; justify-content:center; gap:8px; }
+  .agent-social a{
+    width:28px; height:28px; border-radius:50%; background:var(--bg-light); color:var(--text-gray);
+    display:flex; align-items:center; justify-content:center; font-size:12px; transition:.2s;
+  }
+  .agent-card:hover .agent-social a{ background:var(--white); }
+  .agent-social a:hover{ background:var(--gold) !important; color:var(--white); }
+
+  /* =========================================================
+     TESTIMONIALS + VIDEO
+  ========================================================= */
+  .testimonial-row{ display:grid; grid-template-columns:1.1fr 1fr; gap:26px; align-items:stretch; }
+  .testimonial-card{
+    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
+    padding:34px; position:relative; display:flex; flex-direction:column; justify-content:center;
+  }
+  .quote-mark{ position:absolute; top:22px; right:26px; color:var(--gold); font-size:34px; opacity:.5; }
+  .t-user{ display:flex; align-items:center; gap:12px; margin-bottom:14px; }
+  .t-user img{ width:48px; height:48px; border-radius:50%; object-fit:cover; }
+  .t-user h5{ font-size:15px; }
+  .t-user span{ font-size:12.5px; color:var(--text-gray); }
+  .stars{ color:var(--gold); font-size:13px; margin-bottom:14px; letter-spacing:2px; }
+  .t-text{ font-size:14.5px; color:var(--text-gray); line-height:1.7; margin-bottom:18px; }
+  .dots{ display:flex; gap:6px; }
+  .dots span{ width:7px; height:7px; border-radius:50%; background:var(--border); }
+  .dots span.active{ background:var(--gold); width:20px; border-radius:4px; }
+
+  .video-card{ position:relative; border-radius:var(--radius-md); overflow:hidden; min-height:260px; }
+  .video-card img{ width:100%; height:100%; object-fit:cover; position:absolute; inset:0; }
+  .video-card .overlay{
+    position:relative; z-index:1; height:100%; display:flex; flex-direction:column; justify-content:space-between; padding:24px;
+    background:linear-gradient(180deg, rgba(10,15,28,0) 30%, rgba(10,15,28,.7) 100%);
+  }
+  .play-btn{
+    width:60px; height:60px; border-radius:50%; background:rgba(255,255,255,.92);
+    display:flex; align-items:center; justify-content:center; color:var(--navy); font-size:19px;
+    transition:.2s; margin:auto;
+  }
+  .play-btn:hover{ background:var(--white); transform:scale(1.08); }
+  .video-card .v-label{ color:var(--white); }
+  .video-card .v-label b{ display:flex; align-items:center; gap:6px; font-size:14px; }
+  .video-card .v-label small{ font-size:12px; opacity:.8; }
+
+  /* =========================================================
+     CTA BANNER
+  ========================================================= */
+  .cta-banner{
+    background:linear-gradient(120deg, var(--navy-2), var(--navy-3));
+    border-radius:var(--radius-lg); padding:64px; display:grid; grid-template-columns:1.1fr 1fr;
+    gap:50px; align-items:center; color:var(--white); overflow:hidden;
+  }
+  .cta-left .badge2{
+    display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:1px; color:var(--gold);
+    background:rgba(234,163,59,.12); padding:7px 16px; border-radius:20px; margin-bottom:20px;
+  }
+  .cta-left h2{ font-size:36px; margin-bottom:16px; color:var(--white); }
+  .cta-left h2 span{ color:var(--gold); }
+  .cta-left > p{ color:rgba(255,255,255,.65); font-size:15px; margin-bottom:32px; max-width:420px; }
+  .cta-items{ display:flex; gap:30px; margin-bottom:36px; flex-wrap:wrap; }
+  .cta-item{ display:flex; flex-direction:column; align-items:flex-start; gap:12px; max-width:140px; }
+  .cta-item .ic{
+    width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,.08);
+    display:flex; align-items:center; justify-content:center; color:var(--gold);
+  }
+  .cta-item span{ font-size:13.5px; font-weight:600; line-height:1.35; }
+  .cta-right{ position:relative; border-radius:14px; overflow:hidden; height:320px; }
+  .cta-right img{ width:100%; height:100%; object-fit:cover; }
+
+  /* =========================================================
+     FOOTER
+  ========================================================= */
+  footer{ background:var(--navy-3); color:rgba(255,255,255,.65); padding:70px 40px 26px; }
+  .footer-grid{
+    max-width:1280px; margin:0 auto;
+    display:grid; grid-template-columns:1.4fr 1fr 1fr 1fr 1.2fr; gap:40px; padding-bottom:40px;
+    border-bottom:1px solid rgba(255,255,255,.08);
+  }
+  .footer-logo .pie{ color:var(--gold); font-family:'Poppins',sans-serif; font-weight:800; font-size:22px; }
+  .footer-logo .sub{ font-size:9px; letter-spacing:2px; color:var(--white); opacity:.7; }
+  .footer-grid p{ font-size:13px; line-height:1.7; margin-top:14px; max-width:230px; }
+  footer h5{ color:var(--white); font-size:14.5px; margin-bottom:20px; }
+  footer ul li{ margin-bottom:11px; font-size:13px; }
+  footer ul li a:hover{ color:var(--gold); }
+  .footer-contact li{ display:flex; gap:8px; align-items:flex-start; }
+  .socials{ display:flex; gap:10px; margin-top:20px; }
+  .socials a{
+    width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.08);
+    display:flex; align-items:center; justify-content:center; font-size:12.5px; color:var(--white); transition:.2s;
+  }
+  .socials a:hover{ background:var(--gold); }
+  .footer-bottom{
+    max-width:1280px; margin:0 auto;
+    display:flex; justify-content:space-between; align-items:center; padding-top:22px; font-size:12px;
+  }
+  .back-top{
+    position:fixed; right:26px; bottom:26px; width:46px; height:46px; border-radius:50%;
+    background:var(--gold); color:var(--navy); display:flex; align-items:center; justify-content:center;
+    font-size:17px; box-shadow:0 6px 18px rgba(0,0,0,.25); z-index:50; transition:.2s; opacity:0; pointer-events:none;
+  }
+  .back-top.show{ opacity:1; pointer-events:auto; }
+  .back-top:hover{ background:var(--gold-dark); }
+
+  /* =========================================================
+     RESPONSIVE
+  ========================================================= */
+  @media (max-width:1180px){
+    .property-grid{ grid-template-columns:repeat(2,1fr); }
+    .why-grid{ grid-template-columns:repeat(2,1fr); }
+    .agents-grid{ grid-template-columns:repeat(2,1fr); }
+    .testimonial-row{ grid-template-columns:1fr; }
+    .cta-banner{ grid-template-columns:1fr; padding:44px; }
+    .footer-grid{ grid-template-columns:1fr 1fr; }
+    .hero h1{ font-size:44px; }
+  }
+  @media (max-width:860px){
+    .nav-links{ display:none; }
+    .menu-toggle{ display:block; }
+    .wrap{ padding:0 24px; }
+    section{ padding:64px 0; }
+    .hero{ padding:120px 24px 60px; }
+    .search-fields{ grid-template-columns:1fr; }
+    .hero h1{ font-size:34px; }
+    .stats-bar{ flex-wrap:wrap; gap:24px; padding:32px; }
+    footer{ padding:50px 24px 20px; }
+  }
+  @media (max-width:600px){
+    .property-grid, .why-grid, .agents-grid{ grid-template-columns:1fr; }
+    .footer-grid{ grid-template-columns:1fr; }
+    .hero-cta{ flex-direction:column; }
+    .hero h1{ font-size:28px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ============ NAV ============ -->
+<nav class="nav" id="mainNav">
+  <div class="logo">
+    <span class="pie">PIE</span>
+    <span class="sub">REAL ESTATE</span>
+  </div>
+  <div class="nav-links">
+    <a href="#home" class="active">Home</a>
+    <a href="#properties">Properties</a>
+    <a href="#buyers">Buyers</a>
+    <a href="#sellers">Sellers</a>
+    <a href="#agents">Agents</a>
+    <a href="#about">About Us</a>
+    <a href="#contact">Contact</a>
+  </div>
+  <div class="nav-right">
+    <div class="phone-pill">📞 +92 300 1234567</div>
+    <a href="#contact" class="btn btn-gold btn-sm">Book a Call</a>
+  </div>
+  <button class="menu-toggle">☰</button>
+</nav>
+
+<!-- ============ HERO ============ -->
+<header class="hero" id="home">
+  <div class="hero-inner">
+    <span class="badge">🛡 YOUR TRUSTED NAYA NAZIMABAD REALTOR</span>
+    <h1>Find Your Dream Home in <span>Naya Nazimabad</span></h1>
+    <p>Your trusted partner for buying, selling, and renting in Naya Nazimabad, Karachi — verified plots, bungalows, and houses across Block A to Block P.</p>
+    <div class="hero-cta">
+      <a href="#properties" class="btn btn-gold">Explore Properties →</a>
+      <a href="#sell" class="btn btn-outline">List Your Property 🏠</a>
+    </div>
+
+    <div class="search-card">
+      <div class="search-tabs">
+        <button class="active" data-tab="buy">Buy</button>
+        <button data-tab="rent">Rent</button>
+        <button data-tab="commercial">Commercial</button>
+      </div>
+      <div class="search-fields">
+        <div class="field">
+          <label>Search by Location</label>
+          <div class="input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+            <input type="text" placeholder="e.g. Block A, Block C, Block M">
+          </div>
+        </div>
+        <div class="field">
+          <label>Property Type</label>
+          <div class="input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
+            <select>
+              <option>All Types</option>
+              <option>Apartment</option>
+              <option>House</option>
+              <option>Commercial</option>
+              <option>Plot</option>
+            </select>
+          </div>
+        </div>
+        <div class="field">
+          <label>Price Range</label>
+          <div class="input-wrap">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+            <input type="text" placeholder="Min - Max Price">
+          </div>
+        </div>
+        <button class="search-submit">Search Properties
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
+        </button>
+      </div>
+      <div class="popular">
+        <span>Popular Searches:</span>
+        <span class="tag">Block A</span>
+        <span class="tag">Block B</span>
+        <span class="tag">Block C</span>
+        <span class="tag">Block D</span>
+        <span class="tag">Block M</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-cue"><span>SCROLL</span><div class="line"></div></div>
+</header>
+
+<!-- ============ WHY CHOOSE ============ -->
+<section class="why-choose" id="about">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow">Why Choose Us</span>
+      <h2>Why Choose PIE Real Estate?</h2>
+      <p class="sub">Your local Naya Nazimabad specialists — we make property transactions seamless, transparent, and stress-free, from the first search to the final signature.</p>
+    </div>
+
+    <div class="why-grid">
+      <div class="why-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg></div>
+        <h4>Trusted &amp; Verified</h4>
+        <p>All properties are verified for a safe and secure experience.</p>
+      </div>
+      <div class="why-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 3v18h18"/><path d="M7 15l4-4 3 3 5-6"/></svg></div>
+        <h4>Naya Nazimabad Expertise</h4>
+        <p>We know every block, from A to P, and get you the best deals in the scheme.</p>
+      </div>
+      <div class="why-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+        <h4>24/7 Support</h4>
+        <p>We're here for you anytime, anywhere to assist you.</p>
+      </div>
+      <div class="why-card">
+        <div class="ic"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg></div>
+        <h4>End to End Service</h4>
+        <p>From search to ownership, we handle everything for you.</p>
+      </div>
+    </div>
+
+    <div class="stats-bar">
+      <svg class="house-icon" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1"><path d="M3 12l9-9 9 9M5 10v10h14V10"/></svg>
+      <div class="stat"><h3>5+</h3><p>Years in Naya Nazimabad</p></div>
+      <div class="stat"><h3>150+</h3><p>Properties Sold</p></div>
+      <div class="stat"><h3>300+</h3><p>Happy Clients</p></div>
+      <div class="stat"><h3>Growing</h3><p>Local Agent Team</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FEATURED PROPERTIES ============ -->
+<section id="properties">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow">Browse Our Listings</span>
+      <h2>Featured Properties</h2>
+      <p class="sub">Handpicked listings from Naya Nazimabad, Karachi — verified, priced fairly, and ready to view.</p>
+    </div>
+
+    <div class="filters">
+      <button class="filter-pill active" data-filter="all">All</button>
+      <button class="filter-pill" data-filter="house">House</button>
+      <button class="filter-pill" data-filter="plot">Plot</button>
+    </div>
+
+    <div class="property-grid" id="propertyGrid">
+      <!-- Real listing — Property #4 in the CRM -->
+      <div class="property-card" data-cat="house">
+        <div class="property-media">
+          <span class="featured-tag">★ Featured</span>
+          <button class="fav-btn">♥</button>
+          <img src="{% static 'website/images/property-1-block-a-house.jpg' %}" alt="Naya Nazimabad New House for Sale">
+          <span class="price-tag">PKR 2.5 Crore</span>
+        </div>
+        <div class="property-info">
+          <h3>Naya Nazimabad New House for Sale</h3>
+          <div class="property-loc">📍 Block A, Naya Nazimabad, Karachi</div>
+          <div class="property-stats"><span>🛏 4 Beds</span><span>🛁 4 Baths</span><span>▭ 240 sq yd</span></div>
+        </div>
+      </div>
+      <!-- Real listing — Property #1 in the CRM (for rent) -->
+      <div class="property-card" data-cat="house">
+        <div class="property-media">
+          <button class="fav-btn">♥</button>
+          <img src="{% static 'website/images/property-2-block-a-bungalow.jpg' %}" alt="Naya Nazimabad 160 Square Yards Bungalow">
+          <span class="price-tag">PKR 140,000 / month</span>
+        </div>
+        <div class="property-info">
+          <h3>160 Square Yards Bungalow</h3>
+          <div class="property-loc">📍 Block A, Naya Nazimabad, Karachi</div>
+          <div class="property-stats"><span>▭ 160 sq yd</span><span>For Rent</span></div>
+        </div>
+      </div>
+      <!-- Draft sample listing — not yet in the CRM, confirm details before publishing -->
+      <div class="property-card" data-cat="house">
+        <div class="property-media">
+          <span class="draft-tag">Sample</span>
+          <button class="fav-btn">♥</button>
+          <img src="{% static 'website/images/property-3-block-b-house.jpg' %}" alt="Naya Nazimabad Block B House">
+          <span class="price-tag">PKR 1.75 Crore</span>
+        </div>
+        <div class="property-info">
+          <h3>Family House in Block B</h3>
+          <div class="property-loc">📍 Block B, Naya Nazimabad, Karachi</div>
+          <div class="property-stats"><span>🛏 4 Beds</span><span>🛁 3 Baths</span><span>▭ 240 sq yd</span></div>
+        </div>
+      </div>
+      <!-- Draft sample listing — not yet in the CRM, confirm details before publishing -->
+      <div class="property-card" data-cat="plot">
+        <div class="property-media">
+          <span class="draft-tag">Sample</span>
+          <button class="fav-btn">♥</button>
+          <img src="{% static 'website/images/property-4-block-m-plot.jpg' %}" alt="Residential Plot in Naya Nazimabad Block M">
+          <span class="price-tag">Price on Request</span>
+        </div>
+        <div class="property-info">
+          <h3>Residential Plot in Block M</h3>
+          <div class="property-loc">📍 Block M, Naya Nazimabad, Karachi</div>
+          <div class="property-stats"><span>▭ 120 sq yd</span><span>Investor Pick</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="view-all-wrap">
+      <a href="#" class="btn btn-outline-dark">View All Properties</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============ AGENTS ============ -->
+<section class="agents" id="agents">
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow">Meet Our Team</span>
+      <h2>Meet Our Naya Nazimabad Specialist</h2>
+      <p class="sub">Experienced, and dedicated to finding you the right match. More agents joining soon.</p>
+    </div>
+
+    <div class="agents-grid" style="grid-template-columns:repeat(1, minmax(0, 280px));justify-content:center">
+      <div class="agent-card">
+        <div class="agent-photo"><img src="{% static 'website/images/agent-fahad-nazeer.jpg' %}" alt="Fahad Nazeer"></div>
+        <h4>Fahad Nazeer</h4>
+        <div class="role">Property Consultant</div>
+        <div class="agent-social"><a href="#">📞</a><a href="#">💬</a><a href="#">✉</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ TESTIMONIALS + VIDEO ============ -->
+<section>
+  <div class="wrap">
+    <div class="section-head center">
+      <span class="eyebrow">Testimonials</span>
+      <h2>What Our Clients Say About Us</h2>
+      <p class="sub">Real stories from buyers, sellers, and investors we've worked with.</p>
+    </div>
+
+    <div class="testimonial-row">
+      <div class="testimonial-card">
+        <span class="quote-mark">&#10077;</span>
+        <div class="t-user">
+          <img src="{% static 'website/images/testimonial-homeowner.jpg' %}" alt="Homeowner testimonial">
+          <div><h5>Happy Homeowner</h5><span>Block A, Naya Nazimabad</span></div>
+        </div>
+        <div class="stars">★★★★★</div>
+        <p class="t-text">Placeholder quote — replace with a real client testimonial before this goes live. PIE Real Estate made our property buying experience smooth and stress-free.</p>
+        <div class="dots"><span class="active"></span><span></span><span></span></div>
+      </div>
+
+      <div class="video-card">
+        <img src="{% static 'website/images/video-tour-thumbnail.jpg' %}" alt="Naya Nazimabad video tour">
+        <div class="overlay">
+          <div></div>
+          <button class="play-btn">▶</button>
+          <div class="v-label">
+            <b>🏠 Video Tour</b>
+            <small>See Naya Nazimabad in a whole new way</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CTA ============ -->
+<section id="sell">
+  <div class="wrap">
+    <div class="cta-banner">
+      <div class="cta-left">
+        <span class="badge2">LOOKING TO SELL?</span>
+        <h2>List Your Naya Nazimabad Property<br>with <span>PIE</span></h2>
+        <p>Get maximum exposure and the best value for your plot, bungalow, or house in Naya Nazimabad.</p>
+        <div class="cta-items">
+          <div class="cta-item">
+            <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></div>
+            <span>Free Property Valuation</span>
+          </div>
+          <div class="cta-item">
+            <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="M8.6 13.5l6.8 4M15.4 6.5L8.6 10.5"/></svg></div>
+            <span>Professional Marketing</span>
+          </div>
+          <div class="cta-item">
+            <div class="ic"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M9 2v4M15 2v4M3 10h18"/><path d="M9 16l2 2 4-4"/></svg></div>
+            <span>Quick &amp; Secure Process</span>
+          </div>
+        </div>
+        <a href="#contact" class="btn btn-gold">Get Started →</a>
+      </div>
+      <div class="cta-right">
+        <img src="{% static 'website/images/cta-interior.jpg' %}" alt="Naya Nazimabad home interior">
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOOTER ============ -->
+<footer id="contact">
+  <div class="footer-grid">
+    <div class="footer-logo">
+      <span class="pie">PIE</span><br>
+      <span class="sub">REAL ESTATE</span>
+      <p>Your trusted partner for Naya Nazimabad real estate. Find, buy, sell, and invest with confidence.</p>
+    </div>
+    <div>
+      <h5>Quick Links</h5>
+      <ul>
+        <li><a href="#">Buy Properties</a></li>
+        <li><a href="#">Rent Properties</a></li>
+        <li><a href="#">Sell Properties</a></li>
+        <li><a href="#">Find Agents</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Company</h5>
+      <ul>
+        <li><a href="#">About Us</a></li>
+        <li><a href="#">Our Agents</a></li>
+        <li><a href="#">Careers</a></li>
+        <li><a href="#">Contact Us</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Resources</h5>
+      <ul>
+        <li><a href="#">Blog</a></li>
+        <li><a href="#">Guides</a></li>
+        <li><a href="#">FAQs</a></li>
+        <li><a href="#">Privacy Policy</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Contact Us</h5>
+      <ul class="footer-contact">
+        <li>📞 +92 300 1234567</li>
+        <li>✉ info@pierealestate.com</li>
+        <li>📍 Sales Office, Naya Nazimabad, Karachi</li>
+      </ul>
+      <div class="socials"><a href="#">f</a><a href="#">in</a><a href="#">◎</a><a href="#">✉</a></div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <span>© 2026 PIE Real Estate. All rights reserved.</span>
+    <span>Designed for a seamless property experience.</span>
+  </div>
+</footer>
+
+<button class="back-top" id="backTop">↑</button>
+
+<script>
+  // Nav solid background on scroll
+  const nav = document.getElementById('mainNav');
+  window.addEventListener('scroll', ()=>{
+    nav.classList.toggle('solid', window.scrollY > 60);
+  });
+
+  // Search tabs
+  document.querySelectorAll('.search-tabs button').forEach(btn=>{
+    btn.addEventListener('click', ()=>{
+      document.querySelectorAll('.search-tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+    });
+  });
+
+  // Property filters
+  const pills = document.querySelectorAll('.filter-pill');
+  const cards = document.querySelectorAll('.property-card');
+  pills.forEach(pill=>{
+    pill.addEventListener('click', ()=>{
+      pills.forEach(p=>p.classList.remove('active'));
+      pill.classList.add('active');
+      const f = pill.dataset.filter;
+      cards.forEach(card=>{
+        const cats = card.dataset.cat.split(' ');
+        card.style.display = (f==='all' || cats.includes(f)) ? '' : 'none';
+      });
+    });
+  });
+
+  // Favorite toggle
+  document.querySelectorAll('.fav-btn').forEach(btn=>{
+    btn.addEventListener('click', ()=> btn.classList.toggle('active'));
+  });
+
+  // Testimonial dots auto-cycle (demo)
+  const dots = document.querySelectorAll('.dots span');
+  let dotIdx = 0;
+  setInterval(()=>{
+    dots.forEach(d=>d.classList.remove('active'));
+    dotIdx = (dotIdx + 1) % dots.length;
+    dots[dotIdx].classList.add('active');
+  }, 3500);
+
+  // Back to top
+  const backTop = document.getElementById('backTop');
+  window.addEventListener('scroll', ()=> backTop.classList.toggle('show', window.scrollY > 500));
+  backTop.addEventListener('click', ()=> window.scrollTo({top:0, behavior:'smooth'}));
+
+  // Mobile menu toggle
+  document.querySelector('.menu-toggle').addEventListener('click', function(){
+    const links = document.querySelector('.nav-links');
+    const visible = links.style.display === 'flex';
+    links.style.display = visible ? 'none' : 'flex';
+    Object.assign(links.style, {
+      flexDirection:'column', position:'absolute', top:'64px', left:'24px', right:'24px',
+      background: nav.classList.contains('solid') ? '#fff' : 'rgba(15,21,38,.97)',
+      padding:'20px', borderRadius:'12px', gap:'16px', zIndex:'20',
+      boxShadow:'0 10px 30px rgba(0,0,0,.15)'
+    });
+  });
+</script>
+</body>
+</html>
