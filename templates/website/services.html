@@ -26,41 +26,59 @@
     --radius-sm: 10px;
   }
 
-  *{ margin:0; padding:0; box-sizing:border-box; }
+  *{ box-sizing:border-box; margin:0; padding:0; }
   html{ scroll-behavior:smooth; }
-  body{
-    font-family:'Inter', sans-serif;
-    color:var(--text-dark);
-    background:var(--white);
-    -webkit-font-smoothing:antialiased;
-  }
+  body{ font-family:'Inter', sans-serif; background:var(--white); color:var(--text-dark); -webkit-font-smoothing:antialiased; overflow-x:hidden; }
   h1,h2,h3,h4{ font-family:'Poppins', sans-serif; color:var(--text-dark); line-height:1.15; }
   a{ text-decoration:none; color:inherit; }
   ul{ list-style:none; }
-  button{ font-family:inherit; cursor:pointer; border:none; background:none; }
-  img{ display:block; max-width:100%; }
-  .wrap{ max-width:1280px; margin:0 auto; padding:0 40px; }
-  section{ padding:90px 0; }
+  img{ max-width:100%; display:block; }
+  .wrap{ max-width:1240px; margin:0 auto; padding:0 32px; }
 
-  /* ---------- Buttons ---------- */
+  /* ---------- reveal animation ---------- */
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .8s cubic-bezier(.16,.8,.3,1), transform .8s cubic-bezier(.16,.8,.3,1); }
+  .reveal.in-view{ opacity:1; transform:translateY(0); }
+  .reveal-scale{ opacity:0; transform:scale(.94); transition:opacity .9s ease, transform .9s cubic-bezier(.16,.8,.3,1); }
+  .reveal-scale.in-view{ opacity:1; transform:scale(1); }
+  .stagger > *{ transition-delay:calc(var(--i,0) * 100ms); }
+  @media (prefers-reduced-motion: reduce){ *{ animation:none !important; transition:none !important; } }
+
+  /* ---------- Buttons & shared bits ---------- */
   .btn{
     display:inline-flex; align-items:center; justify-content:center; gap:8px;
-    padding:15px 28px; border-radius:10px; font-weight:600; font-size:15px;
+    padding:14px 26px; border-radius:30px; font-weight:600; font-size:14.5px;
     transition:all .25s ease; white-space:nowrap;
   }
   .btn-gold{ background:var(--gold); color:var(--navy); }
-  .btn-gold:hover{ background:var(--gold-dark); transform:translateY(-2px); }
+  .btn-gold:hover{ background:var(--gold-dark); transform:translateY(-2px); box-shadow:0 10px 24px rgba(234,163,59,.35); }
+  .btn-dark{ background:var(--navy); color:#fff; }
+  .btn-dark:hover{ background:var(--navy-2); transform:translateY(-2px); box-shadow:0 10px 24px rgba(16,26,46,.3); }
   .btn-outline-dark{ background:transparent; color:var(--navy); border:1.5px solid var(--border); }
   .btn-outline-dark:hover{ background:var(--bg-light); }
+  .btn-outline-light{ background:transparent; color:#fff; border:1.5px solid rgba(255,255,255,.5); }
+  .btn-outline-light:hover{ background:rgba(255,255,255,.12); }
   .btn-sm{ padding:11px 20px; font-size:13.5px; }
+  .btn-text{ display:inline-flex; align-items:center; gap:7px; font-weight:600; font-size:13.5px; color:var(--gold-dark); }
+  .btn-text svg{ transition:transform .25s ease; }
+  .btn-text:hover svg{ transform:translateX(5px); }
+  .play-mini{ display:flex; align-items:center; gap:10px; font-weight:600; font-size:14.5px; color:var(--navy); }
+  .play-mini .circle{
+    width:36px; height:36px; border-radius:50%; border:1.5px solid var(--navy);
+    display:flex; align-items:center; justify-content:center; transition:background .25s, transform .25s;
+  }
+  .play-mini:hover .circle{ background:var(--navy); transform:scale(1.08); }
+  .play-mini:hover .circle svg path{ fill:#fff; }
 
-  /* ---------- Section head ---------- */
-  .section-head{ display:flex; align-items:flex-end; justify-content:space-between; margin-bottom:44px; gap:20px; flex-wrap:wrap; }
-  .section-head.center{ flex-direction:column; align-items:center; text-align:center; }
-  .eyebrow{ font-size:14px; color:var(--gold-dark); font-weight:600; margin-bottom:8px; display:block; letter-spacing:.4px; }
-  .section-head h2{ font-size:34px; font-weight:700; }
+  .eyebrow{
+    display:inline-flex; align-items:center; gap:8px;
+    font-size:12.5px; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+    color:var(--gold-dark); margin-bottom:14px;
+  }
+  .eyebrow::before{ content:""; width:18px; height:2px; background:var(--gold); border-radius:2px; }
+  .section-head{ text-align:center; margin-bottom:56px; }
+  .section-head h2{ font-size:36px; font-weight:700; margin-bottom:14px; }
   .section-head h2 span{ color:var(--gold); }
-  .section-head p.sub{ font-size:15px; color:var(--text-gray); margin-top:12px; max-width:560px; }
+  .section-head p{ color:var(--text-gray); max-width:560px; margin:0 auto; font-size:15px; line-height:1.7; }
 
   /* =========================================================
      PRELOADER
@@ -83,7 +101,7 @@
   body.loading{ overflow:hidden; }
 
   /* =========================================================
-     NAV (always solid on this page — light background throughout)
+     NAV
   ========================================================= */
   .nav{
     position:sticky; top:0; z-index:100; background:var(--white);
@@ -109,44 +127,119 @@
   .menu-toggle{ display:none; color:var(--text-dark); font-size:26px; }
 
   /* =========================================================
-     SERVICES HERO
+     HERO
   ========================================================= */
-  .services-hero{ background:var(--bg-light); text-align:center; padding:72px 0 60px; }
-  .services-hero h1{ font-size:42px; font-weight:700; margin:14px 0 18px; }
-  .services-hero h1 span{ color:var(--gold); }
-  .services-hero p{ font-size:15.5px; color:var(--text-gray); line-height:1.7; max-width:600px; margin:0 auto 34px; }
-  .services-hero-cta{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:38px; }
-  .services-jump{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
-  .services-jump a{
-    padding:10px 20px; border-radius:30px; font-size:13px; font-weight:600;
-    background:var(--white); color:var(--text-gray); border:1px solid var(--border); transition:.2s;
+  .hero{ padding:70px 0 90px; position:relative; }
+  .hero-grid{ display:grid; grid-template-columns:1fr 1.05fr; gap:56px; align-items:center; }
+  .hero h1{ font-size:45px; line-height:1.15; font-weight:700; margin-bottom:18px; }
+  .hero h1 span{ color:var(--gold); }
+  .hero p.desc{ color:var(--text-gray); font-size:15.5px; line-height:1.7; max-width:460px; margin-bottom:30px; }
+  .hero-ctas{ display:flex; align-items:center; gap:26px; margin-bottom:44px; flex-wrap:wrap; }
+
+  .feature-row{ display:flex; gap:30px; flex-wrap:wrap; }
+  .feature-item{ display:flex; flex-direction:column; align-items:center; gap:12px; text-align:center; width:84px; }
+  .feature-icon{
+    width:54px; height:54px; border-radius:50%; background:#fdf3e4; display:flex; align-items:center; justify-content:center;
+    transition:transform .3s ease, background .3s ease;
   }
-  .services-jump a:hover{ background:var(--gold); border-color:var(--gold); color:var(--navy); transform:translateY(-2px); }
+  .feature-item:hover .feature-icon{ transform:translateY(-6px) rotate(-6deg); background:var(--gold); }
+  .feature-item:hover .feature-icon svg path, .feature-item:hover .feature-icon svg circle{ stroke:#fff; }
+  .feature-item span{ font-size:12px; font-weight:600; color:var(--navy); line-height:1.35; }
+
+  .hero-media{ position:relative; }
+  .dot-pattern{ position:absolute; top:-20px; left:-16px; display:grid; grid-template-columns:repeat(4,7px); gap:9px; opacity:.55; z-index:2; }
+  .dot-pattern span{ width:5px; height:5px; border-radius:50%; background:var(--gold); }
+  .hero-frame{ position:relative; border-radius:28px; overflow:hidden; aspect-ratio:4/3.5; box-shadow:0 30px 60px -20px rgba(16,26,46,.35); }
+  .hero-frame img{ width:100%; height:100%; object-fit:cover; transform:scale(1.02); transition:transform .6s ease; }
+  .hero-frame:hover img{ transform:scale(1.07); }
+  .badge-exp{
+    position:absolute; top:22px; left:22px; background:rgba(16,26,46,.6); backdrop-filter:blur(6px);
+    color:#fff; padding:12px 18px; border-radius:14px; font-size:12.5px;
+  }
+  .badge-exp b{ display:block; font-family:'Poppins',sans-serif; font-size:22px; font-weight:700; color:var(--gold); }
+  .play-center{
+    position:absolute; top:50%; left:50%; transform:translate(-50%,-50%);
+    width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.92);
+    display:flex; align-items:center; justify-content:center; cursor:pointer;
+    animation:pulse 2.6s ease-in-out infinite;
+  }
+  @keyframes pulse{ 0%,100%{ box-shadow:0 0 0 0 rgba(255,255,255,.5); } 50%{ box-shadow:0 0 0 16px rgba(255,255,255,0); } }
+  .play-center:hover{ transform:translate(-50%,-50%) scale(1.1); }
+  .badge-projects{
+    position:absolute; bottom:22px; right:22px; background:rgba(16,26,46,.75); backdrop-filter:blur(6px);
+    color:#fff; padding:14px 18px; border-radius:16px; display:flex; align-items:center; gap:12px; font-size:11.5px;
+  }
+  .badge-projects .ico{ width:38px; height:38px; border-radius:10px; background:var(--gold); display:flex; align-items:center; justify-content:center; flex:0 0 38px; }
+  .badge-projects b{ display:block; font-family:'Poppins',sans-serif; font-size:16px; color:#fff; }
 
   /* =========================================================
      SERVICES GRID
   ========================================================= */
-  .services-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:26px; }
-  .service-card{
-    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
-    padding:32px 28px; transition:.3s; scroll-margin-top:90px;
+  .services{ padding:100px 0 70px; }
+  .cards-grid{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px; }
+  .card{
+    background:var(--white); border-radius:var(--radius-md); overflow:hidden; border:1px solid var(--border);
+    transition:transform .4s cubic-bezier(.16,.8,.3,1), box-shadow .4s ease, border-color .4s ease; position:relative;
   }
-  .service-card:hover{ box-shadow:var(--shadow); transform:translateY(-6px); border-color:transparent; }
-  .service-card .ic{
-    width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center;
-    font-size:24px; margin-bottom:20px; transition:.3s;
+  .card:hover{ transform:translateY(-10px); box-shadow:0 26px 50px -18px rgba(16,26,46,.25); border-color:transparent; }
+  .card-media{ position:relative; height:168px; overflow:hidden; }
+  .card-media img{ width:100%; height:100%; object-fit:cover; transition:transform .6s ease; }
+  .card:hover .card-media img{ transform:scale(1.1); }
+  .card-icon{
+    position:absolute; left:22px; bottom:-24px; width:52px; height:52px; border-radius:50%;
+    background:#fff; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 18px rgba(16,26,46,.15);
+    transition:background .3s ease, transform .3s ease;
   }
-  .service-card:hover .ic{ transform:scale(1.1) rotate(-4deg); }
-  .service-card:nth-child(1) .ic{ background:#eef2ff; color:#4f46e5; }
-  .service-card:nth-child(2) .ic{ background:#eafbf1; color:#16a34a; }
-  .service-card:nth-child(3) .ic{ background:#fdf3e4; color:var(--gold-dark); }
-  .service-card:nth-child(4) .ic{ background:#f2ecff; color:#7c3aed; }
-  .service-card:nth-child(5) .ic{ background:#fdf1f4; color:#e0475a; }
-  .service-card:nth-child(6) .ic{ background:#e6f7fb; color:#0891b2; }
-  .service-card h3{ font-size:19px; margin-bottom:14px; }
-  .service-list{ display:flex; flex-direction:column; gap:9px; }
-  .service-list li{ display:flex; align-items:flex-start; gap:8px; font-size:13.5px; color:var(--text-gray); line-height:1.5; }
+  .card:hover .card-icon{ background:var(--gold); transform:rotate(-8deg) scale(1.05); }
+  .card:hover .card-icon svg path, .card:hover .card-icon svg circle{ stroke:#fff; }
+  .card-arrow{
+    position:absolute; right:18px; top:18px; width:38px; height:38px; border-radius:50%; background:rgba(255,255,255,.9);
+    display:flex; align-items:center; justify-content:center; transition:background .3s, transform .3s;
+  }
+  .card:hover .card-arrow{ background:var(--gold); transform:rotate(45deg); }
+  .card:hover .card-arrow svg path{ stroke:#fff; }
+  .card-body{ padding:38px 24px 26px; position:relative; }
+  .card-num{ position:absolute; right:22px; top:24px; font-family:'Poppins',sans-serif; font-size:32px; font-weight:700; color:#f1f0ec; }
+  .card-body h3{ font-size:18.5px; font-weight:700; margin-bottom:8px; max-width:78%; line-height:1.3; }
+  .card-body > p{ color:var(--text-gray); font-size:13.5px; line-height:1.6; margin-bottom:14px; }
+  .service-list{ display:flex; flex-direction:column; gap:6px; margin-bottom:16px; }
+  .service-list li{ display:flex; align-items:flex-start; gap:7px; font-size:12.5px; color:var(--text-gray); line-height:1.5; }
   .service-list li::before{ content:"✓"; color:var(--gold-dark); font-weight:700; flex:0 0 auto; }
+
+  /* =========================================================
+     STATS BAR
+  ========================================================= */
+  .stats-bar{
+    background:linear-gradient(120deg, var(--navy-2), var(--navy-3)); border-radius:26px;
+    margin:40px auto 100px; display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px; padding:38px 50px;
+  }
+  .stat{ display:flex; align-items:center; gap:14px; color:#fff; }
+  .stat .ico{ width:44px; height:44px; border-radius:12px; background:rgba(234,163,59,.15); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .stat b{ font-family:'Poppins',sans-serif; font-size:23px; font-weight:700; display:block; color:#fff; }
+  .stat span{ font-size:12px; color:#b8c0d6; }
+  .divider-v{ width:1px; background:rgba(255,255,255,.12); }
+
+  /* =========================================================
+     PROCESS
+  ========================================================= */
+  .process{ padding:20px 0 100px; }
+  .steps{ display:flex; justify-content:space-between; align-items:flex-start; position:relative; flex-wrap:wrap; gap:30px; }
+  .steps::before{
+    content:""; position:absolute; top:35px; left:70px; right:70px; height:2px;
+    background-image:linear-gradient(to right, var(--border) 60%, transparent 40%);
+    background-size:14px 2px; background-repeat:repeat-x;
+  }
+  .step{ display:flex; flex-direction:column; align-items:center; width:180px; position:relative; z-index:2; text-align:center; }
+  .step-circle{
+    width:70px; height:70px; border-radius:50%; background:#fff; border:1.5px solid var(--border);
+    display:flex; align-items:center; justify-content:center; margin-bottom:20px;
+    transition:transform .35s ease, background .35s ease, border-color .35s;
+  }
+  .step:hover .step-circle{ background:var(--gold); border-color:var(--gold); transform:scale(1.1) translateY(-4px); }
+  .step:hover .step-circle svg path, .step:hover .step-circle svg circle, .step:hover .step-circle svg rect{ stroke:#fff; }
+  .step-num{ font-size:11.5px; color:var(--gold-dark); font-weight:700; letter-spacing:.08em; margin-bottom:6px; }
+  .step h4{ font-weight:700; font-size:15px; margin-bottom:8px; }
+  .step p{ font-size:12.5px; color:var(--text-gray); line-height:1.55; }
 
   /* =========================================================
      CTA
@@ -154,20 +247,86 @@
   .cta-banner{
     background:linear-gradient(120deg, var(--navy-2), var(--navy-3));
     border-radius:var(--radius-lg); padding:64px; display:grid; grid-template-columns:1.1fr 1fr;
-    gap:50px; align-items:center; color:var(--white); overflow:hidden;
+    gap:50px; align-items:center; color:#fff; overflow:hidden;
   }
   .cta-left .badge2{
     display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:1px; color:var(--gold);
     background:rgba(234,163,59,.12); padding:7px 16px; border-radius:20px; margin-bottom:20px;
   }
-  .cta-left h2{ font-size:34px; margin-bottom:16px; color:var(--white); }
+  .cta-left h2{ font-size:32px; margin-bottom:16px; color:#fff; }
   .cta-left h2 span{ color:var(--gold); }
-  .cta-left > p{ color:rgba(255,255,255,.65); font-size:15px; margin-bottom:30px; max-width:420px; }
+  .cta-left > p{ color:rgba(255,255,255,.65); font-size:14.5px; margin-bottom:28px; max-width:400px; line-height:1.7; }
   .cta-btns{ display:flex; gap:14px; flex-wrap:wrap; }
-  .cta-btns .btn-outline-light{ background:transparent; color:var(--white); border:1.5px solid rgba(255,255,255,.5); }
-  .cta-btns .btn-outline-light:hover{ background:rgba(255,255,255,.12); }
-  .cta-right{ position:relative; border-radius:14px; overflow:hidden; height:320px; }
-  .cta-right img{ width:100%; height:100%; object-fit:cover; }
+  .cta-media{ position:relative; border-radius:16px; overflow:hidden; height:280px; }
+  .cta-media img{ width:100%; height:100%; object-fit:cover; transition:transform .6s ease; }
+  .cta-media:hover img{ transform:scale(1.08); }
+  .cta-media .play-center{ width:56px; height:56px; }
+
+  /* =========================================================
+     TESTIMONIALS
+  ========================================================= */
+  .testimonials{ padding:0 0 100px; }
+  .placeholder-note{ font-size:12.5px; color:var(--text-mute); text-align:center; margin-top:-36px; margin-bottom:36px; }
+  .test-track-wrap{ display:flex; align-items:center; gap:20px; }
+  .test-track{ display:grid; grid-template-columns:repeat(3,1fr); gap:26px; flex:1; }
+  .test-card{
+    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md); padding:30px 26px;
+    transition:transform .35s ease, box-shadow .35s ease;
+  }
+  .test-card:hover{ transform:translateY(-8px); box-shadow:0 24px 46px -20px rgba(16,26,46,.2); }
+  .quote-mark{ font-family:'Poppins',sans-serif; font-size:34px; color:var(--gold); line-height:1; margin-bottom:12px; }
+  .test-card p{ color:var(--text-dark); font-size:13.5px; line-height:1.7; margin-bottom:20px; min-height:88px; }
+  .test-person{ display:flex; align-items:center; gap:12px; }
+  .test-avatar{
+    width:42px; height:42px; border-radius:50%; background:var(--bg-light); color:var(--gold-dark);
+    display:flex; align-items:center; justify-content:center; font-size:17px; flex:0 0 42px;
+  }
+  .test-name{ font-weight:700; font-size:13.5px; }
+  .test-role{ font-size:12px; color:var(--text-gray); }
+  .test-stars{ margin-left:auto; color:var(--gold); font-size:12.5px; letter-spacing:2px; }
+  .nav-arrow{
+    width:44px; height:44px; border-radius:50%; border:1px solid var(--border); background:#fff;
+    display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0;
+    transition:background .25s, transform .2s;
+  }
+  .nav-arrow:hover{ background:var(--navy); transform:scale(1.08); }
+  .nav-arrow:hover svg path{ stroke:#fff; }
+  .dots{ display:flex; justify-content:center; gap:8px; margin-top:32px; }
+  .dots span{ width:7px; height:7px; border-radius:50%; background:var(--border); transition:background .3s, width .3s; }
+  .dots span.active{ background:var(--gold); width:22px; border-radius:6px; }
+
+  /* =========================================================
+     CONTACT
+  ========================================================= */
+  .contact{ padding-bottom:90px; }
+  .contact-grid{
+    display:grid; grid-template-columns:1fr 1.15fr; border-radius:var(--radius-lg); overflow:hidden;
+    box-shadow:0 30px 60px -30px rgba(16,26,46,.3);
+  }
+  .contact-left{ background:linear-gradient(150deg, var(--navy-2), var(--navy-3)); color:#fff; padding:52px 44px; position:relative; overflow:hidden; }
+  .contact-left::after{
+    content:""; position:absolute; width:280px; height:280px; border-radius:50%;
+    background:radial-gradient(circle, rgba(234,163,59,.25), transparent 70%); top:-100px; right:-100px;
+  }
+  .contact-left .eyebrow{ color:var(--gold); }
+  .contact-left h2{ font-size:28px; font-weight:700; margin-bottom:14px; color:#fff; }
+  .contact-left > p{ color:#b8c0d6; font-size:13.5px; margin-bottom:32px; max-width:340px; line-height:1.6; }
+  .contact-info{ display:flex; flex-direction:column; gap:18px; position:relative; z-index:2; }
+  .contact-info div{ display:flex; align-items:center; gap:14px; font-size:13.5px; }
+  .contact-info .ico{ width:38px; height:38px; border-radius:10px; background:rgba(255,255,255,.08); display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .contact-right{ background:#fff; padding:52px 44px; }
+  .contact-right h3{ font-size:19px; font-weight:700; margin-bottom:22px; }
+  .form-row{ display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:14px; }
+  .form-field{ display:flex; flex-direction:column; gap:6px; }
+  .form-field.full{ grid-column:1/-1; }
+  .form-field label{ font-size:12px; font-weight:600; color:var(--text-gray); }
+  .form-field input, .form-field textarea{
+    border:1px solid var(--border); border-radius:10px; padding:12px 14px; font-family:'Inter',sans-serif; font-size:13.5px;
+    outline:none; transition:border-color .2s, box-shadow .2s; background:var(--bg-light); color:var(--text-dark);
+  }
+  .form-field input:focus, .form-field textarea:focus{ border-color:var(--gold); box-shadow:0 0 0 4px rgba(234,163,59,.15); }
+  .contact-right .btn-gold{ width:100%; margin-top:6px; padding:14px; }
+  .form-note{ font-size:11.5px; color:var(--text-mute); margin-top:10px; text-align:center; }
 
   /* =========================================================
      FOOTER
@@ -179,16 +338,16 @@
     border-bottom:1px solid rgba(255,255,255,.08);
   }
   .footer-logo .pie{ color:var(--gold); font-family:'Poppins',sans-serif; font-weight:800; font-size:22px; }
-  .footer-logo .sub{ font-size:9px; letter-spacing:2px; color:var(--white); opacity:.7; }
+  .footer-logo .sub{ font-size:9px; letter-spacing:2px; color:#fff; opacity:.7; }
   .footer-grid p{ font-size:13px; line-height:1.7; margin-top:14px; max-width:230px; }
-  footer h5{ color:var(--white); font-size:14.5px; margin-bottom:20px; }
+  footer h5{ color:#fff; font-size:14.5px; margin-bottom:20px; }
   footer ul li{ margin-bottom:11px; font-size:13px; }
   footer ul li a:hover{ color:var(--gold); }
   .footer-contact li{ display:flex; gap:8px; align-items:flex-start; }
   .socials{ display:flex; gap:10px; margin-top:20px; }
   .socials a{
     width:32px; height:32px; border-radius:50%; background:rgba(255,255,255,.08);
-    display:flex; align-items:center; justify-content:center; font-size:12.5px; color:var(--white); transition:.2s;
+    display:flex; align-items:center; justify-content:center; font-size:12.5px; color:#fff; transition:.2s;
   }
   .socials a:hover{ background:var(--gold); }
   .footer-bottom{
@@ -237,24 +396,14 @@
   }
 
   /* =========================================================
-     SCROLL-REVEAL
-  ========================================================= */
-  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s ease; }
-  .reveal.in-view{ opacity:1; transform:translateY(0); }
-  .services-grid.reveal .service-card{ opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease; }
-  .services-grid.reveal.in-view .service-card{ opacity:1; transform:translateY(0); }
-  .services-grid.reveal.in-view .service-card:nth-child(2){ transition-delay:.08s; }
-  .services-grid.reveal.in-view .service-card:nth-child(3){ transition-delay:.16s; }
-  .services-grid.reveal.in-view .service-card:nth-child(4){ transition-delay:.24s; }
-  .services-grid.reveal.in-view .service-card:nth-child(5){ transition-delay:.32s; }
-  .services-grid.reveal.in-view .service-card:nth-child(6){ transition-delay:.4s; }
-
-  /* =========================================================
      RESPONSIVE
   ========================================================= */
   @media (max-width:1180px){
-    .services-grid{ grid-template-columns:repeat(2,1fr); }
+    .hero-grid, .cta-banner, .contact-grid{ grid-template-columns:1fr; }
+    .cards-grid{ grid-template-columns:repeat(2,1fr); }
     .footer-grid{ grid-template-columns:1fr 1fr; }
+    .steps::before{ display:none; }
+    .test-track{ grid-template-columns:1fr; }
   }
   @media (max-width:860px){
     .nav-links{ display:none; }
@@ -262,14 +411,16 @@
     .nav-right .btn{ display:none; }
     .wrap{ padding:0 24px; }
     section{ padding:64px 0; }
-    .services-hero h1{ font-size:32px; }
-    .cta-banner{ grid-template-columns:1fr; padding:44px; }
+    .hero h1{ font-size:32px; }
+    .cta-banner{ padding:44px; }
+    .form-row{ grid-template-columns:1fr; }
     footer{ padding:50px 24px 20px; }
   }
   @media (max-width:600px){
-    .services-grid{ grid-template-columns:1fr; }
+    .cards-grid{ grid-template-columns:1fr; }
     .footer-grid{ grid-template-columns:1fr; }
     .cta-banner{ padding:34px; }
+    .feature-row{ justify-content:center; }
     .nav, .nav.solid{ padding:14px 18px; }
     .phone-pill{ font-size:12.5px; padding:8px 12px; gap:6px; }
     .whatsapp-widget{ right:16px; bottom:16px; }
@@ -307,113 +458,345 @@
   </div>
   <div class="nav-right">
     <div class="phone-pill">📞 +92 300 1234567</div>
-    <a href="{% url 'website_homepage' %}#contact" class="btn btn-gold btn-sm">Book a Call</a>
+    <a href="{% url 'website_homepage' %}#contact" class="btn btn-dark btn-sm">Book a Call →</a>
   </div>
   <button class="menu-toggle">☰</button>
 </nav>
 
-<!-- ============ SERVICES HERO ============ -->
-<section class="services-hero">
-  <div class="wrap reveal">
-    <span class="eyebrow">Our Services</span>
-    <h1>Complete Real Estate Solutions,<br>All in <span>One Place.</span></h1>
-    <p>From buying your first plot to designing your dream interior — PIE Real Estate covers every step of your property journey across Naya Nazimabad, Bahria Town, and Silk Gardens.</p>
-    <div class="services-hero-cta">
-      <a href="{% url 'website_homepage' %}#properties" class="btn btn-gold">Explore Properties →</a>
-      <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-dark">Book a Consultation</a>
+<!-- ============ HERO ============ -->
+<section class="hero">
+  <div class="wrap hero-grid">
+    <div class="reveal">
+      <div class="eyebrow">Our Services</div>
+      <h1>Comprehensive Real Estate Solutions for <span>Every Step of the Way</span></h1>
+      <p class="desc">At PIE Real Estate, we offer end-to-end real estate services designed to help you buy, sell, rent, build, renovate, and invest with confidence across Naya Nazimabad, Bahria Town, and Silk Gardens.</p>
+      <div class="hero-ctas">
+        <a href="{% url 'website_homepage' %}#properties" class="btn btn-dark">Explore Properties →</a>
+        <a class="play-mini" href="#buying-selling">
+          <span class="circle"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 1L10 6L2 11V1Z" fill="#16213a"/></svg></span>
+          See All Services
+        </a>
+      </div>
+      <div class="feature-row">
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 2L3 8v13h6v-7h6v7h6V8L12 2Z" stroke="#eaa33b" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+          <span>Trusted Expertise</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="#eaa33b" stroke-width="1.6"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6" stroke="#eaa33b" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <span>Client First Approach</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1 1 3 6.2" stroke="#eaa33b" stroke-width="1.6" stroke-linecap="round"/><path d="M4 12V7m0 5h5" stroke="#eaa33b" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <span>Transparent Process</span>
+        </div>
+        <div class="feature-item">
+          <div class="feature-icon"><svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="8.5" stroke="#eaa33b" stroke-width="1.6"/><path d="M12 7v5l3.5 2" stroke="#eaa33b" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+          <span>24/7 Support</span>
+        </div>
+      </div>
     </div>
-    <div class="services-jump">
-      <a href="#buying-selling">Buying &amp; Selling</a>
-      <a href="#rental-leasing">Rental &amp; Leasing</a>
-      <a href="#construction">Construction</a>
-      <a href="#interior-design">Interior Design</a>
-      <a href="#renovation">Renovation</a>
-      <a href="#consultation">Consultation</a>
+
+    <div class="hero-media reveal-scale">
+      <div class="dot-pattern">
+        <span></span><span></span><span></span><span></span>
+        <span></span><span></span><span></span><span></span>
+      </div>
+      <div class="hero-frame">
+        <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?q=80&w=1000&auto=format&fit=crop" alt="PIE Real Estate services">
+        <div class="badge-exp"><b data-count="5">0+</b>Years of Experience</div>
+        <div class="play-center">
+          <svg width="18" height="18" viewBox="0 0 18 18"><path d="M4 2l12 7-12 7V2Z" fill="#16213a"/></svg>
+        </div>
+        <div class="badge-projects">
+          <div class="ico"><svg width="18" height="18" viewBox="0 0 24 24" fill="none"><path d="M5 21V5l7-3 7 3v16" stroke="#16213a" stroke-width="1.6"/></svg></div>
+          <div><span style="color:#b8c0d6">Successfully Delivered</span><b data-count="150">0+ Properties</b></div>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 <!-- ============ SERVICES GRID ============ -->
-<section>
+<section class="services">
   <div class="wrap">
-    <div class="services-grid reveal">
-      <div class="service-card" id="buying-selling">
-        <div class="ic">🏠</div>
-        <h3>Buying &amp; Selling of Properties</h3>
-        <ul class="service-list">
-          <li>Houses</li>
-          <li>Plots</li>
-          <li>Apartments</li>
-          <li>Commercial Units</li>
-        </ul>
+    <div class="section-head reveal">
+      <div class="eyebrow" style="justify-content:center">What We Offer</div>
+      <h2>Our Real Estate <span>Services</span></h2>
+      <p>We provide a wide range of services tailored to meet your unique needs and help you achieve your real estate goals.</p>
+    </div>
+
+    <div class="cards-grid stagger">
+      <div class="card reveal" id="buying-selling" style="--i:0">
+        <div class="card-media">
+          <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?q=80&w=800&auto=format&fit=crop" alt="Buying and Selling of Properties">
+          <div class="card-arrow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="card-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 11.5 12 4l8 7.5" stroke="#16213a" stroke-width="1.7" stroke-linecap="round"/><path d="M6 10v9h12v-9" stroke="#16213a" stroke-width="1.7"/></svg></div>
+        </div>
+        <div class="card-body">
+          <div class="card-num">01</div>
+          <h3>Buying &amp; Selling of Properties</h3>
+          <p>Get the best deals with our market expertise and personalized assistance.</p>
+          <ul class="service-list">
+            <li>Houses</li><li>Plots</li><li>Apartments</li><li>Commercial Units</li>
+          </ul>
+          <a class="btn-text" href="#contact-form">Get in Touch <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#d6902a" stroke-width="2" stroke-linecap="round"/></svg></a>
+        </div>
       </div>
-      <div class="service-card" id="rental-leasing">
-        <div class="ic">🔑</div>
-        <h3>Rental &amp; Leasing Services</h3>
-        <ul class="service-list">
-          <li>Family &amp; commercial rentals</li>
-          <li>Background-verified tenants</li>
-          <li>Legal rental agreements</li>
-        </ul>
+
+      <div class="card reveal" id="rental-leasing" style="--i:1">
+        <div class="card-media">
+          <img src="https://images.unsplash.com/photo-1600607687920-4e2a09cf159d?q=80&w=800&auto=format&fit=crop" alt="Rental and Leasing Services">
+          <div class="card-arrow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="card-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.6 5.4 6 .8-4.3 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.4 9.2l6-.8L12 3Z" stroke="#16213a" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="card-body">
+          <div class="card-num">02</div>
+          <h3>Rental &amp; Leasing Services</h3>
+          <p>Hassle-free agreements and support for tenants and landlords alike.</p>
+          <ul class="service-list">
+            <li>Family &amp; commercial rentals</li><li>Background-verified tenants</li><li>Legal rental agreements</li>
+          </ul>
+          <a class="btn-text" href="#contact-form">Get in Touch <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#d6902a" stroke-width="2" stroke-linecap="round"/></svg></a>
+        </div>
       </div>
-      <div class="service-card" id="construction">
-        <div class="ic">🏗️</div>
-        <h3>Construction Services</h3>
-        <ul class="service-list">
-          <li>Gray &amp; turnkey construction</li>
-          <li>Modern design planning</li>
-          <li>Quality material assurance</li>
-        </ul>
+
+      <div class="card reveal" id="construction" style="--i:2">
+        <div class="card-media">
+          <img src="https://images.unsplash.com/photo-1541976590-713941681591?q=80&w=800&auto=format&fit=crop" alt="Construction Services">
+          <div class="card-arrow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="card-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M3 21h18M5 21V10l4-2 4 2 4-2v13" stroke="#16213a" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="card-body">
+          <div class="card-num">03</div>
+          <h3>Construction Services</h3>
+          <p>From concept to completion, we build quality spaces that last.</p>
+          <ul class="service-list">
+            <li>Gray &amp; turnkey construction</li><li>Modern design planning</li><li>Quality material assurance</li>
+          </ul>
+          <a class="btn-text" href="#contact-form">Get in Touch <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#d6902a" stroke-width="2" stroke-linecap="round"/></svg></a>
+        </div>
       </div>
-      <div class="service-card" id="interior-design">
-        <div class="ic">🛋️</div>
-        <h3>Interior Designing</h3>
-        <ul class="service-list">
-          <li>Luxury interiors</li>
-          <li>Residential &amp; commercial projects</li>
-          <li>Customized designs</li>
-        </ul>
+
+      <div class="card reveal" id="interior-design" style="--i:0">
+        <div class="card-media">
+          <img src="https://images.unsplash.com/photo-1618221195710-dd6b41faaea6?q=80&w=800&auto=format&fit=crop" alt="Interior Designing">
+          <div class="card-arrow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="card-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 18v-6a8 8 0 0 1 16 0v6" stroke="#16213a" stroke-width="1.6"/><rect x="3" y="17" width="4" height="4" rx="1" stroke="#16213a" stroke-width="1.6"/><rect x="17" y="17" width="4" height="4" rx="1" stroke="#16213a" stroke-width="1.6"/></svg></div>
+        </div>
+        <div class="card-body">
+          <div class="card-num">04</div>
+          <h3>Interior Designing</h3>
+          <p>Transform your space with creative, functional design solutions.</p>
+          <ul class="service-list">
+            <li>Luxury interiors</li><li>Residential &amp; commercial projects</li><li>Customized designs</li>
+          </ul>
+          <a class="btn-text" href="#contact-form">Get in Touch <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#d6902a" stroke-width="2" stroke-linecap="round"/></svg></a>
+        </div>
       </div>
-      <div class="service-card" id="renovation">
-        <div class="ic">🛠️</div>
-        <h3>Renovation Services</h3>
-        <ul class="service-list">
-          <li>Complete home renovation</li>
-          <li>Kitchen &amp; bathroom remodeling</li>
-          <li>Flooring &amp; false ceiling work</li>
-          <li>Electrical &amp; plumbing upgrades</li>
-          <li>Wall finishing, paint &amp; texture work</li>
-          <li>Front elevation &amp; exterior upgrades</li>
-        </ul>
+
+      <div class="card reveal" id="renovation" style="--i:1">
+        <div class="card-media">
+          <img src="https://images.unsplash.com/photo-1503387762-592deb58ef4e?q=80&w=800&auto=format&fit=crop" alt="Renovation Services">
+          <div class="card-arrow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="card-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M14 4l6 6-9.5 9.5H4v-6.5L14 4Z" stroke="#16213a" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        </div>
+        <div class="card-body">
+          <div class="card-num">05</div>
+          <h3>Renovation Services</h3>
+          <p>We bring new life to your existing spaces, inside and out.</p>
+          <ul class="service-list">
+            <li>Complete home renovation</li>
+            <li>Kitchen &amp; bathroom remodeling</li>
+            <li>Flooring &amp; false ceiling work</li>
+            <li>Electrical &amp; plumbing upgrades</li>
+            <li>Wall finishing, paint &amp; texture work</li>
+            <li>Front elevation &amp; exterior upgrades</li>
+          </ul>
+          <a class="btn-text" href="#contact-form">Get in Touch <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#d6902a" stroke-width="2" stroke-linecap="round"/></svg></a>
+        </div>
       </div>
-      <div class="service-card" id="consultation">
-        <div class="ic">📊</div>
-        <h3>Property Consultation</h3>
-        <ul class="service-list">
-          <li>Market analysis</li>
-          <li>Investment advisory</li>
-          <li>Legal guidance</li>
-        </ul>
+
+      <div class="card reveal" id="consultation" style="--i:2">
+        <div class="card-media">
+          <img src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?q=80&w=800&auto=format&fit=crop" alt="Property Consultation">
+          <div class="card-arrow"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+          <div class="card-icon"><svg width="21" height="21" viewBox="0 0 24 24" fill="none"><path d="M4 18v-2a5 5 0 0 1 5-5h6a5 5 0 0 1 5 5v2" stroke="#16213a" stroke-width="1.6"/><circle cx="9" cy="7" r="2.4" stroke="#16213a" stroke-width="1.6"/><circle cx="17" cy="8" r="2" stroke="#16213a" stroke-width="1.6"/></svg></div>
+        </div>
+        <div class="card-body">
+          <div class="card-num">06</div>
+          <h3>Property Consultation</h3>
+          <p>Professional advice for all your real estate decisions.</p>
+          <ul class="service-list">
+            <li>Market analysis</li><li>Investment advisory</li><li>Legal guidance</li>
+          </ul>
+          <a class="btn-text" href="#contact-form">Get in Touch <svg width="13" height="13" viewBox="0 0 24 24" fill="none"><path d="M5 12h14M13 6l6 6-6 6" stroke="#d6902a" stroke-width="2" stroke-linecap="round"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ STATS BAR ============ -->
+<div class="wrap">
+  <div class="stats-bar reveal">
+    <div class="stat">
+      <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M5 21V5l7-3 7 3v16" stroke="#eaa33b" stroke-width="1.6"/></svg></div>
+      <div><b data-count="150">0</b><span>Properties Sold</span></div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="stat">
+      <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.4" stroke="#eaa33b" stroke-width="1.6"/><path d="M5 20c1.2-4 4-6 7-6s5.8 2 7 6" stroke="#eaa33b" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+      <div><b data-count="300">0</b><span>Happy Clients</span></div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="stat">
+      <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-6.3-7-11.5A7 7 0 0 1 19 9.5C19 14.7 12 21 12 21Z" stroke="#eaa33b" stroke-width="1.6"/><circle cx="12" cy="9.5" r="2.4" stroke="#eaa33b" stroke-width="1.6"/></svg></div>
+      <div><b data-count="3">0</b><span>Communities Covered</span></div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="stat">
+      <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.6 5.4 6 .8-4.3 4.2 1 6-5.3-2.8-5.3 2.8 1-6L3.4 9.2l6-.8L12 3Z" stroke="#eaa33b" stroke-width="1.5" stroke-linejoin="round"/></svg></div>
+      <div><b>Growing</b><span>Expert Agents</span></div>
+    </div>
+    <div class="divider-v"></div>
+    <div class="stat">
+      <div class="ico"><svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M8 21h8M12 17v4M6 4h12v3a6 6 0 0 1-12 0V4Z" stroke="#eaa33b" stroke-width="1.6"/><path d="M6 5H3v2a3 3 0 0 0 3 3M18 5h3v2a3 3 0 0 1-3 3" stroke="#eaa33b" stroke-width="1.6"/></svg></div>
+      <div><b data-count="5">0</b><span>Years of Experience</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ PROCESS ============ -->
+<section class="process">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div class="eyebrow" style="justify-content:center">Our Process</div>
+      <h2>A Seamless Experience <span>From Start to Finish</span></h2>
+    </div>
+    <div class="steps stagger">
+      <div class="step reveal" style="--i:0">
+        <div class="step-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="10.5" cy="10.5" r="6.5" stroke="#16213a" stroke-width="1.6"/><path d="M20 20l-4.8-4.8" stroke="#16213a" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <div class="step-num">01</div><h4>Discover</h4><p>We understand your needs and goals.</p>
+      </div>
+      <div class="step reveal" style="--i:1">
+        <div class="step-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M6 3h9l4 4v14H6V3Z" stroke="#16213a" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12h6M9 16h6" stroke="#16213a" stroke-width="1.6" stroke-linecap="round"/></svg></div>
+        <div class="step-num">02</div><h4>Plan &amp; Advise</h4><p>Our experts create the best strategy for you.</p>
+      </div>
+      <div class="step reveal" style="--i:2">
+        <div class="step-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M20.8 4.6a5 5 0 0 0-7.1 0L12 6.3l-1.7-1.7a5 5 0 1 0-7 7.1L12 20.4l8.8-8.7a5 5 0 0 0 0-7.1Z" stroke="#16213a" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <div class="step-num">03</div><h4>Execute</h4><p>We carry out the plan with precision and care.</p>
+      </div>
+      <div class="step reveal" style="--i:3">
+        <div class="step-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><rect x="4" y="10" width="16" height="10" rx="2" stroke="#16213a" stroke-width="1.6"/><path d="M8 10V7a4 4 0 0 1 8 0v3" stroke="#16213a" stroke-width="1.6"/></svg></div>
+        <div class="step-num">04</div><h4>Deliver</h4><p>We deliver results that exceed expectations.</p>
+      </div>
+      <div class="step reveal" style="--i:4">
+        <div class="step-circle"><svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 21s-7-4.5-9.3-9A5.4 5.4 0 0 1 12 6.5 5.4 5.4 0 0 1 21.3 12c-2.3 4.5-9.3 9-9.3 9Z" stroke="#16213a" stroke-width="1.6" stroke-linejoin="round"/></svg></div>
+        <div class="step-num">05</div><h4>Support</h4><p>Our support continues even after delivery.</p>
       </div>
     </div>
   </div>
 </section>
 
 <!-- ============ CTA ============ -->
-<section>
+<div class="wrap">
+  <div class="cta-banner reveal">
+    <div class="cta-left">
+      <span class="badge2">READY TO GET STARTED?</span>
+      <h2>Let's Find the Right Solution <span>for Your Needs</span></h2>
+      <p>Whether you're buying, selling, renting, building, or renovating — we're here to help you every step of the way.</p>
+      <div class="cta-btns">
+        <a href="#contact-form" class="btn btn-gold">Book a Consultation →</a>
+        <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-light">📞 Contact Us</a>
+      </div>
+    </div>
+    <div class="cta-media">
+      <img src="https://images.unsplash.com/photo-1616486338812-3dadae4b4ace?q=80&w=1000&auto=format&fit=crop" alt="Interior design">
+      <div class="play-center">
+        <svg width="16" height="16" viewBox="0 0 18 18"><path d="M4 2l12 7-12 7V2Z" fill="#16213a"/></svg>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ TESTIMONIALS ============ -->
+<section class="testimonials">
   <div class="wrap">
-    <div class="cta-banner reveal">
-      <div class="cta-left">
-        <span class="badge2">NEED A HAND?</span>
-        <h2>Let's Talk About<br>Your <span>Next Project.</span></h2>
-        <p>Whether it's buying, renting, building, renovating, or designing — our team is ready to help.</p>
-        <div class="cta-btns">
-          <a href="{% url 'website_homepage' %}#contact" class="btn btn-gold">Get in Touch →</a>
-          <a href="{% url 'website_about' %}" class="btn btn-outline-light">About Us</a>
+    <div class="section-head reveal">
+      <div class="eyebrow" style="justify-content:center">What Our Clients Say</div>
+      <h2>Trusted by Hundreds of <span>Happy Clients</span></h2>
+    </div>
+    <p class="placeholder-note">Sample testimonials shown below — replace with real client reviews before publishing.</p>
+    <div class="test-track-wrap">
+      <div class="nav-arrow" id="prevBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M15 6l-6 6 6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+      <div class="test-track stagger">
+        <div class="test-card reveal" style="--i:0">
+          <div class="quote-mark">&ldquo;</div>
+          <p>PIE Real Estate made my home buying experience smooth and stress-free. Their team is professional, responsive, and truly cares.</p>
+          <div class="test-person">
+            <div class="test-avatar">🙂</div>
+            <div><div class="test-name">Verified Buyer</div><div class="test-role">Naya Nazimabad</div></div>
+            <div class="test-stars">★★★★★</div>
+          </div>
+        </div>
+        <div class="test-card reveal" style="--i:1">
+          <div class="quote-mark">&ldquo;</div>
+          <p>I found the perfect rental property within days. The process was transparent and everything was handled with great care.</p>
+          <div class="test-person">
+            <div class="test-avatar">🙂</div>
+            <div><div class="test-name">Happy Tenant</div><div class="test-role">Silk Gardens</div></div>
+            <div class="test-stars">★★★★★</div>
+          </div>
+        </div>
+        <div class="test-card reveal" style="--i:2">
+          <div class="quote-mark">&ldquo;</div>
+          <p>Excellent service and expert advice throughout the sale of my property. Highly recommended!</p>
+          <div class="test-person">
+            <div class="test-avatar">🙂</div>
+            <div><div class="test-name">Property Seller</div><div class="test-role">Bahria Town</div></div>
+            <div class="test-stars">★★★★★</div>
+          </div>
         </div>
       </div>
-      <div class="cta-right">
-        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/cta-interior_hjh8uu.jpg" alt="PIE Real Estate services">
+      <div class="nav-arrow" id="nextBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none"><path d="M9 6l6 6-6 6" stroke="#16213a" stroke-width="2" stroke-linecap="round"/></svg></div>
+    </div>
+    <div class="dots">
+      <span class="active"></span><span></span><span></span>
+    </div>
+  </div>
+</section>
+
+<!-- ============ CONTACT ============ -->
+<section class="contact" id="contact-form">
+  <div class="wrap">
+    <div class="contact-grid reveal">
+      <div class="contact-left">
+        <div class="eyebrow">Have Questions?</div>
+        <h2>We're Here to Help!</h2>
+        <p>Reach out to our team for personalized assistance and expert advice on any of the services above.</p>
+        <div class="contact-info">
+          <div><div class="ico">📞</div> +92 300 1234567</div>
+          <div><div class="ico">✉️</div> info@pierealestate.com</div>
+          <div><div class="ico">📍</div> Sales Office, Naya Nazimabad, Karachi</div>
+        </div>
+      </div>
+      <div class="contact-right">
+        <h3>Send Us a Message</h3>
+        <form id="serviceContactForm">
+          <div class="form-row">
+            <div class="form-field"><label>Your Name</label><input type="text" id="cfName" placeholder="John Doe" required></div>
+            <div class="form-field"><label>Phone Number</label><input type="text" id="cfPhone" placeholder="+92 300 1234567"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-field full"><label>Email Address</label><input type="email" id="cfEmail" placeholder="john@example.com" required></div>
+          </div>
+          <div class="form-row">
+            <div class="form-field full"><label>How can we help you?</label><textarea id="cfMessage" rows="3" placeholder="Tell us about your requirements..."></textarea></div>
+          </div>
+          <button type="submit" class="btn btn-gold">Send Message →</button>
+          <p class="form-note">Opens your email app with the details prefilled to info@pierealestate.com.</p>
+        </form>
       </div>
     </div>
   </div>
@@ -490,17 +873,53 @@
   window.addEventListener('load', ()=> setTimeout(hidePreloader, 300));
   setTimeout(hidePreloader, 4000);
 
-  // Scroll-reveal animation
-  const revealEls = document.querySelectorAll('.reveal');
-  const revealObserver = new IntersectionObserver((entries)=>{
+  // Scroll reveal
+  const revealEls = document.querySelectorAll('.reveal, .reveal-scale');
+  const io = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{ if(e.isIntersecting){ e.target.classList.add('in-view'); io.unobserve(e.target); } });
+  }, { threshold:0.12 });
+  revealEls.forEach(el=>io.observe(el));
+
+  // Animated counters
+  const counters = document.querySelectorAll('[data-count]');
+  const counterIO = new IntersectionObserver((entries)=>{
     entries.forEach(entry=>{
-      if(entry.isIntersecting){
-        entry.target.classList.add('in-view');
-        revealObserver.unobserve(entry.target);
+      if(!entry.isIntersecting) return;
+      const el = entry.target;
+      const target = parseInt(el.dataset.count, 10);
+      const suffix = el.textContent.replace(/^[0-9]+/, '');
+      const duration = 1300;
+      const start = performance.now();
+      function tick(now){
+        const p = Math.min((now-start)/duration, 1);
+        const eased = 1 - Math.pow(1-p, 3);
+        el.textContent = Math.round(target * eased) + suffix;
+        if(p < 1) requestAnimationFrame(tick);
       }
+      requestAnimationFrame(tick);
+      counterIO.unobserve(el);
     });
-  }, { threshold: 0.1 });
-  revealEls.forEach(el=> revealObserver.observe(el));
+  }, { threshold:0.4 });
+  counters.forEach(c=>counterIO.observe(c));
+
+  // Testimonial dots (prev/next + auto-cycle)
+  const dots = document.querySelectorAll('.dots span');
+  let dotIndex = 0;
+  function rotateDots(){ dots.forEach(d=>d.classList.remove('active')); dots[dotIndex].classList.add('active'); }
+  document.getElementById('nextBtn').addEventListener('click', ()=>{ dotIndex = (dotIndex+1)%dots.length; rotateDots(); });
+  document.getElementById('prevBtn').addEventListener('click', ()=>{ dotIndex = (dotIndex-1+dots.length)%dots.length; rotateDots(); });
+  setInterval(()=>{ dotIndex = (dotIndex+1)%dots.length; rotateDots(); }, 5000);
+
+  // Contact form -> opens a prefilled email (no backend on this static page)
+  document.getElementById('serviceContactForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    const name = document.getElementById('cfName').value;
+    const phone = document.getElementById('cfPhone').value;
+    const email = document.getElementById('cfEmail').value;
+    const message = document.getElementById('cfMessage').value;
+    const body = `Name: ${name}\nPhone: ${phone}\nEmail: ${email}\n\n${message}`;
+    window.location.href = `mailto:info@pierealestate.com?subject=${encodeURIComponent('Service Inquiry from ' + name)}&body=${encodeURIComponent(body)}`;
+  });
 
   // Back to top
   const backTop = document.getElementById('backTop');
@@ -516,7 +935,6 @@
   }, 2500);
 
   // Mobile menu toggle
-  const nav = document.getElementById('mainNav');
   document.querySelector('.menu-toggle').addEventListener('click', function(){
     const links = document.querySelector('.nav-links');
     const visible = links.style.display === 'flex';
