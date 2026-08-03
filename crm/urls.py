@@ -18,10 +18,11 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import website_homepage
+from accounts.views import website_homepage, website_about
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', website_homepage, name='website_homepage'),
+    path('about/', website_about, name='website_about'),
     path('crm/', include('accounts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

@@ -105,6 +105,10 @@ def website_homepage(request):
     return render(request, 'website/homepage.html')
 
 
+def website_about(request):
+    return render(request, 'website/about.html')
+
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
