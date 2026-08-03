@@ -109,6 +109,10 @@ def website_about(request):
     return render(request, 'website/about.html')
 
 
+def website_services(request):
+    return render(request, 'website/services.html')
+
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')

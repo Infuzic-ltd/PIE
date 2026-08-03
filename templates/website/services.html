@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>About Us — PIE Real Estate</title>
+<title>Our Services — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -60,8 +60,7 @@
   .eyebrow{ font-size:14px; color:var(--gold-dark); font-weight:600; margin-bottom:8px; display:block; letter-spacing:.4px; }
   .section-head h2{ font-size:34px; font-weight:700; }
   .section-head h2 span{ color:var(--gold); }
-  .section-head p.sub{ font-size:15px; color:var(--text-gray); margin-top:12px; max-width:520px; }
-  .placeholder-note{ font-size:12.5px; color:var(--text-mute); margin-top:-28px; margin-bottom:36px; text-align:center; }
+  .section-head p.sub{ font-size:15px; color:var(--text-gray); margin-top:12px; max-width:560px; }
 
   /* =========================================================
      PRELOADER
@@ -110,156 +109,44 @@
   .menu-toggle{ display:none; color:var(--text-dark); font-size:26px; }
 
   /* =========================================================
-     ABOUT HERO
+     SERVICES HERO
   ========================================================= */
-  .about-hero{ padding:64px 0 30px; overflow:hidden; }
-  .about-hero .wrap{ display:grid; grid-template-columns:1.05fr 1fr; gap:60px; align-items:center; }
-  .about-hero h1{ font-size:44px; font-weight:700; margin:14px 0 18px; }
-  .about-hero h1 span{ color:var(--gold); }
-  .about-hero > .wrap > div:first-child > p{ font-size:15.5px; color:var(--text-gray); line-height:1.7; max-width:480px; margin-bottom:30px; }
-  .about-hero-cta{ display:flex; gap:14px; margin-bottom:44px; flex-wrap:wrap; }
-
-  .hero-stats{ display:flex; gap:30px; flex-wrap:wrap; }
-  .hero-stat{ display:flex; align-items:center; gap:12px; }
-  .hero-stat .ic{
-    width:44px; height:44px; border-radius:12px; flex:0 0 44px;
-    display:flex; align-items:center; justify-content:center; font-size:18px;
+  .services-hero{ background:var(--bg-light); text-align:center; padding:72px 0 60px; }
+  .services-hero h1{ font-size:42px; font-weight:700; margin:14px 0 18px; }
+  .services-hero h1 span{ color:var(--gold); }
+  .services-hero p{ font-size:15.5px; color:var(--text-gray); line-height:1.7; max-width:600px; margin:0 auto 34px; }
+  .services-hero-cta{ display:flex; gap:14px; justify-content:center; flex-wrap:wrap; margin-bottom:38px; }
+  .services-jump{ display:flex; gap:10px; flex-wrap:wrap; justify-content:center; }
+  .services-jump a{
+    padding:10px 20px; border-radius:30px; font-size:13px; font-weight:600;
+    background:var(--white); color:var(--text-gray); border:1px solid var(--border); transition:.2s;
   }
-  .hero-stat:nth-child(1) .ic{ background:#eef2ff; color:#4f46e5; }
-  .hero-stat:nth-child(2) .ic{ background:#eafbf1; color:#16a34a; }
-  .hero-stat:nth-child(3) .ic{ background:#fdf3e4; color:var(--gold-dark); }
-  .hero-stat:nth-child(4) .ic{ background:#fdf1f4; color:#e0475a; }
-  .hero-stat h3{ font-size:19px; font-weight:700; }
-  .hero-stat p{ font-size:12px; color:var(--text-gray); margin-top:1px; }
-
-  .about-hero-media{ position:relative; }
-  .dot-pattern{
-    position:absolute; top:-24px; right:-24px; width:120px; height:120px; z-index:0;
-    background-image:radial-gradient(var(--gold) 1.6px, transparent 1.6px);
-    background-size:14px 14px; opacity:.5;
-  }
-  .about-hero-img{
-    position:relative; z-index:1; border-radius:var(--radius-lg); overflow:hidden;
-    box-shadow:var(--shadow); height:420px;
-  }
-  .about-hero-img img{ width:100%; height:100%; object-fit:cover; }
-  .about-hero-img .play-overlay{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    background:rgba(10,15,28,.15);
-  }
-  .play-btn{
-    width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.92);
-    display:flex; align-items:center; justify-content:center; color:var(--navy); font-size:20px;
-    transition:.2s; animation:pulseRing 2.4s ease-out infinite;
-  }
-  .play-btn:hover{ background:#fff; transform:scale(1.08); }
-  @keyframes pulseRing{
-    0%{ box-shadow:0 0 0 0 rgba(255,255,255,.5); }
-    70%{ box-shadow:0 0 0 18px rgba(255,255,255,0); }
-    100%{ box-shadow:0 0 0 0 rgba(255,255,255,0); }
-  }
-  .floating-badge{
-    position:absolute; z-index:2; bottom:-22px; right:24px; background:var(--white);
-    border-radius:var(--radius-md); box-shadow:0 14px 34px rgba(16,26,46,.18);
-    padding:14px 20px; display:flex; align-items:center; gap:12px;
-    animation:floatY 3.6s ease-in-out infinite;
-  }
-  .floating-badge .ic{ font-size:22px; }
-  .floating-badge h4{ font-size:18px; font-weight:800; color:var(--gold-dark); }
-  .floating-badge p{ font-size:11px; color:var(--text-gray); }
-  @keyframes floatY{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
+  .services-jump a:hover{ background:var(--gold); border-color:var(--gold); color:var(--navy); transform:translateY(-2px); }
 
   /* =========================================================
-     WHO WE ARE + MISSION/VISION
+     SERVICES GRID
   ========================================================= */
-  .who-we-are .wrap{ display:grid; grid-template-columns:1fr 1.1fr; gap:70px; align-items:center; }
-  .who-media{ position:relative; }
-  .who-media-img{ border-radius:var(--radius-lg); overflow:hidden; height:400px; box-shadow:var(--shadow); }
-  .who-media-img img{ width:100%; height:100%; object-fit:cover; }
-  .mv-card{
-    position:absolute; width:210px; background:var(--white); border-radius:var(--radius-md);
-    box-shadow:0 14px 34px rgba(16,26,46,.18); padding:16px 18px; animation:floatY 4.2s ease-in-out infinite;
-  }
-  .mv-card .ic{
-    width:36px; height:36px; border-radius:10px; background:#fdf3e4; color:var(--gold-dark);
-    display:flex; align-items:center; justify-content:center; font-size:16px; margin-bottom:10px;
-  }
-  .mv-card h4{ font-size:14px; margin-bottom:5px; }
-  .mv-card p{ font-size:11.5px; color:var(--text-gray); line-height:1.5; }
-  .mv-mission{ left:-30px; bottom:-26px; animation-delay:0s; }
-  .mv-vision{ right:-30px; top:-26px; animation-delay:1.6s; }
-
-  .who-content h2{ font-size:32px; font-weight:700; margin-bottom:14px; }
-  .who-content h2 span{ color:var(--gold); }
-  .who-content > p{ font-size:15px; color:var(--text-gray); line-height:1.7; margin-bottom:30px; }
-  .value-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:22px; }
-  .value-item .ic{
-    width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center;
-    font-size:19px; margin-bottom:12px;
-  }
-  .value-item:nth-child(1) .ic{ background:#eef2ff; color:#4f46e5; }
-  .value-item:nth-child(2) .ic{ background:#eafbf1; color:#16a34a; }
-  .value-item:nth-child(3) .ic{ background:#f2ecff; color:#7c3aed; }
-  .value-item:nth-child(4) .ic{ background:#fdf3e4; color:var(--gold-dark); }
-  .value-item h4{ font-size:15.5px; margin-bottom:6px; }
-  .value-item p{ font-size:12.5px; color:var(--text-gray); line-height:1.6; }
-
-  /* =========================================================
-     TEAM
-  ========================================================= */
-  .team-section{ background:var(--bg-light); }
-  .team-wrap{ display:flex; justify-content:center; }
-  .team-card{
+  .services-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:26px; }
+  .service-card{
     background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
-    overflow:hidden; text-align:center; padding-bottom:22px; transition:.25s; width:100%; max-width:270px;
+    padding:32px 28px; transition:.3s; scroll-margin-top:90px;
   }
-  .team-card:hover{ box-shadow:var(--shadow); transform:translateY(-4px); }
-  .team-photo{ height:220px; overflow:hidden; }
-  .team-photo img{ width:100%; height:100%; object-fit:cover; }
-  .team-card h4{ font-size:16px; margin-top:18px; }
-  .team-card .role{ font-size:12.5px; color:var(--text-gray); margin-bottom:12px; }
-  .team-social{ display:flex; justify-content:center; gap:8px; }
-  .team-social a{
-    width:30px; height:30px; border-radius:50%; background:var(--bg-light); color:var(--text-gray);
-    display:flex; align-items:center; justify-content:center; font-size:12.5px; transition:.2s;
+  .service-card:hover{ box-shadow:var(--shadow); transform:translateY(-6px); border-color:transparent; }
+  .service-card .ic{
+    width:56px; height:56px; border-radius:14px; display:flex; align-items:center; justify-content:center;
+    font-size:24px; margin-bottom:20px; transition:.3s;
   }
-  .team-card:hover .team-social a{ background:var(--white); }
-  .team-social a:hover{ background:var(--gold) !important; color:var(--white); }
-  .team-more{ text-align:center; margin-top:26px; font-size:13px; color:var(--text-gray); }
-
-  /* =========================================================
-     DARK STATS BAND
-  ========================================================= */
-  .dark-stats{
-    background:linear-gradient(120deg, var(--navy-2), var(--navy-3));
-    padding:56px 0; display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px;
-  }
-  .dark-stat{ text-align:center; flex:1; min-width:130px; }
-  .dark-stat .ic{ font-size:22px; color:var(--gold); margin-bottom:10px; }
-  .dark-stat h3{ color:var(--white); font-size:32px; font-weight:700; }
-  .dark-stat p{ color:rgba(255,255,255,.65); font-size:12.5px; margin-top:6px; letter-spacing:.3px; }
-
-  /* =========================================================
-     TESTIMONIALS
-  ========================================================= */
-  .testimonials-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:22px; }
-  .testimonial-card{
-    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
-    padding:28px; position:relative;
-  }
-  .quote-mark{ position:absolute; top:18px; right:22px; color:var(--gold); font-size:30px; opacity:.5; }
-  .t-user{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-  .t-avatar{
-    width:42px; height:42px; border-radius:50%; background:var(--bg-light); color:var(--gold-dark);
-    display:flex; align-items:center; justify-content:center; font-size:17px; flex:0 0 42px;
-  }
-  .t-user h5{ font-size:14px; }
-  .t-user span{ font-size:11.5px; color:var(--text-gray); }
-  .stars{ color:var(--gold); font-size:12.5px; margin-bottom:12px; letter-spacing:2px; }
-  .t-text{ font-size:13.5px; color:var(--text-gray); line-height:1.7; }
-  .dots{ display:flex; gap:6px; justify-content:center; margin-top:32px; }
-  .dots span{ width:7px; height:7px; border-radius:50%; background:var(--border); }
-  .dots span.active{ background:var(--gold); width:20px; border-radius:4px; transition:.3s; }
+  .service-card:hover .ic{ transform:scale(1.1) rotate(-4deg); }
+  .service-card:nth-child(1) .ic{ background:#eef2ff; color:#4f46e5; }
+  .service-card:nth-child(2) .ic{ background:#eafbf1; color:#16a34a; }
+  .service-card:nth-child(3) .ic{ background:#fdf3e4; color:var(--gold-dark); }
+  .service-card:nth-child(4) .ic{ background:#f2ecff; color:#7c3aed; }
+  .service-card:nth-child(5) .ic{ background:#fdf1f4; color:#e0475a; }
+  .service-card:nth-child(6) .ic{ background:#e6f7fb; color:#0891b2; }
+  .service-card h3{ font-size:19px; margin-bottom:14px; }
+  .service-list{ display:flex; flex-direction:column; gap:9px; }
+  .service-list li{ display:flex; align-items:flex-start; gap:8px; font-size:13.5px; color:var(--text-gray); line-height:1.5; }
+  .service-list li::before{ content:"✓"; color:var(--gold-dark); font-weight:700; flex:0 0 auto; }
 
   /* =========================================================
      CTA
@@ -354,16 +241,19 @@
   ========================================================= */
   .reveal{ opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s ease; }
   .reveal.in-view{ opacity:1; transform:translateY(0); }
+  .services-grid.reveal .service-card{ opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease; }
+  .services-grid.reveal.in-view .service-card{ opacity:1; transform:translateY(0); }
+  .services-grid.reveal.in-view .service-card:nth-child(2){ transition-delay:.08s; }
+  .services-grid.reveal.in-view .service-card:nth-child(3){ transition-delay:.16s; }
+  .services-grid.reveal.in-view .service-card:nth-child(4){ transition-delay:.24s; }
+  .services-grid.reveal.in-view .service-card:nth-child(5){ transition-delay:.32s; }
+  .services-grid.reveal.in-view .service-card:nth-child(6){ transition-delay:.4s; }
 
   /* =========================================================
      RESPONSIVE
   ========================================================= */
   @media (max-width:1180px){
-    .about-hero .wrap{ grid-template-columns:1fr; }
-    .about-hero-media{ order:-1; }
-    .who-we-are .wrap{ grid-template-columns:1fr; }
-    .value-grid{ grid-template-columns:repeat(2,1fr); }
-    .testimonials-grid{ grid-template-columns:1fr 1fr; }
+    .services-grid{ grid-template-columns:repeat(2,1fr); }
     .footer-grid{ grid-template-columns:1fr 1fr; }
   }
   @media (max-width:860px){
@@ -372,17 +262,14 @@
     .nav-right .btn{ display:none; }
     .wrap{ padding:0 24px; }
     section{ padding:64px 0; }
-    .about-hero h1{ font-size:34px; }
-    .hero-stats{ gap:20px; }
-    .dark-stats{ padding:44px 24px; }
+    .services-hero h1{ font-size:32px; }
+    .cta-banner{ grid-template-columns:1fr; padding:44px; }
     footer{ padding:50px 24px 20px; }
   }
   @media (max-width:600px){
-    .testimonials-grid{ grid-template-columns:1fr; }
+    .services-grid{ grid-template-columns:1fr; }
     .footer-grid{ grid-template-columns:1fr; }
-    .cta-banner{ grid-template-columns:1fr; padding:34px; }
-    .mv-card{ position:static; width:100%; margin-top:16px; animation:none; }
-    .who-media{ display:flex; flex-direction:column; }
+    .cta-banner{ padding:34px; }
     .nav, .nav.solid{ padding:14px 18px; }
     .phone-pill{ font-size:12.5px; padding:8px 12px; gap:6px; }
     .whatsapp-widget{ right:16px; bottom:16px; }
@@ -414,8 +301,8 @@
     <a href="#buyers">Buyers</a>
     <a href="#sellers">Sellers</a>
     <a href="{% url 'website_homepage' %}#agents">Agents</a>
-    <a href="{% url 'website_services' %}">Services</a>
-    <a href="{% url 'website_about' %}" class="active">About Us</a>
+    <a href="{% url 'website_services' %}" class="active">Services</a>
+    <a href="{% url 'website_about' %}">About Us</a>
     <a href="{% url 'website_homepage' %}#contact">Contact</a>
   </div>
   <div class="nav-right">
@@ -425,137 +312,90 @@
   <button class="menu-toggle">☰</button>
 </nav>
 
-<!-- ============ ABOUT HERO ============ -->
-<section class="about-hero">
-  <div class="wrap">
-    <div class="reveal">
-      <span class="eyebrow">About Us</span>
-      <h1>Building Trust. Delivering Dreams.<br>Creating <span>Futures.</span></h1>
-      <p>At PIE Real Estate, we believe in more than just properties — we believe in people, relationships, and the dreams that inspire every move across Naya Nazimabad, Bahria Town, and Silk Gardens.</p>
-      <div class="about-hero-cta">
-        <a href="{% url 'website_homepage' %}#properties" class="btn btn-gold">Explore Properties →</a>
-        <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-dark">Contact Us</a>
-      </div>
-      <div class="hero-stats">
-        <div class="hero-stat"><div class="ic">🏠</div><div><h3 data-count="5">0+</h3><p>Years of Experience</p></div></div>
-        <div class="hero-stat"><div class="ic">👥</div><div><h3 data-count="150">0+</h3><p>Properties Sold</p></div></div>
-        <div class="hero-stat"><div class="ic">🙂</div><div><h3 data-count="300">0+</h3><p>Happy Clients</p></div></div>
-        <div class="hero-stat"><div class="ic">⭐</div><div><h3>Growing</h3><p>Expert Agent Team</p></div></div>
-      </div>
+<!-- ============ SERVICES HERO ============ -->
+<section class="services-hero">
+  <div class="wrap reveal">
+    <span class="eyebrow">Our Services</span>
+    <h1>Complete Real Estate Solutions,<br>All in <span>One Place.</span></h1>
+    <p>From buying your first plot to designing your dream interior — PIE Real Estate covers every step of your property journey across Naya Nazimabad, Bahria Town, and Silk Gardens.</p>
+    <div class="services-hero-cta">
+      <a href="{% url 'website_homepage' %}#properties" class="btn btn-gold">Explore Properties →</a>
+      <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-dark">Book a Consultation</a>
     </div>
-    <div class="about-hero-media reveal">
-      <div class="dot-pattern"></div>
-      <div class="about-hero-img">
-        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/video-tour-thumbnail_imbag2.jpg" alt="PIE Real Estate">
-        <div class="play-overlay"><button class="play-btn">▶</button></div>
-      </div>
-      <div class="floating-badge">
-        <span class="ic">🏆</span>
-        <div><h4 data-count="5">0+ Years</h4><p>Of Excellence</p></div>
-      </div>
+    <div class="services-jump">
+      <a href="#buying-selling">Buying &amp; Selling</a>
+      <a href="#rental-leasing">Rental &amp; Leasing</a>
+      <a href="#construction">Construction</a>
+      <a href="#interior-design">Interior Design</a>
+      <a href="#renovation">Renovation</a>
+      <a href="#consultation">Consultation</a>
     </div>
   </div>
 </section>
 
-<!-- ============ WHO WE ARE ============ -->
-<section class="who-we-are">
-  <div class="wrap">
-    <div class="who-media reveal">
-      <div class="who-media-img">
-        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/cta-interior_hjh8uu.jpg" alt="Interior">
-      </div>
-      <div class="mv-card mv-mission">
-        <div class="ic">🎯</div>
-        <h4>Our Mission</h4>
-        <p>To make every real estate experience smooth, transparent, and rewarding for every client we serve.</p>
-      </div>
-      <div class="mv-card mv-vision">
-        <div class="ic">🔭</div>
-        <h4>Our Vision</h4>
-        <p>To be the most trusted name across Karachi and Lahore's leading housing communities.</p>
-      </div>
-    </div>
-    <div class="who-content reveal">
-      <span class="eyebrow">Who We Are</span>
-      <h2>Your Trusted Partner<br>in <span>Real Estate</span></h2>
-      <p>PIE Real Estate is a forward-thinking real estate company dedicated to providing exceptional property solutions across Naya Nazimabad, Bahria Town, and Silk Gardens. Whether you're buying, selling, or investing, our expert team is here to guide you every step of the way.</p>
-      <div class="value-grid">
-        <div class="value-item"><div class="ic">🛡</div><h4>Integrity</h4><p>We operate with honesty and transparency in every transaction.</p></div>
-        <div class="value-item"><div class="ic">🤝</div><h4>Client First</h4><p>Your goals are our priority. We listen, we care, we deliver.</p></div>
-        <div class="value-item"><div class="ic">📈</div><h4>Excellence</h4><p>We are committed to delivering the highest standards.</p></div>
-        <div class="value-item"><div class="ic">💡</div><h4>Innovation</h4><p>We leverage modern technology to bring you better results.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ TEAM ============ -->
-<section class="team-section">
-  <div class="wrap">
-    <div class="section-head center reveal">
-      <span class="eyebrow">Our Team</span>
-      <h2>Meet Our <span>Expert Team</span></h2>
-      <p class="sub">Experienced, and dedicated to finding you the right match across every community we serve.</p>
-    </div>
-    <div class="team-wrap reveal">
-      <div class="team-card">
-        <div class="team-photo"><img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/agent-fahad-nazeer_diudpr.jpg" alt="Fahad Nazeer"></div>
-        <h4>Fahad Nazeer</h4>
-        <div class="role">Property Consultant</div>
-        <div class="team-social"><a href="#">📞</a><a href="#">💬</a><a href="#">✉</a></div>
-      </div>
-    </div>
-    <div class="team-more">More specialists joining the team soon.</div>
-  </div>
-</section>
-
-<!-- ============ DARK STATS ============ -->
-<section class="dark-stats reveal">
-  <div class="dark-stat"><div class="ic">👥</div><h3 data-count="150">0+</h3><p>Properties Sold</p></div>
-  <div class="dark-stat"><div class="ic">🙂</div><h3 data-count="300">0+</h3><p>Happy Clients</p></div>
-  <div class="dark-stat"><div class="ic">📍</div><h3 data-count="3">0+</h3><p>Communities Covered</p></div>
-  <div class="dark-stat"><div class="ic">⭐</div><h3>Growing</h3><p>Expert Agents</p></div>
-  <div class="dark-stat"><div class="ic">🏆</div><h3 data-count="5">0+</h3><p>Years of Experience</p></div>
-</section>
-
-<!-- ============ TESTIMONIALS ============ -->
+<!-- ============ SERVICES GRID ============ -->
 <section>
   <div class="wrap">
-    <div class="section-head center reveal">
-      <span class="eyebrow">Clients Love Us</span>
-      <h2>What Our <span>Clients</span> Say</h2>
+    <div class="services-grid reveal">
+      <div class="service-card" id="buying-selling">
+        <div class="ic">🏠</div>
+        <h3>Buying &amp; Selling of Properties</h3>
+        <ul class="service-list">
+          <li>Houses</li>
+          <li>Plots</li>
+          <li>Apartments</li>
+          <li>Commercial Units</li>
+        </ul>
+      </div>
+      <div class="service-card" id="rental-leasing">
+        <div class="ic">🔑</div>
+        <h3>Rental &amp; Leasing Services</h3>
+        <ul class="service-list">
+          <li>Family &amp; commercial rentals</li>
+          <li>Background-verified tenants</li>
+          <li>Legal rental agreements</li>
+        </ul>
+      </div>
+      <div class="service-card" id="construction">
+        <div class="ic">🏗️</div>
+        <h3>Construction Services</h3>
+        <ul class="service-list">
+          <li>Gray &amp; turnkey construction</li>
+          <li>Modern design planning</li>
+          <li>Quality material assurance</li>
+        </ul>
+      </div>
+      <div class="service-card" id="interior-design">
+        <div class="ic">🛋️</div>
+        <h3>Interior Designing</h3>
+        <ul class="service-list">
+          <li>Luxury interiors</li>
+          <li>Residential &amp; commercial projects</li>
+          <li>Customized designs</li>
+        </ul>
+      </div>
+      <div class="service-card" id="renovation">
+        <div class="ic">🛠️</div>
+        <h3>Renovation Services</h3>
+        <ul class="service-list">
+          <li>Complete home renovation</li>
+          <li>Kitchen &amp; bathroom remodeling</li>
+          <li>Flooring &amp; false ceiling work</li>
+          <li>Electrical &amp; plumbing upgrades</li>
+          <li>Wall finishing, paint &amp; texture work</li>
+          <li>Front elevation &amp; exterior upgrades</li>
+        </ul>
+      </div>
+      <div class="service-card" id="consultation">
+        <div class="ic">📊</div>
+        <h3>Property Consultation</h3>
+        <ul class="service-list">
+          <li>Market analysis</li>
+          <li>Investment advisory</li>
+          <li>Legal guidance</li>
+        </ul>
+      </div>
     </div>
-    <p class="placeholder-note">Sample testimonials shown below — replace with real client reviews before publishing.</p>
-    <div class="testimonials-grid reveal">
-      <div class="testimonial-card">
-        <span class="quote-mark">&#10077;</span>
-        <div class="t-user">
-          <div class="t-avatar">🙂</div>
-          <div><h5>Verified Buyer</h5><span>Naya Nazimabad</span></div>
-        </div>
-        <div class="stars">★★★★★</div>
-        <p class="t-text">PIE Real Estate made my home buying experience smooth and stress-free. Their team is professional, responsive, and truly cares.</p>
-      </div>
-      <div class="testimonial-card">
-        <span class="quote-mark">&#10077;</span>
-        <div class="t-user">
-          <div class="t-avatar">🙂</div>
-          <div><h5>Property Seller</h5><span>Bahria Town</span></div>
-        </div>
-        <div class="stars">★★★★★</div>
-        <p class="t-text">I sold my property within weeks at a fair price. Highly recommend PIE Real Estate for their market knowledge and dedication.</p>
-      </div>
-      <div class="testimonial-card">
-        <span class="quote-mark">&#10077;</span>
-        <div class="t-user">
-          <div class="t-avatar">🙂</div>
-          <div><h5>Happy Tenant</h5><span>Silk Gardens</span></div>
-        </div>
-        <div class="stars">★★★★★</div>
-        <p class="t-text">Excellent service and support throughout the rental process. They found the perfect place for my family within budget.</p>
-      </div>
-    </div>
-    <div class="dots"><span class="active"></span><span></span><span></span></div>
   </div>
 </section>
 
@@ -564,16 +404,16 @@
   <div class="wrap">
     <div class="cta-banner reveal">
       <div class="cta-left">
-        <span class="badge2">READY TO FIND YOUR DREAM PROPERTY?</span>
-        <h2>Let's Make Your Next Move<br>Your <span>Best Move.</span></h2>
-        <p>Whether you're buying, selling, or investing, we're here to help you achieve your real estate goals.</p>
+        <span class="badge2">NEED A HAND?</span>
+        <h2>Let's Talk About<br>Your <span>Next Project.</span></h2>
+        <p>Whether it's buying, renting, building, renovating, or designing — our team is ready to help.</p>
         <div class="cta-btns">
-          <a href="{% url 'website_homepage' %}#properties" class="btn btn-gold">Explore Properties →</a>
-          <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-light">Contact Us</a>
+          <a href="{% url 'website_homepage' %}#contact" class="btn btn-gold">Get in Touch →</a>
+          <a href="{% url 'website_about' %}" class="btn btn-outline-light">About Us</a>
         </div>
       </div>
       <div class="cta-right">
-        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576097/property-1-block-a-house_w2g49h.jpg" alt="PIE Real Estate property">
+        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/cta-interior_hjh8uu.jpg" alt="PIE Real Estate services">
       </div>
     </div>
   </div>
@@ -601,7 +441,6 @@
       <ul>
         <li><a href="{% url 'website_about' %}">About Us</a></li>
         <li><a href="{% url 'website_services' %}">Our Services</a></li>
-        <li><a href="{% url 'website_homepage' %}#agents">Our Agents</a></li>
         <li><a href="#">Careers</a></li>
         <li><a href="{% url 'website_homepage' %}#contact">Contact Us</a></li>
       </ul>
@@ -660,39 +499,8 @@
         revealObserver.unobserve(entry.target);
       }
     });
-  }, { threshold: 0.15 });
+  }, { threshold: 0.1 });
   revealEls.forEach(el=> revealObserver.observe(el));
-
-  // Animated counters
-  const counters = document.querySelectorAll('[data-count]');
-  const counterObserver = new IntersectionObserver((entries)=>{
-    entries.forEach(entry=>{
-      if(!entry.isIntersecting) return;
-      const el = entry.target;
-      const target = parseInt(el.dataset.count, 10);
-      const suffix = el.textContent.replace(/^[0-9]+/, '');
-      const duration = 1200;
-      const start = performance.now();
-      function tick(now){
-        const progress = Math.min((now - start) / duration, 1);
-        const value = Math.round(target * (1 - Math.pow(1 - progress, 3)));
-        el.textContent = value + suffix;
-        if(progress < 1) requestAnimationFrame(tick);
-      }
-      requestAnimationFrame(tick);
-      counterObserver.unobserve(el);
-    });
-  }, { threshold: 0.4 });
-  counters.forEach(el=> counterObserver.observe(el));
-
-  // Testimonial dots auto-cycle
-  const dots = document.querySelectorAll('.dots span');
-  let dotIdx = 0;
-  setInterval(()=>{
-    dots.forEach(d=>d.classList.remove('active'));
-    dotIdx = (dotIdx + 1) % dots.length;
-    dots[dotIdx].classList.add('active');
-  }, 3500);
 
   // Back to top
   const backTop = document.getElementById('backTop');
