@@ -55,6 +55,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'accounts.context_processors.notifications',
             ],
         },
     },
@@ -109,6 +110,11 @@ zcIkHRmMtqMExvMiAG330zqp0XmgjOE9/g==
 VAPID_PRIVATE_KEY = _raw_vapid_private.replace('\\n', '\n')
 
 VAPID_ADMIN_EMAIL = os.environ.get('VAPID_ADMIN_EMAIL', 'admin@pierealestate.com')
+
+# ── Lead intake API ───────────────────────────────────────────────────────────
+# Required in the X-Api-Key header for POST /api/leads/create/. Set a real
+# secret via the LEAD_API_KEY environment variable before going to production.
+LEAD_API_KEY = os.environ.get('LEAD_API_KEY', 'pie-lead-api-dev-key-8f2a1c-change-in-production')
 
 # ── Cloudinary (direct upload — URL saved to DB) ─────────────────────────────
 cloudinary.config(

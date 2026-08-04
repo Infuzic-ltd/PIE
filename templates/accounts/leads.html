@@ -20,6 +20,7 @@ a{color:inherit;text-decoration:none}
 .nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
 .nav a:hover{background:rgba(255,255,255,.06);color:#fff}
 .nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.nav-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px}
 .subnav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
 .subnav a{font-size:13px;padding:8px 12px;color:#93a1c2}
 .subnav a.active{background:rgba(37,99,235,.16);color:#fff}
@@ -88,6 +89,10 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
 .st-token{background:#fce7f3;color:#be185d}
 .st-converted{background:#d1fae5;color:#065f46}
 .st-lost{background:#f1f5f9;color:#475569}
+.score-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.score-hot{background:#fee2e2;color:#b91c1c}
+.score-warm{background:#ffedd5;color:#c2410c}
+.score-cold{background:#dcfce7;color:#166534}
 .assigned-cell{display:flex;align-items:center;gap:7px}
 .a-av{width:26px;height:26px;border-radius:50%;background:#64748b;display:grid;place-items:center;color:#fff;font-size:10px;font-weight:700;flex:0 0 26px}
 .actions{display:flex;gap:5px}
@@ -124,6 +129,7 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
 </div>
 <a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
 <a href="{% url 'customer_list' %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
+<a href="{% url 'notifications_list' %}"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> Notifications{% if unread_notifications_count %}<span class="nav-badge">{{ unread_notifications_count }}</span>{% endif %}</a>
 {% if request.user.is_crm_admin %}
 <a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
 <div class="subnav">
@@ -191,6 +197,10 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
     <option value="">All Types</option>
     {% for val, label in type_choices %}<option value="{{ val }}" {% if filters.lead_type == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
   </select>
+  <select name="lead_score">
+    <option value="">All Scores</option>
+    {% for val, label in score_choices %}<option value="{{ val }}" {% if filters.lead_score == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+  </select>
   <button type="submit" class="btn">Filter</button>
   <a href="{% url 'lead_list' %}" class="clear-link">Clear</a>
 </form>
@@ -206,6 +216,7 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
         <th>Lead Type</th>
         <th>Budget Range</th>
         <th>Status</th>
+        <th>Score</th>
         <th>Assigned To</th>
         <th>Added On</th>
         <th>Actions</th>
@@ -231,6 +242,7 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
         <td><span class="badge type-{{ lead.lead_type }}">{{ lead.get_lead_type_display }}</span></td>
         <td style="font-size:13px;white-space:nowrap">{{ lead.budget_display|default:"—" }}</td>
         <td><span class="st st-{{ lead.status }}">{{ lead.get_status_display }}</span></td>
+        <td><span class="score-badge score-{{ lead.lead_score }}">{{ lead.score_icon }} {{ lead.get_lead_score_display }}</span></td>
         <td>
           {% if lead.assigned_to %}
           <div class="assigned-cell">
@@ -251,10 +263,10 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
         </td>
       </tr>
       {% empty %}
-      <tr><td colspan="9" class="empty">
+      <tr><td colspan="10" class="empty">
         <svg viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
         <div style="font-weight:600;margin-bottom:4px">No leads found</div>
-        <div style="font-size:13px">{% if filters.q or filters.status or filters.source or filters.lead_type %}Try adjusting your filters.{% else %}<a href="{% url 'lead_create' %}" style="color:var(--blue)">Add your first lead</a>{% endif %}</div>
+        <div style="font-size:13px">{% if filters.q or filters.status or filters.source or filters.lead_type or filters.lead_score %}Try adjusting your filters.{% else %}<a href="{% url 'lead_create' %}" style="color:var(--blue)">Add your first lead</a>{% endif %}</div>
       </td></tr>
       {% endfor %}
     </tbody>

@@ -195,7 +195,7 @@ class Lead(models.Model):
         ('website', 'Website'),
         ('whatsapp', 'WhatsApp'),
         ('referral', 'Referral'),
-        ('property_listing', 'Property Listing'),
+        ('property_listing', 'Property Portals'),
         ('walk_in', 'Walk-in'),
         ('phone_call', 'Phone Call'),
         ('social_media', 'Social Media'),
@@ -208,6 +208,28 @@ class Lead(models.Model):
         ('plot', 'Plot'),
         ('commercial', 'Commercial'),
     ]
+
+    SCORE_HOT = 'hot'
+    SCORE_WARM = 'warm'
+    SCORE_COLD = 'cold'
+
+    SCORE_CHOICES = [
+        (SCORE_HOT, 'Hot'),
+        (SCORE_WARM, 'Warm'),
+        (SCORE_COLD, 'Cold'),
+    ]
+
+    SCORE_COLORS = {
+        SCORE_HOT: '#ef4444',
+        SCORE_WARM: '#f97316',
+        SCORE_COLD: '#22c55e',
+    }
+
+    SCORE_ICONS = {
+        SCORE_HOT: '🔴',
+        SCORE_WARM: '🟠',
+        SCORE_COLD: '🟢',
+    }
 
     full_name = models.CharField(max_length=150)
     email = models.EmailField(blank=True)
@@ -235,6 +257,10 @@ class Lead(models.Model):
     notes = models.TextField(blank=True)
     follow_up_date = models.DateTimeField(null=True, blank=True)
     last_contacted = models.DateTimeField(null=True, blank=True)
+    lead_score = models.CharField(
+        max_length=10, choices=SCORE_CHOICES, default=SCORE_COLD,
+        help_text='Auto-calculated from requirement completeness and engagement signals on every save.',
+    )
     assigned_to = models.ForeignKey(
         'User', on_delete=models.SET_NULL, null=True, blank=True, related_name='assigned_leads'
     )
@@ -262,6 +288,43 @@ class Lead(models.Model):
 
     def status_color(self):
         return self.STATUS_COLORS.get(self.status, '#6b7280')
+
+    def score_color(self):
+        return self.SCORE_COLORS.get(self.lead_score, '#6b7280')
+
+    def score_icon(self):
+        return self.SCORE_ICONS.get(self.lead_score, '')
+
+    def calculate_lead_score(self):
+        """Starter rule: requirement completeness + pipeline engagement. Retune thresholds as needed."""
+        if self.status == self.STATUS_LOST:
+            return self.SCORE_COLD
+
+        points = 0
+        if self.budget_min or self.budget_max:
+            points += 1
+        if self.interested_in:
+            points += 1
+        if self.area_preferences:
+            points += 1
+        if self.bedrooms_min or self.bathrooms_min:
+            points += 1
+        if self.follow_up_date:
+            points += 1
+        if self.status in (self.STATUS_QUALIFIED, self.STATUS_FOLLOW_UP, self.STATUS_PROPOSAL):
+            points += 2
+        if self.status in (self.STATUS_NEGOTIATION, self.STATUS_TOKEN, self.STATUS_CONVERTED):
+            points += 4
+
+        if points >= 5:
+            return self.SCORE_HOT
+        if points >= 2:
+            return self.SCORE_WARM
+        return self.SCORE_COLD
+
+    def save(self, *args, **kwargs):
+        self.lead_score = self.calculate_lead_score()
+        super().save(*args, **kwargs)
 
     def budget_display(self):
         def fmt(v):
@@ -591,6 +654,21 @@ class PushSubscription(models.Model):
 
     def __str__(self):
         return f'{self.user.email} — push'
+
+
+class Notification(models.Model):
+    recipient = models.ForeignKey('User', on_delete=models.CASCADE, related_name='notifications')
+    title = models.CharField(max_length=200)
+    body = models.CharField(max_length=500, blank=True)
+    url = models.CharField(max_length=300, blank=True)
+    is_read = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.recipient.email} — {self.title}'
 
 
 class PropertyImage(models.Model):

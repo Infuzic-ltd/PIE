@@ -68,4 +68,9 @@ urlpatterns = [
     path('push/subscribe/', views.push_subscribe, name='push_subscribe'),
     path('push/unsubscribe/', views.push_unsubscribe, name='push_unsubscribe'),
     path('push/test/', views.push_test, name='push_test'),
+
+    # Notifications
+    path('notifications/', views.notifications_list, name='notifications_list'),
+    path('notifications/<int:pk>/open/', views.notification_open, name='notification_open'),
+    path('notifications/mark-all-read/', views.notifications_mark_all_read, name='notifications_mark_all_read'),
 ]

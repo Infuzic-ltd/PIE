@@ -18,7 +18,7 @@ import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, AgentTarget
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, AgentTarget
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -79,7 +79,17 @@ def _send_push(subscription, title, body, url='/'):
 
 
 def notify_all(title, body, url='/'):
+    Notification.objects.bulk_create([
+        Notification(recipient=u, title=title, body=body, url=url)
+        for u in User.objects.filter(is_active=True)
+    ])
     for sub in PushSubscription.objects.select_related('user').all():
+        _send_push(sub, title, body, url)  # errors are swallowed per-subscription
+
+
+def notify_user(user, title, body, url='/'):
+    Notification.objects.create(recipient=user, title=title, body=body, url=url)
+    for sub in PushSubscription.objects.filter(user=user):
         _send_push(sub, title, body, url)  # errors are swallowed per-subscription
 
 
@@ -535,7 +545,7 @@ def push_test(request):
     sent = 0
     errors = []
     for sub in subs:
-        ok, err = _send_push(sub, 'PIE Real Estate', 'Test notification works! ✓', '/dashboard/')
+        ok, err = _send_push(sub, 'PIE Real Estate', 'Test notification works! ✓', '/crm/dashboard/')
         if ok:
             sent += 1
         elif err:
@@ -543,6 +553,31 @@ def push_test(request):
     if sent == 0:
         return JsonResponse({'error': errors[0] if errors else 'send failed'}, status=500)
     return JsonResponse({'status': 'sent', 'count': sent})
+
+
+# ── Notifications ────────────────────────────────────────────────────────────
+
+@login_required
+def notifications_list(request):
+    notifications = request.user.notifications.all()
+    return render(request, 'accounts/notifications.html', {'notifications': notifications})
+
+
+@login_required
+def notification_open(request, pk):
+    notif = get_object_or_404(Notification, pk=pk, recipient=request.user)
+    if not notif.is_read:
+        notif.is_read = True
+        notif.save(update_fields=['is_read'])
+    return redirect(notif.url or 'dashboard')
+
+
+@login_required
+@require_POST
+def notifications_mark_all_read(request):
+    request.user.notifications.filter(is_read=False).update(is_read=True)
+    next_url = request.POST.get('next') or request.META.get('HTTP_REFERER') or reverse('dashboard')
+    return redirect(next_url)
 
 
 # ── Customers ─────────────────────────────────────────────────────────────────
@@ -668,6 +703,16 @@ def block_required_document_delete(request, pk):
 
 # ── Lead Management ────────────────────────────────────────────────────────────
 
+def _auto_assign_agent():
+    """Equal-distribution assignment: the active agent with the fewest currently-assigned leads."""
+    return (
+        User.objects.filter(role=User.ROLE_AGENT, is_active=True)
+        .annotate(lead_count=Count('assigned_leads'))
+        .order_by('lead_count', 'id')
+        .first()
+    )
+
+
 def _lead_qs(request):
     if request.user.is_crm_admin:
         return Lead.objects.select_related('assigned_to', 'created_by').prefetch_related('collaborators')
@@ -684,6 +729,7 @@ def lead_list(request):
     source_filter = request.GET.get('source', '')
     type_filter = request.GET.get('lead_type', '')
     agent_filter = request.GET.get('agent', '')
+    score_filter = request.GET.get('lead_score', '')
     search = request.GET.get('q', '').strip()
 
     if status_filter:
@@ -694,6 +740,8 @@ def lead_list(request):
         qs = qs.filter(lead_type=type_filter)
     if agent_filter and request.user.is_crm_admin:
         qs = qs.filter(assigned_to_id=agent_filter)
+    if score_filter:
+        qs = qs.filter(lead_score=score_filter)
     if search:
         qs = qs.filter(
             Q(full_name__icontains=search) |
@@ -719,11 +767,13 @@ def lead_list(request):
         'status_choices': Lead.STATUS_CHOICES,
         'source_choices': Lead.SOURCE_CHOICES,
         'type_choices': Lead.TYPE_CHOICES,
+        'score_choices': Lead.SCORE_CHOICES,
         'filters': {
             'status': status_filter,
             'source': source_filter,
             'lead_type': type_filter,
             'agent': agent_filter,
+            'lead_score': score_filter,
             'q': search,
         },
     })
@@ -737,6 +787,8 @@ def lead_create(request):
         lead.created_by = request.user
         if not request.user.is_crm_admin:
             lead.assigned_to = request.user
+        elif not lead.assigned_to_id:
+            lead.assigned_to = _auto_assign_agent()
         raw = request.POST.getlist('interested_in')
         lead.interested_in = raw
         lead.save()
@@ -746,6 +798,13 @@ def lead_create(request):
             description=f'Lead created by {request.user.get_full_name() or request.user.email}.',
             created_by=request.user,
         )
+        if lead.assigned_to_id and lead.assigned_to_id != request.user.id:
+            notify_user(
+                lead.assigned_to,
+                'New Lead Assigned',
+                f'{lead.full_name} has been assigned to you.',
+                f'/crm/leads/{lead.pk}/',
+            )
         return redirect('lead_detail', pk=lead.pk)
     return render(request, 'accounts/lead_form.html', {
         'form': form, 'lead': None,
@@ -858,6 +917,120 @@ def lead_delete(request, pk):
         lead.delete()
         return redirect('lead_list')
     return render(request, 'accounts/lead_confirm_delete.html', {'lead': lead})
+
+
+# ── Public lead intake API ────────────────────────────────────────────────────
+# Called from outside the CRM (website forms, WhatsApp bot, property portals).
+# Auth is a shared secret in the X-Api-Key header (settings.LEAD_API_KEY) — there
+# is no per-caller identity, just a single key. Every field except full_name and
+# phone is optional. On success the lead is auto-assigned round-robin to
+# whichever active agent currently has the fewest leads, and that agent is
+# notified in-CRM (and via web push, if subscribed).
+
+def _decimal_or_none(value):
+    if value in (None, ''):
+        return None
+    try:
+        return Decimal(str(value))
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _int_or_none(value):
+    if value in (None, ''):
+        return None
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+@csrf_exempt
+@require_POST
+def lead_api_create(request):
+    if request.headers.get('X-Api-Key') != settings.LEAD_API_KEY:
+        return JsonResponse({'error': 'Invalid or missing API key.'}, status=401)
+
+    if request.content_type == 'application/json':
+        try:
+            data = json.loads(request.body.decode('utf-8') or '{}')
+        except (json.JSONDecodeError, UnicodeDecodeError):
+            return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
+    else:
+        data = request.POST
+
+    full_name = str(data.get('full_name') or '').strip()
+    phone = str(data.get('phone') or '').strip()
+    if not full_name or not phone:
+        return JsonResponse({'error': 'full_name and phone are required.'}, status=400)
+
+    valid_sources = {s for s, _ in Lead.SOURCE_CHOICES}
+    source = data.get('source') or 'website'
+    if source not in valid_sources:
+        return JsonResponse({'error': f'Invalid source. Choices: {sorted(valid_sources)}'}, status=400)
+
+    valid_types = {t for t, _ in Lead.TYPE_CHOICES}
+    lead_type = data.get('lead_type') or Lead.TYPE_BUYER
+    if lead_type not in valid_types:
+        return JsonResponse({'error': f'Invalid lead_type. Choices: {sorted(valid_types)}'}, status=400)
+
+    raw_interests = data.get('interested_in') or []
+    if isinstance(raw_interests, str):
+        raw_interests = [raw_interests]
+    valid_interests = {i for i, _ in Lead.INTEREST_CHOICES}
+    interested_in = [i for i in raw_interests if i in valid_interests]
+
+    lead = Lead(
+        full_name=full_name,
+        phone=phone,
+        alternate_phone=str(data.get('alternate_phone') or '').strip(),
+        email=str(data.get('email') or '').strip(),
+        lead_type=lead_type,
+        source=source,
+        interested_in=interested_in,
+        area_preferences=str(data.get('area_preferences') or '').strip(),
+        budget_min=_decimal_or_none(data.get('budget_min')),
+        budget_max=_decimal_or_none(data.get('budget_max')),
+        bedrooms_min=_int_or_none(data.get('bedrooms_min')),
+        bedrooms_max=_int_or_none(data.get('bedrooms_max')),
+        bathrooms_min=_int_or_none(data.get('bathrooms_min')),
+        bathrooms_max=_int_or_none(data.get('bathrooms_max')),
+        area_sqft_min=_int_or_none(data.get('area_sqft_min')),
+        area_sqft_max=_int_or_none(data.get('area_sqft_max')),
+        other_requirements=str(data.get('other_requirements') or '').strip(),
+        notes=str(data.get('notes') or '').strip(),
+    )
+    lead.assigned_to = _auto_assign_agent()
+    lead.save()
+
+    agent = lead.assigned_to
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_CREATED,
+        description=(
+            f'Lead received via API (source: {lead.get_source_display()}).'
+            + (f' Auto-assigned to {agent.get_full_name()}.' if agent else ' No active agent available to assign.')
+        ),
+    )
+    if agent:
+        notify_user(
+            agent,
+            'New Lead Assigned',
+            f'{lead.full_name} ({lead.get_source_display()}) has been assigned to you.',
+            f'/crm/leads/{lead.pk}/',
+        )
+
+    return JsonResponse({
+        'id': lead.pk,
+        'full_name': lead.full_name,
+        'phone': lead.phone,
+        'status': lead.status,
+        'lead_score': lead.lead_score,
+        'assigned_agent': {
+            'name': agent.get_full_name(),
+            'phone': agent.phone,
+        } if agent else None,
+    }, status=201)
 
 
 @login_required
