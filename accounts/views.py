@@ -123,6 +123,10 @@ def website_services(request):
     return render(request, 'website/services.html')
 
 
+def lead_api_docs(request):
+    return render(request, 'website/lead_api_docs.html')
+
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
@@ -854,10 +858,7 @@ def lead_detail(request, pk):
             lines.append(f"*{i}. {prop.title}*\n{details}")
         lines.append("\nReady to schedule a viewing? Contact us anytime. — PIE Real Estate")
         message = "\n\n".join(lines)
-        # Normalize phone for wa.me (strip non-digits, add 92 prefix if starts with 0)
-        digits = re.sub(r'\D', '', lead.phone)
-        if digits.startswith('0') and len(digits) == 11:
-            digits = '92' + digits[1:]
+        digits = _normalize_phone_digits(lead.phone)
         whatsapp_url = f"https://wa.me/{digits}?text={quote(message)}"
 
     return render(request, 'accounts/lead_detail.html', {
@@ -945,6 +946,15 @@ def _int_or_none(value):
         return None
 
 
+def _normalize_phone_digits(raw):
+    """Digits only, with a Pakistani local '0...' prefix rewritten to the '92...' country code
+    so local and international formats of the same number compare equal."""
+    digits = re.sub(r'\D', '', raw or '')
+    if digits.startswith('0') and len(digits) == 11:
+        digits = '92' + digits[1:]
+    return digits
+
+
 @csrf_exempt
 @require_POST
 def lead_api_create(request):
@@ -980,6 +990,20 @@ def lead_api_create(request):
     valid_interests = {i for i, _ in Lead.INTEREST_CHOICES}
     interested_in = [i for i in raw_interests if i in valid_interests]
 
+    agent_phone = str(data.get('agent_phone') or '').strip()
+    preassigned_agent = None
+    if agent_phone:
+        digits = _normalize_phone_digits(agent_phone)
+        if len(digits) < 6:
+            return JsonResponse({'error': 'agent_phone is not a valid phone number.'}, status=400)
+        preassigned_agent = next(
+            (u for u in User.objects.filter(role=User.ROLE_AGENT, is_active=True).exclude(phone='')
+             if _normalize_phone_digits(u.phone) == digits),
+            None,
+        )
+        if not preassigned_agent:
+            return JsonResponse({'error': f'No active agent found with phone {agent_phone}.'}, status=400)
+
     lead = Lead(
         full_name=full_name,
         phone=phone,
@@ -1000,17 +1024,20 @@ def lead_api_create(request):
         other_requirements=str(data.get('other_requirements') or '').strip(),
         notes=str(data.get('notes') or '').strip(),
     )
-    lead.assigned_to = _auto_assign_agent()
+    lead.assigned_to = preassigned_agent or _auto_assign_agent()
     lead.save()
 
     agent = lead.assigned_to
+    if preassigned_agent:
+        assignment_note = f' Already assigned to {agent.get_full_name()} (per agent_phone).'
+    elif agent:
+        assignment_note = f' Auto-assigned to {agent.get_full_name()}.'
+    else:
+        assignment_note = ' No active agent available to assign.'
     LeadActivity.objects.create(
         lead=lead,
         activity_type=LeadActivity.TYPE_CREATED,
-        description=(
-            f'Lead received via API (source: {lead.get_source_display()}).'
-            + (f' Auto-assigned to {agent.get_full_name()}.' if agent else ' No active agent available to assign.')
-        ),
+        description=f'Lead received via API (source: {lead.get_source_display()}).{assignment_note}',
     )
     if agent:
         notify_user(
@@ -1029,6 +1056,7 @@ def lead_api_create(request):
         'assigned_agent': {
             'name': agent.get_full_name(),
             'phone': agent.phone,
+            'assignment': 'explicit' if preassigned_agent else 'auto',
         } if agent else None,
     }, status=201)
 

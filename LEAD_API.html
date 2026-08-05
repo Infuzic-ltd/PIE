@@ -1,0 +1,568 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Lead Intake API — PIE Real Estate CRM</title>
+<style>
+  :root{
+    --paper:#faf8f4;
+    --surface:#ffffff;
+    --surface-2:#f3f0e9;
+    --ink:#1a1f28;
+    --ink-soft:#5b6472;
+    --ink-faint:#8b93a0;
+    --line:#e6e2d7;
+    --line-soft:#efece3;
+    --accent:#a8710a;
+    --accent-soft:#f6e9d2;
+    --accent-ink:#6b4807;
+    --success:#1a7f4e;
+    --success-soft:#e3f5ec;
+    --danger:#b3261e;
+    --danger-soft:#fbe9e7;
+    --radius:6px;
+    --mono: ui-monospace, "SF Mono", "Cascadia Code", "Roboto Mono", Menlo, Consolas, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --jkey:#8a5a00;
+    --jstr:#2a6f3d;
+    --jnum:#1d5fa8;
+    --jbool:#a8390f;
+    --jpunc:#8b93a0;
+  }
+  :root[data-theme="dark"]{
+    --paper:#12161d;
+    --surface:#1b212b;
+    --surface-2:#1f2631;
+    --ink:#e6e4dc;
+    --ink-soft:#9aa6b4;
+    --ink-faint:#6c7787;
+    --line:#293140;
+    --line-soft:#232a36;
+    --accent:#dba954;
+    --accent-soft:#3a2f16;
+    --accent-ink:#f0c785;
+    --success:#4ade80;
+    --success-soft:#12301f;
+    --danger:#f2685f;
+    --danger-soft:#341715;
+    --jkey:#e0b256;
+    --jstr:#7bcf95;
+    --jnum:#7db6ec;
+    --jbool:#f0916f;
+    --jpunc:#6c7787;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --paper:#12161d;
+      --surface:#1b212b;
+      --surface-2:#1f2631;
+      --ink:#e6e4dc;
+      --ink-soft:#9aa6b4;
+      --ink-faint:#6c7787;
+      --line:#293140;
+      --line-soft:#232a36;
+      --accent:#dba954;
+      --accent-soft:#3a2f16;
+      --accent-ink:#f0c785;
+      --success:#4ade80;
+      --success-soft:#12301f;
+      --danger:#f2685f;
+      --danger-soft:#341715;
+      --jkey:#e0b256;
+      --jstr:#7bcf95;
+      --jnum:#7db6ec;
+      --jbool:#f0916f;
+      --jpunc:#6c7787;
+    }
+  }
+
+  *{box-sizing:border-box}
+  body{margin:0}
+  .page{
+    background:var(--paper);
+    color:var(--ink);
+    font-family:var(--sans);
+    line-height:1.6;
+    -webkit-font-smoothing:antialiased;
+    min-height:100vh;
+  }
+  a{color:inherit}
+  code, .mono{font-family:var(--mono)}
+  ::selection{background:var(--accent-soft)}
+
+  /* ---- shell ---- */
+  .shell{
+    max-width:1180px;
+    margin:0 auto;
+    display:grid;
+    grid-template-columns:220px 1fr;
+    gap:56px;
+    padding:0 32px;
+  }
+
+  /* ---- top bar ---- */
+  .topbar{
+    border-bottom:1px solid var(--line);
+    background:var(--paper);
+    position:sticky; top:0; z-index:20;
+  }
+  .topbar-inner{
+    max-width:1180px; margin:0 auto; padding:16px 32px;
+    display:flex; align-items:center; gap:10px; justify-content:space-between;
+  }
+  .brand{
+    display:flex; align-items:baseline; gap:8px;
+    font-family:var(--mono); font-size:12.5px; letter-spacing:.06em; color:var(--ink-faint);
+    text-transform:uppercase;
+  }
+  .brand b{color:var(--ink); font-weight:700}
+  .theme-hint{font-size:11px; color:var(--ink-faint); font-family:var(--mono)}
+
+  /* ---- sidebar ---- */
+  .toc{
+    position:sticky; top:70px; align-self:start;
+    padding:36px 0 40px;
+    font-size:13px;
+  }
+  .toc-label{
+    font-family:var(--mono); font-size:10.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--ink-faint); margin-bottom:14px;
+  }
+  .toc a{
+    display:block; padding:6px 0; color:var(--ink-soft); text-decoration:none;
+    border-left:2px solid transparent; padding-left:12px; margin-left:-13px;
+    transition:color .15s, border-color .15s;
+  }
+  .toc a:hover{color:var(--ink)}
+  .toc a.on{color:var(--accent-ink); border-left-color:var(--accent); font-weight:600}
+
+  /* ---- main ---- */
+  main{padding:40px 0 100px; min-width:0}
+  .lede{max-width:680px; margin-bottom:44px}
+  .eyebrow{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.1em; text-transform:uppercase;
+    color:var(--accent-ink); margin:0 0 10px;
+  }
+  h1{
+    font-family:var(--mono); font-size:clamp(26px,3.4vw,34px); font-weight:700;
+    margin:0 0 14px; letter-spacing:-.01em; text-wrap:balance; color:var(--ink);
+  }
+  .lede p{color:var(--ink-soft); font-size:15.5px; max-width:62ch; margin:0 0 4px}
+
+  .route{
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:14px 16px; margin-top:22px;
+  }
+  .method{
+    font-family:var(--mono); font-weight:700; font-size:12.5px; letter-spacing:.03em;
+    background:var(--accent); color:var(--paper); padding:4px 9px; border-radius:4px; flex:none;
+  }
+  .route code{font-size:14px; color:var(--ink); flex:1; min-width:180px}
+  .copy-btn{
+    font-family:var(--mono); font-size:11.5px; letter-spacing:.03em;
+    background:var(--surface-2); border:1px solid var(--line); color:var(--ink-soft);
+    padding:6px 10px; border-radius:4px; cursor:pointer; transition:background .15s, color .15s;
+    display:inline-flex; align-items:center; gap:6px; flex:none;
+  }
+  .copy-btn:hover{background:var(--accent-soft); color:var(--accent-ink); border-color:var(--accent)}
+  .copy-btn:focus-visible, a:focus-visible, .tab:focus-visible{outline:2px solid var(--accent); outline-offset:2px}
+  .copy-btn.copied{color:var(--success); border-color:var(--success)}
+
+  section{margin-bottom:52px; scroll-margin-top:80px; max-width:720px}
+  section h2{
+    font-family:var(--mono); font-size:19px; font-weight:700; margin:0 0 6px;
+    padding-bottom:12px; border-bottom:1px solid var(--line);
+  }
+  .section-sub{color:var(--ink-faint); font-size:13.5px; margin:10px 0 20px}
+  section > p{color:var(--ink-soft); font-size:14.5px; max-width:65ch}
+  section p.tight{margin-top:0}
+
+  .pill{
+    display:inline-flex; align-items:center; gap:5px; font-family:var(--mono); font-size:11px;
+    font-weight:700; padding:2px 8px; border-radius:20px; letter-spacing:.02em;
+  }
+  .pill.req{background:var(--danger-soft); color:var(--danger)}
+  .pill.opt{background:var(--line-soft); color:var(--ink-faint)}
+  .pill.status-201{background:var(--success-soft); color:var(--success)}
+  .pill.status-4xx{background:var(--danger-soft); color:var(--danger)}
+
+  .kv{
+    display:flex; gap:10px; align-items:flex-start; padding:10px 0; border-bottom:1px solid var(--line-soft);
+    font-size:13.5px;
+  }
+  .kv:last-child{border-bottom:none}
+  .kv .k{font-family:var(--mono); color:var(--ink); flex:0 0 130px; font-size:13px}
+  .kv .v{color:var(--ink-soft)}
+
+  table{width:100%; border-collapse:collapse; font-size:13.5px}
+  .table-wrap{overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius)}
+  th{
+    text-align:left; font-family:var(--mono); font-size:10.5px; letter-spacing:.08em; text-transform:uppercase;
+    color:var(--ink-faint); background:var(--surface-2); padding:10px 14px; border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  td{padding:11px 14px; border-bottom:1px solid var(--line-soft); vertical-align:top; color:var(--ink-soft)}
+  tr:last-child td{border-bottom:none}
+  td.field{font-family:var(--mono); color:var(--ink); white-space:nowrap}
+  td.type{font-family:var(--mono); color:var(--ink-faint); white-space:nowrap; font-size:12.5px}
+
+  pre{
+    background:var(--surface); border:1px solid var(--line); border-radius:var(--radius);
+    padding:16px 18px; overflow-x:auto; font-size:13px; line-height:1.65; margin:0;
+    font-variant-numeric:tabular-nums;
+  }
+  .code-block{position:relative; margin:14px 0}
+  .code-block .copy-btn{position:absolute; top:9px; right:9px}
+  .jk{color:var(--jkey)} .js{color:var(--jstr)} .jn{color:var(--jnum)} .jb{color:var(--jbool)} .jp{color:var(--jpunc)}
+  .cm{color:var(--ink-faint)}
+
+  .tabs{display:flex; gap:2px; margin-top:18px; border-bottom:1px solid var(--line)}
+  .tab{
+    font-family:var(--mono); font-size:12.5px; padding:8px 14px; cursor:pointer; color:var(--ink-faint);
+    background:none; border:none; border-bottom:2px solid transparent; margin-bottom:-1px;
+  }
+  .tab.on{color:var(--ink); border-bottom-color:var(--accent)}
+  .tabpanel{display:none}
+  .tabpanel.on{display:block}
+
+  .callout{
+    border:1px solid var(--line); border-radius:var(--radius); padding:14px 16px; font-size:13.5px;
+    color:var(--ink-soft); background:var(--surface); margin:16px 0;
+  }
+  .callout.warn{border-color:color-mix(in srgb, var(--danger) 35%, var(--line)); background:var(--danger-soft); color:var(--danger)}
+  .callout b{color:inherit}
+
+  ul.limits{margin:0; padding-left:20px; color:var(--ink-soft); font-size:14px}
+  ul.limits li{margin-bottom:8px}
+
+  footer{
+    max-width:720px; padding-top:20px; border-top:1px solid var(--line);
+    color:var(--ink-faint); font-size:12.5px; font-family:var(--mono);
+  }
+
+  @media (max-width:880px){
+    .shell{grid-template-columns:1fr; gap:0}
+    .toc{
+      position:sticky; top:57px; padding:14px 0; margin-bottom:8px;
+      display:flex; gap:4px; overflow-x:auto; background:var(--paper); z-index:10;
+      border-bottom:1px solid var(--line);
+    }
+    .toc-label{display:none}
+    .toc a{
+      white-space:nowrap; border-left:none; margin-left:0; padding:6px 10px;
+      border-bottom:2px solid transparent; border-radius:4px 4px 0 0;
+    }
+    .toc a.on{border-left:none; border-bottom-color:var(--accent); background:var(--surface-2)}
+    .kv .k{flex-basis:110px}
+  }
+</style>
+</head>
+<body>
+
+<div class="page">
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">PIE Real Estate <b>/ CRM API</b></div>
+      <div class="theme-hint">v1</div>
+    </div>
+  </div>
+
+  <div class="shell">
+    <nav class="toc" id="toc">
+      <div class="toc-label">On this page</div>
+      <a href="#auth">Authentication</a>
+      <a href="#request">Request</a>
+      <a href="#fields">Field reference</a>
+      <a href="#responses">Responses</a>
+      <a href="#behavior">Behavior</a>
+      <a href="#limits">Limitations</a>
+      <a href="#examples">Examples</a>
+    </nav>
+
+    <main>
+      <div class="lede">
+        <p class="eyebrow">Public endpoint · Reference</p>
+        <h1>Lead Intake API</h1>
+        <p>Register a new lead into the CRM from outside systems — a website form, a WhatsApp bot, a property portal. Every successful call is automatically scored, assigned to an agent, and the agent is notified.</p>
+
+        <div class="route">
+          <span class="method">POST</span>
+          <code>/api/leads/create/</code>
+          <button class="copy-btn" data-copy="https://your-domain.com/api/leads/create/">Copy URL</button>
+        </div>
+      </div>
+
+      <section id="auth">
+        <h2>Authentication</h2>
+        <p class="tight">Every request must include the shared key in a header. It's set via the <code>LEAD_API_KEY</code> environment variable — treat it like a password.</p>
+        <div class="code-block">
+          <pre><span class="jk">X-Api-Key</span><span class="jp">:</span> your-key-here</pre>
+        </div>
+        <div class="kv">
+          <div class="k">401</div>
+          <div class="v"><code>{"error": "Invalid or missing API key."}</code> — header absent or doesn't match.</div>
+        </div>
+      </section>
+
+      <section id="request">
+        <h2>Request</h2>
+        <p class="section-sub">Only <code>full_name</code> and <code>phone</code> are required. Everything else falls back to a sensible default.</p>
+        <div class="kv"><div class="k">Method</div><div class="v">POST</div></div>
+        <div class="kv"><div class="k">Content-Type</div><div class="v"><code>application/json</code> (recommended), or <code>application/x-www-form-urlencoded</code></div></div>
+        <div class="kv"><div class="k">Body</div><div class="v">A JSON object — see field reference below</div></div>
+      </section>
+
+      <section id="fields">
+        <h2>Field reference</h2>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Field</th><th>Type</th><th></th><th>Default</th><th>Notes</th></tr></thead>
+            <tbody>
+              <tr><td class="field">full_name</td><td class="type">string</td><td><span class="pill req">required</span></td><td>—</td><td>—</td></tr>
+              <tr><td class="field">phone</td><td class="type">string</td><td><span class="pill req">required</span></td><td>—</td><td>Any format, stored as-is</td></tr>
+              <tr><td class="field">email</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>—</td></tr>
+              <tr><td class="field">alternate_phone</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>—</td></tr>
+              <tr><td class="field">source</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>website</code></td><td>website · whatsapp · referral · property_listing · walk_in · phone_call · social_media · other</td></tr>
+              <tr><td class="field">lead_type</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>buyer</code></td><td>buyer · seller · investor · tenant</td></tr>
+              <tr><td class="field">interested_in</td><td class="type">string[]</td><td><span class="pill opt">optional</span></td><td><code>[]</code></td><td>apartment · house · plot · commercial — unknown values dropped silently</td></tr>
+              <tr><td class="field">area_preferences</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>Free text, e.g. "Block A, Block C"</td></tr>
+              <tr><td class="field">budget_min / budget_max</td><td class="type">number</td><td><span class="pill opt">optional</span></td><td><code>null</code></td><td>—</td></tr>
+              <tr><td class="field">bedrooms_min / bedrooms_max</td><td class="type">integer</td><td><span class="pill opt">optional</span></td><td><code>null</code></td><td>—</td></tr>
+              <tr><td class="field">bathrooms_min / bathrooms_max</td><td class="type">integer</td><td><span class="pill opt">optional</span></td><td><code>null</code></td><td>—</td></tr>
+              <tr><td class="field">area_sqft_min / area_sqft_max</td><td class="type">integer</td><td><span class="pill opt">optional</span></td><td><code>null</code></td><td>—</td></tr>
+              <tr><td class="field">other_requirements</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>Free text</td></tr>
+              <tr><td class="field">notes</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>Free text</td></tr>
+              <tr><td class="field">agent_phone</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td>—</td><td>Lead is already assigned — see below. Omit for a fresh, unassigned lead.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p style="color:var(--ink); font-weight:600; font-size:14px; margin:22px 0 6px">Assignment: auto vs. explicit</p>
+        <p class="tight">Most leads have no agent yet, so by default the lead is auto-assigned — round-robin to whichever active agent currently has the fewest leads. If the lead is <b style="color:var(--ink)">already assigned</b> on your side — say, it came from an agent's own listing, or a referral routed to a specific agent — pass that agent's phone number in <code>agent_phone</code> instead. It's matched by digits only, so local (<code>0312 2211828</code>) and international (<code>+92 312 2211828</code>) formats both work, and auto-assignment is skipped entirely.</p>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td class="type" style="white-space:nowrap">400</td><td><code>{"error": "agent_phone is not a valid phone number."}</code></td></tr>
+              <tr><td class="type">400</td><td><code>{"error": "No active agent found with phone ..."}</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="responses">
+        <h2>Responses</h2>
+
+        <p class="tight"><span class="pill status-201">201 Created</span></p>
+        <div class="code-block">
+          <pre><span class="jp">{</span>
+  <span class="jk">"id"</span><span class="jp">:</span> <span class="jn">42</span><span class="jp">,</span>
+  <span class="jk">"full_name"</span><span class="jp">:</span> <span class="js">"Ali Raza"</span><span class="jp">,</span>
+  <span class="jk">"phone"</span><span class="jp">:</span> <span class="js">"03001234567"</span><span class="jp">,</span>
+  <span class="jk">"status"</span><span class="jp">:</span> <span class="js">"new"</span><span class="jp">,</span>
+  <span class="jk">"lead_score"</span><span class="jp">:</span> <span class="js">"warm"</span><span class="jp">,</span>
+  <span class="jk">"assigned_agent"</span><span class="jp">:</span> <span class="jp">{</span>
+    <span class="jk">"name"</span><span class="jp">:</span> <span class="js">"Fahad Nazeer"</span><span class="jp">,</span>
+    <span class="jk">"phone"</span><span class="jp">:</span> <span class="js">"+923001234567"</span><span class="jp">,</span>
+    <span class="jk">"assignment"</span><span class="jp">:</span> <span class="js">"auto"</span>
+  <span class="jp">}</span>
+<span class="jp">}</span></pre>
+          <button class="copy-btn" data-copy='{&#10;  "id": 42,&#10;  "full_name": "Ali Raza",&#10;  "phone": "03001234567",&#10;  "status": "new",&#10;  "lead_score": "warm",&#10;  "assigned_agent": {&#10;    "name": "Fahad Nazeer",&#10;    "phone": "+923001234567",&#10;    "assignment": "auto"&#10;  }&#10;}'>Copy</button>
+        </div>
+        <div class="kv"><div class="k">id</div><div class="v">The lead's primary key — build a CRM deep link as <code>/crm/leads/&#123;id&#125;/</code></div></div>
+        <div class="kv"><div class="k">lead_score</div><div class="v"><code>hot</code>, <code>warm</code>, or <code>cold</code> — see <a href="#behavior">Behavior</a></div></div>
+        <div class="kv"><div class="k">assigned_agent</div><div class="v"><code>null</code> if no active agent exists to assign to</div></div>
+        <div class="kv"><div class="k">.assignment</div><div class="v"><code>"auto"</code> (round-robin) or <code>"explicit"</code> (you supplied <code>agent_phone</code>)</div></div>
+
+        <p><span class="pill status-4xx">Errors</span></p>
+        <div class="table-wrap">
+          <table>
+            <tbody>
+              <tr><td class="type" style="white-space:nowrap">401</td><td><code>{"error": "Invalid or missing API key."}</code></td></tr>
+              <tr><td class="type">400</td><td><code>{"error": "Invalid JSON body."}</code></td></tr>
+              <tr><td class="type">400</td><td><code>{"error": "full_name and phone are required."}</code></td></tr>
+              <tr><td class="type">400</td><td><code>{"error": "Invalid source. Choices: [...]"}</code></td></tr>
+              <tr><td class="type">400</td><td><code>{"error": "Invalid lead_type. Choices: [...]"}</code></td></tr>
+              <tr><td class="type">400</td><td><code>{"error": "agent_phone is not a valid phone number."}</code></td></tr>
+              <tr><td class="type">400</td><td><code>{"error": "No active agent found with phone ..."}</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="behavior">
+        <h2>Behavior</h2>
+
+        <p class="tight" style="color:var(--ink); font-weight:600; font-size:14px; margin-bottom:6px">Auto-assignment</p>
+        <p class="tight">When <code>agent_phone</code> isn't supplied, the lead goes to whichever active agent currently has the fewest leads — this keeps the workload equal across the team over time. If no active agent exists, <code>assigned_to</code> stays empty.</p>
+
+        <p style="color:var(--ink); font-weight:600; font-size:14px; margin-bottom:6px">Explicit assignment</p>
+        <p class="tight">When <code>agent_phone</code> is supplied and matches an active agent, the lead is assigned directly to them and auto-assignment is skipped entirely — this is how an already-assigned lead is registered.</p>
+
+        <p style="color:var(--ink); font-weight:600; font-size:14px; margin-bottom:6px">Lead scoring</p>
+        <p class="tight">A starter rule based on what's known about the lead at creation time:</p>
+        <ul class="limits">
+          <li>+1 for each of: budget set, <code>interested_in</code> set, <code>area_preferences</code> set, bedrooms/bathrooms set</li>
+          <li>Score ≥ 2 → <b style="color:var(--ink)">Warm</b>, score ≥ 5 → <b style="color:var(--ink)">Hot</b>, otherwise <b style="color:var(--ink)">Cold</b></li>
+          <li>Later pipeline progress (in the CRM) adds further points — a freshly-created lead only reflects the signals above</li>
+        </ul>
+        <div class="callout">Easy to retune once you've seen it run against real data — see <code>Lead.calculate_lead_score()</code> in <code>accounts/models.py</code>.</div>
+
+        <p style="color:var(--ink); font-weight:600; font-size:14px; margin-bottom:6px">Notification</p>
+        <p class="tight">If an agent was assigned, they get an in-CRM notification linking straight to the lead, plus a browser push notification if they have push enabled.</p>
+      </section>
+
+      <section id="limits">
+        <h2>Limitations</h2>
+        <ul class="limits">
+          <li><b style="color:var(--ink)">No deduplication</b> — calling this twice with the same phone number creates two separate leads.</li>
+          <li><b style="color:var(--ink)">No rate limiting</b> — the API key is the only gate. Don't expose it publicly.</li>
+        </ul>
+      </section>
+
+      <section id="examples">
+        <h2>Examples</h2>
+        <div class="tabs" role="tablist">
+          <button class="tab on" data-tab="curl" role="tab">curl</button>
+          <button class="tab" data-tab="js" role="tab">JavaScript</button>
+          <button class="tab" data-tab="py" role="tab">Python</button>
+        </div>
+
+        <div class="tabpanel on" data-panel="curl">
+          <div class="code-block">
+<pre><span class="cm"># create a lead from a WhatsApp bot handoff</span>
+curl -X POST https://your-domain.com/api/leads/create/ \
+  -H <span class="js">"Content-Type: application/json"</span> \
+  -H <span class="js">"X-Api-Key: YOUR_LEAD_API_KEY"</span> \
+  -d <span class="js">'{
+    "full_name": "Ali Raza",
+    "phone": "03001234567",
+    "email": "ali@example.com",
+    "source": "whatsapp",
+    "lead_type": "buyer",
+    "interested_in": ["house", "plot"],
+    "area_preferences": "Block A, Block C",
+    "budget_min": 5000000,
+    "budget_max": 15000000,
+    "bedrooms_min": 3,
+    "notes": "Wants a corner plot, prefers Block C."
+  }'</span></pre>
+            <button class="copy-btn" data-copy-id="curl-src">Copy</button>
+          </div>
+
+          <p style="color:var(--ink); font-weight:600; font-size:13.5px; margin:22px 0 6px">Already assigned to a specific agent</p>
+          <div class="code-block">
+<pre>curl -X POST https://your-domain.com/api/leads/create/ \
+  -H <span class="js">"Content-Type: application/json"</span> \
+  -H <span class="js">"X-Api-Key: YOUR_LEAD_API_KEY"</span> \
+  -d <span class="js">'{
+    "full_name": "Sana Malik",
+    "phone": "03331234567",
+    "source": "referral",
+    "agent_phone": "0312 2211828"
+  }'</span></pre>
+            <button class="copy-btn" data-copy-id="curl-agent-src">Copy</button>
+          </div>
+        </div>
+
+        <div class="tabpanel" data-panel="js">
+          <div class="code-block">
+<pre><span class="jk">const</span> res = <span class="jk">await</span> fetch(<span class="js">'https://your-domain.com/api/leads/create/'</span>, {
+  method: <span class="js">'POST'</span>,
+  headers: {
+    <span class="js">'Content-Type'</span>: <span class="js">'application/json'</span>,
+    <span class="js">'X-Api-Key'</span>: <span class="js">'YOUR_LEAD_API_KEY'</span>,
+  },
+  body: JSON.stringify({
+    full_name: <span class="js">'Ali Raza'</span>,
+    phone: <span class="js">'03001234567'</span>,
+    source: <span class="js">'website'</span>,
+  }),
+});
+<span class="jk">const</span> lead = <span class="jk">await</span> res.json();</pre>
+            <button class="copy-btn" data-copy-id="js-src">Copy</button>
+          </div>
+        </div>
+
+        <div class="tabpanel" data-panel="py">
+          <div class="code-block">
+<pre><span class="jk">import</span> requests
+
+resp = requests.post(
+    <span class="js">'https://your-domain.com/api/leads/create/'</span>,
+    headers={<span class="js">'X-Api-Key'</span>: <span class="js">'YOUR_LEAD_API_KEY'</span>},
+    json={
+        <span class="js">'full_name'</span>: <span class="js">'Ali Raza'</span>,
+        <span class="js">'phone'</span>: <span class="js">'03001234567'</span>,
+        <span class="js">'source'</span>: <span class="js">'property_listing'</span>,
+    },
+)
+<span class="jk">print</span>(resp.status_code, resp.json())</pre>
+            <button class="copy-btn" data-copy-id="py-src">Copy</button>
+          </div>
+        </div>
+      </section>
+
+      <footer>PIE Real Estate — CRM Lead Intake API — internal reference</footer>
+    </main>
+  </div>
+</div>
+
+<script>
+(function(){
+  // plain-text sources for the copy buttons on the tabbed examples (kept separate from the highlighted markup)
+  var sources = {
+    'curl-src': "curl -X POST https://your-domain.com/api/leads/create/ \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-Api-Key: YOUR_LEAD_API_KEY\" \\\n  -d '{\n    \"full_name\": \"Ali Raza\",\n    \"phone\": \"03001234567\",\n    \"email\": \"ali@example.com\",\n    \"source\": \"whatsapp\",\n    \"lead_type\": \"buyer\",\n    \"interested_in\": [\"house\", \"plot\"],\n    \"area_preferences\": \"Block A, Block C\",\n    \"budget_min\": 5000000,\n    \"budget_max\": 15000000,\n    \"bedrooms_min\": 3,\n    \"notes\": \"Wants a corner plot, prefers Block C.\"\n  }'",
+    'curl-agent-src': "curl -X POST https://your-domain.com/api/leads/create/ \\\n  -H \"Content-Type: application/json\" \\\n  -H \"X-Api-Key: YOUR_LEAD_API_KEY\" \\\n  -d '{\n    \"full_name\": \"Sana Malik\",\n    \"phone\": \"03331234567\",\n    \"source\": \"referral\",\n    \"agent_phone\": \"0312 2211828\"\n  }'",
+    'js-src': "const res = await fetch('https://your-domain.com/api/leads/create/', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'X-Api-Key': 'YOUR_LEAD_API_KEY',\n  },\n  body: JSON.stringify({\n    full_name: 'Ali Raza',\n    phone: '03001234567',\n    source: 'website',\n  }),\n});\nconst lead = await res.json();",
+    'py-src': "import requests\n\nresp = requests.post(\n    'https://your-domain.com/api/leads/create/',\n    headers={'X-Api-Key': 'YOUR_LEAD_API_KEY'},\n    json={\n        'full_name': 'Ali Raza',\n        'phone': '03001234567',\n        'source': 'property_listing',\n    },\n)\nprint(resp.status_code, resp.json())"
+  };
+
+  function flash(btn){
+    var old = btn.textContent;
+    btn.textContent = 'Copied';
+    btn.classList.add('copied');
+    setTimeout(function(){ btn.textContent = old; btn.classList.remove('copied'); }, 1400);
+  }
+
+  document.querySelectorAll('.copy-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var text = btn.dataset.copy;
+      if (btn.dataset.copyId) text = sources[btn.dataset.copyId];
+      if (!text) return;
+      navigator.clipboard.writeText(text).then(function(){ flash(btn); });
+    });
+  });
+
+  // tabs
+  document.querySelectorAll('.tab').forEach(function(tab){
+    tab.addEventListener('click', function(){
+      var group = tab.closest('section');
+      group.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('on'); });
+      group.querySelectorAll('.tabpanel').forEach(function(p){ p.classList.remove('on'); });
+      tab.classList.add('on');
+      group.querySelector('.tabpanel[data-panel="' + tab.dataset.tab + '"]').classList.add('on');
+    });
+  });
+
+  // scrollspy for TOC
+  var links = Array.prototype.slice.call(document.querySelectorAll('#toc a'));
+  var sections = links.map(function(l){ return document.querySelector(l.getAttribute('href')); });
+  function onScroll(){
+    var y = window.scrollY + 100;
+    var current = sections[0];
+    sections.forEach(function(s){ if (s && s.offsetTop <= y) current = s; });
+    links.forEach(function(l){ l.classList.remove('on'); });
+    if (current){
+      var match = links.find(function(l){ return l.getAttribute('href') === '#' + current.id; });
+      if (match) match.classList.add('on');
+    }
+  }
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+})();
+</script>
+
+</body>
+</html>
