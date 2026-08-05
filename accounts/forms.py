@@ -216,6 +216,7 @@ class LeadForm(forms.ModelForm):
             'bathrooms_min', 'bathrooms_max',
             'area_sqft_min', 'area_sqft_max',
             'other_requirements', 'notes', 'follow_up_date', 'property',
+            'lost_reason',
         ]
 
     def __init__(self, *args, user=None, **kwargs):
@@ -227,7 +228,9 @@ class LeadForm(forms.ModelForm):
         self.fields['property'].queryset = Property.objects.all().select_related('block')
         self.fields['property'].empty_label = '— No property linked yet —'
         self.fields['property'].required = False
-        self.fields['property'].label = 'Negotiating Property'
+        self.fields['property'].label = 'Property'
+        self.fields['lost_reason'].required = False
+        self.fields['lost_reason'].label = 'Deal Lost Reason'
         if user and not user.is_crm_admin:
             del self.fields['assigned_to']
 
@@ -235,18 +238,25 @@ class LeadForm(forms.ModelForm):
         cleaned = super().clean()
         status = cleaned.get('status')
         prop = cleaned.get('property')
-        if status == Lead.STATUS_NEGOTIATION and not prop:
+        if status == Lead.STATUS_VISIT_SCHEDULED and not prop:
             self.add_error(
                 'property',
-                'Select the property being negotiated before moving this lead to Negotiation.',
+                'Select the property being visited before scheduling a site visit.',
             )
-        if status == Lead.STATUS_CONVERTED:
+        if status == Lead.STATUS_DEAL_LOST and not cleaned.get('lost_reason'):
+            self.add_error(
+                'lost_reason',
+                'Add a reason before marking this lead as Deal Lost.',
+            )
+        documentation_index = Lead.STATUS_ORDER.index(Lead.STATUS_DOCUMENTATION)
+        target_index = Lead.STATUS_ORDER.index(status) if status in Lead.STATUS_ORDER else None
+        if target_index is not None and target_index > documentation_index:
             missing = self.instance.missing_required_documents(prop=prop)
             if missing:
                 names = ', '.join(d.name for d in missing)
                 self.add_error(
                     'status',
-                    f"Add the required documents for this lead's property block before marking it Converted: {names}.",
+                    f"Add the required documents for this lead's property block first: {names}.",
                 )
         return cleaned
 

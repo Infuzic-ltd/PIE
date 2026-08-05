@@ -14,11 +14,12 @@ from django.db.models import Q, Sum, Count
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
+from django.utils.dateparse import parse_datetime, parse_date
 import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, AgentTarget
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -725,6 +726,46 @@ def _lead_qs(request):
     ).distinct().select_related('assigned_to', 'created_by').prefetch_related('collaborators')
 
 
+def _build_whatsapp_share_url(request, lead, recommendations):
+    """WhatsApp deep link sharing the lead's top matching properties, or '' if there's nothing to share."""
+    if not (lead.phone and recommendations):
+        return ''
+    lines = [f"Hi {lead.full_name}! \U0001f44b Here are top properties from PIE Real Estate matching your requirements:\n"]
+    for i, prop in enumerate(recommendations, 1):
+        prop_url = request.build_absolute_uri(f'/properties/{prop.pk}/')
+        price = f"PKR {prop.price:,.0f}" if prop.price else 'Price on request'
+        details = f"  \U0001f4cd {prop.location}, {prop.city}\n  \U0001f4b0 {price}"
+        if prop.bedrooms:
+            details += f"\n  \U0001f6cf {prop.bedrooms} Bed"
+        if prop.bathrooms:
+            details += f" · \U0001f6bf {prop.bathrooms} Bath"
+        if hasattr(prop, 'match_pct'):
+            details += f"\n  ✓ {prop.match_pct}% match"
+        details += f"\n  \U0001f517 {prop_url}"
+        lines.append(f"*{i}. {prop.title}*\n{details}")
+    lines.append("\nReady to schedule a viewing? Contact us anytime. — PIE Real Estate")
+    message = "\n\n".join(lines)
+    digits = _normalize_phone_digits(lead.phone)
+    return f"https://wa.me/{digits}?text={quote(message)}"
+
+
+def _advance_status(lead, target_status, user, note=None):
+    """Move a lead forward to target_status only if it isn't already there or past it —
+    used by auto-transitions so they never downgrade a lead that's already further along."""
+    target_index = Lead.STATUS_ORDER.index(target_status)
+    if lead.status_step_index() != -1 and lead.status_step_index() >= target_index:
+        return
+    old = lead.get_status_display()
+    lead.status = target_status
+    lead.save(update_fields=['status', 'lead_score', 'updated_at'])
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_STATUS,
+        description=note or f'Status changed from {old} to {lead.get_status_display()}.',
+        created_by=user,
+    )
+
+
 @login_required
 def lead_list(request):
     qs = _lead_qs(request)
@@ -756,10 +797,10 @@ def lead_list(request):
     base_qs = _lead_qs(request)
     kpis = {
         'total': base_qs.count(),
-        'new': base_qs.filter(status='new').count(),
-        'contacted': base_qs.filter(status='contacted').count(),
-        'qualified': base_qs.filter(status='qualified').count(),
-        'converted': base_qs.filter(status='converted').count(),
+        'received': base_qs.filter(status=Lead.STATUS_RECEIVED).count(),
+        'contacted': base_qs.filter(status=Lead.STATUS_CONTACTED).count(),
+        'negotiation': base_qs.filter(status=Lead.STATUS_NEGOTIATION).count(),
+        'deal_closed': base_qs.filter(status=Lead.STATUS_DEAL_CLOSED).count(),
     }
 
     agents = User.objects.filter(is_active=True) if request.user.is_crm_admin else None
@@ -793,6 +834,8 @@ def lead_create(request):
             lead.assigned_to = request.user
         elif not lead.assigned_to_id:
             lead.assigned_to = _auto_assign_agent()
+        if lead.assigned_to_id and lead.status == Lead.STATUS_RECEIVED:
+            lead.status = Lead.STATUS_ASSIGNED
         raw = request.POST.getlist('interested_in')
         lead.interested_in = raw
         lead.save()
@@ -840,26 +883,16 @@ def lead_detail(request, pk):
         if can_manage_collaborators else User.objects.none()
     )
 
-    # Build WhatsApp share URL for top-5 recommended properties
-    whatsapp_url = ''
-    if lead.phone and recommendations:
-        lines = [f"Hi {lead.full_name}! \U0001f44b Here are top properties from PIE Real Estate matching your requirements:\n"]
-        for i, prop in enumerate(recommendations, 1):
-            prop_url = request.build_absolute_uri(f'/properties/{prop.pk}/')
-            price = f"PKR {prop.price:,.0f}" if prop.price else 'Price on request'
-            details = f"  \U0001f4cd {prop.location}, {prop.city}\n  \U0001f4b0 {price}"
-            if prop.bedrooms:
-                details += f"\n  \U0001f6cf {prop.bedrooms} Bed"
-            if prop.bathrooms:
-                details += f" · \U0001f6bf {prop.bathrooms} Bath"
-            if hasattr(prop, 'match_pct'):
-                details += f"\n  ✓ {prop.match_pct}% match"
-            details += f"\n  \U0001f517 {prop_url}"
-            lines.append(f"*{i}. {prop.title}*\n{details}")
-        lines.append("\nReady to schedule a viewing? Contact us anytime. — PIE Real Estate")
-        message = "\n\n".join(lines)
-        digits = _normalize_phone_digits(lead.phone)
-        whatsapp_url = f"https://wa.me/{digits}?text={quote(message)}"
+    whatsapp_url = _build_whatsapp_share_url(request, lead, recommendations)
+    payments = lead.payments.select_related('recorded_by').all()
+    total_paid = lead.total_paid()
+
+    status_labels = dict(Lead.STATUS_CHOICES)
+    steps = [
+        {'key': key, 'label': status_labels[key], 'icon': Lead.STATUS_ICONS.get(key, '')}
+        for key in Lead.STATUS_ORDER
+    ]
+    status_index = {key: i for i, key in enumerate(Lead.STATUS_ORDER)}
 
     return render(request, 'accounts/lead_detail.html', {
         'lead': lead,
@@ -876,6 +909,12 @@ def lead_detail(request, pk):
         'collaborators': collaborators,
         'can_manage_collaborators': can_manage_collaborators,
         'eligible_agents': eligible_agents,
+        'payments': payments,
+        'total_paid': total_paid,
+        'status_order': Lead.STATUS_ORDER,
+        'status_step_index': lead.status_step_index(),
+        'steps': steps,
+        'status_index': status_index,
     })
 
 
@@ -883,10 +922,14 @@ def lead_detail(request, pk):
 def lead_update(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)
     old_status = lead.status
+    old_status_label = lead.get_status_display()
     old_property_id = lead.property_id
+    old_assigned_to_id = lead.assigned_to_id
     form = LeadForm(request.POST or None, instance=lead, user=request.user)
     if request.method == 'POST' and form.is_valid():
         updated = form.save(commit=False)
+        if updated.assigned_to_id and not old_assigned_to_id and updated.status == Lead.STATUS_RECEIVED:
+            updated.status = Lead.STATUS_ASSIGNED
         raw = request.POST.getlist('interested_in')
         updated.interested_in = raw
         updated.save()
@@ -894,8 +937,15 @@ def lead_update(request, pk):
             LeadActivity.objects.create(
                 lead=updated,
                 activity_type=LeadActivity.TYPE_STATUS,
-                description=f'Status changed from {old_status.replace("_", " ").title()} to {updated.get_status_display()}.',
+                description=f'Status changed from {old_status_label} to {updated.get_status_display()}.',
                 created_by=request.user,
+            )
+        if updated.assigned_to_id and updated.assigned_to_id != old_assigned_to_id:
+            notify_user(
+                updated.assigned_to,
+                'New Lead Assigned',
+                f'{updated.full_name} has been assigned to you.',
+                f'/crm/leads/{updated.pk}/',
             )
         if updated.property_id and updated.property_id != old_property_id:
             LeadActivity.objects.create(
@@ -1174,8 +1224,8 @@ def lead_add_document(request, pk):
             created_by=request.user,
         )
         if doc.document_type == LeadDocument.TYPE_TOKEN_RECEIPT and doc.amount:
-            lead.token_amount = doc.amount
-            lead.save(update_fields=['token_amount'])
+            lead.booking_amount = doc.amount
+            lead.save(update_fields=['booking_amount', 'lead_score'])
     return redirect('lead_detail', pk=pk)
 
 
@@ -1187,18 +1237,24 @@ def lead_status_update(request, pk):
     valid = [s for s, _ in Lead.STATUS_CHOICES]
     is_ajax = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
 
+    def fail(error):
+        if is_ajax:
+            return JsonResponse({'ok': False, 'error': error}, status=400)
+        messages.error(request, error)
+        return redirect('lead_detail', pk=pk)
+
     if new_status not in valid or new_status == lead.status:
         return redirect('lead_detail', pk=pk)
 
-    if new_status == Lead.STATUS_NEGOTIATION and not lead.property_id:
+    update_fields = {'status', 'lead_score', 'updated_at'}
+
+    # Visit Scheduled needs to know which property the visit is for.
+    if new_status == Lead.STATUS_VISIT_SCHEDULED and not lead.property_id:
         prop = Property.objects.filter(pk=request.POST.get('property_id')).first()
         if not prop:
-            error = 'Select the property being negotiated before moving this lead to Negotiation.'
-            if is_ajax:
-                return JsonResponse({'ok': False, 'error': error}, status=400)
-            messages.error(request, error)
-            return redirect('lead_detail', pk=pk)
+            return fail('Select the property being visited before scheduling a site visit.')
         lead.property = prop
+        update_fields.add('property')
         LeadActivity.objects.create(
             lead=lead,
             activity_type=LeadActivity.TYPE_PROPERTY,
@@ -1206,27 +1262,158 @@ def lead_status_update(request, pk):
             created_by=request.user,
         )
 
-    if new_status == Lead.STATUS_CONVERTED:
+    # Deal Lost needs a reason.
+    if new_status == Lead.STATUS_DEAL_LOST:
+        reason = request.POST.get('lost_reason', '').strip()
+        if not reason:
+            return fail('Add a reason before marking this lead as Deal Lost.')
+        lead.lost_reason = reason
+        update_fields.add('lost_reason')
+
+    # Anything past Documentation requires the block's mandatory documents to be complete.
+    documentation_index = Lead.STATUS_ORDER.index(Lead.STATUS_DOCUMENTATION)
+    target_index = Lead.STATUS_ORDER.index(new_status) if new_status in Lead.STATUS_ORDER else None
+    if target_index is not None and target_index > documentation_index and not lead.documents_complete():
         missing = lead.missing_required_documents()
-        if missing:
-            names = ', '.join(d.name for d in missing)
-            error = f"Add the required documents for this lead's property block before marking it Converted: {names}."
-            if is_ajax:
-                return JsonResponse({'ok': False, 'error': error}, status=400)
-            messages.error(request, error)
-            return redirect('lead_detail', pk=pk)
+        names = ', '.join(d.name for d in missing)
+        return fail(f"Add the required documents for this lead's property block first: {names}.")
 
     old = lead.get_status_display()
+    is_contact_transition = new_status == Lead.STATUS_CONTACTED
     lead.status = new_status
-    lead.save(update_fields=['status', 'property', 'updated_at'])
+    lead.save(update_fields=list(update_fields))
     LeadActivity.objects.create(
         lead=lead,
-        activity_type=LeadActivity.TYPE_STATUS,
+        activity_type=LeadActivity.TYPE_CONTACTED if is_contact_transition else LeadActivity.TYPE_STATUS,
         description=f'Status changed from {old} to {lead.get_status_display()}.',
         created_by=request.user,
     )
     if is_ajax:
         return JsonResponse({'ok': True, 'status': lead.status, 'label': lead.get_status_display(), 'color': lead.status_color()})
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def lead_share_properties(request, pk):
+    """The WhatsApp 'Send Top N' button — still opens WhatsApp with the same message as
+    before, plus now logs the share and advances status to Property Shared."""
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    recommendations = lead.get_recommended_properties(limit=5)
+    whatsapp_url = _build_whatsapp_share_url(request, lead, recommendations)
+    if not whatsapp_url:
+        messages.error(request, 'No matching properties to share yet — add requirements to this lead first.')
+        return redirect('lead_detail', pk=pk)
+    count = len(recommendations)
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_PROPERTY,
+        description=f'Shared {count} matching propert{"y" if count == 1 else "ies"} with the lead via WhatsApp.',
+        created_by=request.user,
+    )
+    _advance_status(lead, Lead.STATUS_PROPERTY_SHARED, request.user)
+    return redirect(whatsapp_url)
+
+
+@login_required
+@require_POST
+def lead_auto_follow_up(request, pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    lead.follow_up_date = timezone.now()
+    lead.save(update_fields=['follow_up_date', 'lead_score', 'updated_at'])
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_FOLLOW_UP,
+        description=f'Follow-up logged by {request.user.get_full_name() or request.user.email}.',
+        created_by=request.user,
+    )
+    _advance_status(lead, Lead.STATUS_FOLLOW_UP, request.user)
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def lead_schedule_visit(request, pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    raw_datetime = request.POST.get('visit_datetime', '')
+    visit_dt = parse_datetime(raw_datetime)
+    if not visit_dt:
+        messages.error(request, 'Pick a valid date and time for the site visit.')
+        return redirect('lead_detail', pk=pk)
+    if timezone.is_naive(visit_dt):
+        visit_dt = timezone.make_aware(visit_dt)
+
+    prop = lead.property
+    if not prop:
+        prop = Property.objects.filter(pk=request.POST.get('property_id')).first()
+        if not prop:
+            messages.error(request, 'Select the property being visited before scheduling a site visit.')
+            return redirect('lead_detail', pk=pk)
+        lead.property = prop
+
+    lead.visit_scheduled_at = visit_dt
+    lead.save(update_fields=['property', 'visit_scheduled_at', 'lead_score', 'updated_at'])
+    when = timezone.localtime(visit_dt).strftime('%b %d, %Y at %I:%M %p')
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_VISIT,
+        description=f'Site visit scheduled for {when} at {prop.title}.',
+        created_by=request.user,
+    )
+    _advance_status(lead, Lead.STATUS_VISIT_SCHEDULED, request.user)
+
+    notify_recipients = [lead.assigned_to] if lead.assigned_to_id else []
+    notify_recipients += list(lead.collaborators.all())
+    for agent in notify_recipients:
+        notify_user(
+            agent,
+            'Site Visit Scheduled',
+            f'{lead.full_name} — visit for {prop.title} on {when}.',
+            f'/crm/leads/{lead.pk}/',
+        )
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def lead_add_payment(request, pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    amount = _decimal_or_none(request.POST.get('amount'))
+    paid_on = parse_date(request.POST.get('paid_on', '')) or timezone.localdate()
+    note = request.POST.get('note', '').strip()
+    if not amount or amount <= 0:
+        messages.error(request, 'Enter a valid payment amount.')
+        return redirect('lead_detail', pk=pk)
+
+    LeadPayment.objects.create(lead=lead, amount=amount, paid_on=paid_on, note=note, recorded_by=request.user)
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_PAYMENT,
+        description=f'Payment of PKR {amount:,.0f} recorded on {paid_on:%b %d, %Y}.' + (f' — {note}' if note else ''),
+        created_by=request.user,
+    )
+    if lead.status == Lead.STATUS_DOCUMENTATION:
+        _advance_status(lead, Lead.STATUS_PAYMENT_TRACKING, request.user)
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def lead_mark_possession_complete(request, pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    if not lead.documents_complete():
+        missing = lead.missing_required_documents()
+        messages.error(request, f"Add the required documents first: {', '.join(d.name for d in missing)}.")
+        return redirect('lead_detail', pk=pk)
+    old = lead.get_status_display()
+    lead.status = Lead.STATUS_POSSESSION_COMPLETE
+    lead.save(update_fields=['status', 'lead_score', 'updated_at'])
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_STATUS,
+        description=f'Status changed from {old} to {lead.get_status_display()}. Transfer & possession validated.',
+        created_by=request.user,
+    )
     return redirect('lead_detail', pk=pk)
 
 

@@ -80,15 +80,19 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
 .type-tenant{background:#dcfce7;color:#16a34a}
 .st{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600}
 .st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
-.st-new{background:#dbeafe;color:#1d4ed8}
+.st-received{background:#dbeafe;color:#1d4ed8}
+.st-assigned{background:#e0e7ff;color:#4338ca}
 .st-contacted{background:#fef3c7;color:#92400e}
-.st-qualified{background:#dcfce7;color:#166534}
+.st-property_shared{background:#e0f2fe;color:#0369a1}
 .st-follow_up{background:#ffedd5;color:#c2410c}
-.st-proposal{background:#ede9fe;color:#6d28d9}
+.st-visit_scheduled{background:#f3e8ff;color:#7e22ce}
 .st-negotiation{background:#cffafe;color:#155e75}
-.st-token{background:#fce7f3;color:#be185d}
-.st-converted{background:#d1fae5;color:#065f46}
-.st-lost{background:#f1f5f9;color:#475569}
+.st-booking_confirmed{background:#fce7f3;color:#be185d}
+.st-documentation{background:#ede9fe;color:#6d28d9}
+.st-payment_tracking{background:#ccfbf1;color:#0f766e}
+.st-possession_complete{background:#dcfce7;color:#166534}
+.st-deal_closed{background:#d1fae5;color:#065f46}
+.st-deal_lost{background:#fee2e2;color:#b91c1c}
 .score-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:11.5px;font-weight:600;white-space:nowrap}
 .score-hot{background:#fee2e2;color:#b91c1c}
 .score-warm{background:#ffedd5;color:#c2410c}
@@ -156,10 +160,10 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
 <!-- KPIs -->
 <div class="kpi-row">
   <div class="kpi"><div class="k-label">Total Leads</div><div class="k-val">{{ kpis.total }}</div></div>
-  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#3b82f6"></span>New</div><div class="k-val" style="color:#2563eb">{{ kpis.new }}</div></div>
+  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#3b82f6"></span>Received</div><div class="k-val" style="color:#2563eb">{{ kpis.received }}</div></div>
   <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#f59e0b"></span>Contacted</div><div class="k-val" style="color:#b45309">{{ kpis.contacted }}</div></div>
-  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#10b981"></span>Qualified</div><div class="k-val" style="color:#059669">{{ kpis.qualified }}</div></div>
-  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#059669"></span>Converted</div><div class="k-val" style="color:#065f46">{{ kpis.converted }}</div></div>
+  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#06b6d4"></span>Negotiation</div><div class="k-val" style="color:#155e75">{{ kpis.negotiation }}</div></div>
+  <div class="kpi"><div class="k-label"><span class="k-dot" style="background:#059669"></span>Deal Closed</div><div class="k-val" style="color:#065f46">{{ kpis.deal_closed }}</div></div>
 </div>
 
 <!-- Check existing lead by phone -->

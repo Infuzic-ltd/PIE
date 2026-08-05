@@ -42,6 +42,8 @@ a{color:inherit;text-decoration:none}
 .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
 .btn.primary:hover{background:#1d4ed8}
 .btn.danger{background:#fef2f2;border-color:#fecaca;color:#dc2626}
+.btn.pulse{animation:btnPulse 1.5s infinite}
+@keyframes btnPulse{0%,100%{box-shadow:0 0 0 0 rgba(249,115,22,.45)}50%{box-shadow:0 0 0 9px rgba(249,115,22,0)}}
 .content{padding:22px 24px 40px;flex:1}
 .lead-header{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;align-items:flex-start;gap:18px}
 .lead-header .info{flex:1}
@@ -62,7 +64,7 @@ a{color:inherit;text-decoration:none}
 .badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:600}
 .st{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
 .st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
-.st-new{background:#dbeafe;color:#1d4ed8}.st-contacted{background:#fef3c7;color:#92400e}.st-qualified{background:#dcfce7;color:#166534}.st-follow_up{background:#ffedd5;color:#c2410c}.st-proposal{background:#ede9fe;color:#6d28d9}.st-negotiation{background:#cffafe;color:#155e75}.st-token{background:#fce7f3;color:#be185d}.st-converted{background:#d1fae5;color:#065f46}.st-lost{background:#f1f5f9;color:#475569}
+.st-received{background:#dbeafe;color:#1d4ed8}.st-assigned{background:#e0e7ff;color:#4338ca}.st-contacted{background:#fef3c7;color:#92400e}.st-property_shared{background:#e0f2fe;color:#0369a1}.st-follow_up{background:#ffedd5;color:#c2410c}.st-visit_scheduled{background:#f3e8ff;color:#7e22ce}.st-negotiation{background:#cffafe;color:#155e75}.st-booking_confirmed{background:#fce7f3;color:#be185d}.st-documentation{background:#ede9fe;color:#6d28d9}.st-payment_tracking{background:#ccfbf1;color:#0f766e}.st-possession_complete{background:#dcfce7;color:#166534}.st-deal_closed{background:#d1fae5;color:#065f46}.st-deal_lost{background:#fee2e2;color:#b91c1c}
 .score-badge{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
 .score-hot{background:#fee2e2;color:#b91c1c}.score-warm{background:#ffedd5;color:#c2410c}.score-cold{background:#dcfce7;color:#166534}
 .chip{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:20px;font-size:12px;font-weight:500;background:#f1f5f9;color:var(--ink-soft);margin:2px}
@@ -82,10 +84,31 @@ a{color:inherit;text-decoration:none}
 .note-form{display:flex;gap:8px;margin-top:10px}
 .note-form textarea{flex:1;border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-size:13px;font-family:inherit;resize:none;height:70px;outline:none;color:var(--ink)}
 .note-form textarea:focus{border-color:var(--blue)}
-/* Status bar */
-.status-bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:14px}
-.status-opt{padding:5px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:.12s}
-.status-opt:hover{opacity:.8}
+/* Modern pipeline stepper */
+.stepper-card{overflow:visible}
+.lost-link{background:none;border:none;color:var(--red);font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;padding:4px 8px;border-radius:6px}
+.lost-link:hover{background:#fef2f2}
+.lost-banner{display:flex;align-items:center;gap:8px;background:#fef2f2;border:1px solid #fecaca;color:#b91c1c;padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px;font-weight:500}
+.stepper-scroll{overflow-x:auto;padding-bottom:4px}
+.stepper-track{position:relative;padding:12px 4px 0;min-width:920px}
+.stepper-line-bg{position:absolute;top:31px;left:40px;right:40px;height:3px;background:var(--line);border-radius:3px;z-index:0}
+.stepper-line-fill{position:absolute;top:31px;left:40px;height:3px;background:linear-gradient(90deg,#22c55e,#16a34a);border-radius:3px;z-index:0;transition:width .3s ease}
+.stepper-row{display:flex;position:relative;z-index:1}
+.step{flex:1;display:flex;flex-direction:column;align-items:center;min-width:0;padding:0 2px}
+.step.clickable{cursor:pointer}
+.step-circle{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;font-size:15px;border:2px solid var(--line);background:#fff;color:var(--ink-faint);transition:.15s}
+.step.done .step-circle{background:var(--green);border-color:var(--green);color:#fff}
+.step.current .step-circle{animation:stepPulse 1.6s ease-in-out infinite}
+@keyframes stepPulse{0%,100%{transform:scale(1)}50%{transform:scale(1.1)}}
+.step-label{font-size:10.5px;margin-top:7px;font-weight:600;color:var(--ink-faint);text-align:center;line-height:1.3}
+.step.done .step-label{color:var(--ink-soft)}
+.step.current .step-label{color:var(--ink);font-weight:700}
+.step-form{display:none}
+/* Follow-up / visit / payment cards */
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.fld label{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);background:#fff}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue)}
 /* Property recommendations */
 .prop-recs{display:flex;flex-direction:column;gap:10px}
 .rec-card{display:flex;gap:12px;padding:12px;border:1px solid var(--line);border-radius:10px;transition:background .12s}
@@ -112,10 +135,6 @@ a{color:inherit;text-decoration:none}
 /* Doc form */
 .doc-form{margin-top:12px;display:none}
 .doc-form.open{display:block}
-.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
-.fld label{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px}
-.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);background:#fff}
-.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue)}
 .scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
 .float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
 .float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
@@ -141,7 +160,7 @@ a{color:inherit;text-decoration:none}
 .modal-box{background:#fff;border-radius:14px;padding:22px;width:100%;max-width:420px;box-shadow:0 20px 60px rgba(8,16,36,.3)}
 .modal-box h3{font-size:15px;font-weight:700;margin-bottom:6px}
 .modal-box p{font-size:12.5px;color:var(--ink-soft);margin-bottom:14px}
-.modal-box select{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);margin-bottom:14px}
+.modal-box select,.modal-box textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);margin-bottom:14px}
 .modal-actions{display:flex;gap:8px;justify-content:flex-end}
 @media(max-width:960px){.body-grid{grid-template-columns:1fr}}
 @media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:18px 16px 40px}}
@@ -201,6 +220,43 @@ a{color:inherit;text-decoration:none}
 </div>
 {% endif %}
 
+<!-- Modern Pipeline Status Stepper -->
+<div class="card stepper-card">
+  <div class="card-title" style="justify-content:space-between">
+    <span style="display:flex;align-items:center;gap:8px"><svg viewBox="0 0 24 24"><path d="M3 3v18h18"/><path d="M18 9l-5 5-4-4-4.5 4.5"/></svg> Pipeline Status</span>
+    {% if can_edit and not lead.is_lost %}
+    <button type="button" class="lost-link" id="openLostModalBtn">Mark as Lost</button>
+    {% endif %}
+  </div>
+
+  {% if lead.is_lost %}
+  <div class="lost-banner">❌ <strong>Deal Lost</strong>{% if lead.lost_reason %} — {{ lead.lost_reason }}{% endif %}</div>
+  {% endif %}
+
+  <div class="stepper-scroll">
+    <div class="stepper-track">
+      <div class="stepper-line-bg"></div>
+      {% if status_step_index >= 0 %}<div class="stepper-line-fill" style="width:{% widthratio status_step_index 11 100 %}%"></div>{% endif %}
+      <div class="stepper-row">
+        {% for step in steps %}
+        <div class="step {% if forloop.counter0 < status_step_index %}done{% elif forloop.counter0 == status_step_index %}current{% endif %}{% if can_edit %} clickable{% endif %}"
+             {% if can_edit %}onclick="submitStepForm({{ forloop.counter0 }})"{% endif %}>
+          <div class="step-circle"{% if forloop.counter0 == status_step_index %} style="border-color:{{ lead.status_color }};color:{{ lead.status_color }};box-shadow:0 0 0 5px {{ lead.status_color }}22"{% endif %}>{% if forloop.counter0 < status_step_index %}✓{% else %}{{ step.icon }}{% endif %}</div>
+          <div class="step-label">{{ step.label }}</div>
+          {% if can_edit %}
+          <form method="post" action="{% url 'lead_status_update' lead.pk %}" class="status-form step-form" data-status="{{ step.key }}" id="stepForm{{ forloop.counter0 }}">
+            {% csrf_token %}
+            <input type="hidden" name="status" value="{{ step.key }}">
+            <input type="hidden" name="property_id" value="{{ lead.property_id|default:'' }}" class="status-property-input">
+          </form>
+          {% endif %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Lead Header -->
 <div class="lead-header">
   <div class="av-lg" style="background:{% if lead.lead_type == 'buyer' %}#3b82f6{% elif lead.lead_type == 'seller' %}#f97316{% elif lead.lead_type == 'investor' %}#8b5cf6{% else %}#10b981{% endif %}">{{ lead.initials }}</div>
@@ -222,31 +278,15 @@ a{color:inherit;text-decoration:none}
       {% if lead.email %}<a href="mailto:{{ lead.email }}" class="action-btn"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg> Email</a>{% endif %}
     </div>
   </div>
-  <!-- Quick Status Change -->
-  {% if can_edit %}
-  <div style="min-width:200px">
-    <div style="font-size:11.5px;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.4px;margin-bottom:8px">Update Status</div>
-    <div style="display:flex;flex-direction:column;gap:4px">
-      {% for val, label in status_choices %}
-      <form method="post" action="{% url 'lead_status_update' lead.pk %}" class="status-form" data-status="{{ val }}">{% csrf_token %}
-        <input type="hidden" name="status" value="{{ val }}">
-        <input type="hidden" name="property_id" value="{{ lead.property_id|default:'' }}" class="status-property-input">
-        <button type="submit" style="width:100%;text-align:left;padding:5px 10px;border-radius:6px;border:1.5px solid {% if lead.status == val %}{{ lead.status_color }}{% else %}var(--line){% endif %};background:{% if lead.status == val %}{{ lead.status_color }}1a{% else %}#fff{% endif %};font-size:12px;font-weight:{% if lead.status == val %}700{% else %}500{% endif %};color:{% if lead.status == val %}{{ lead.status_color }}{% else %}var(--ink-soft){% endif %};cursor:pointer;font-family:inherit;transition:.12s">{{ label }}</button>
-      </form>
-      {% endfor %}
-    </div>
-  </div>
-  {% endif %}
 </div>
 
 <div class="body-grid">
 <!-- Left Column -->
 <div>
   <!-- Negotiating Property & Document Progress -->
-  {% if lead.property or lead.status == 'negotiation' or lead.status == 'token' or lead.status == 'converted' %}
+  {% if lead.property %}
   <div class="card">
     <div class="card-title"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Negotiating Property</div>
-    {% if lead.property %}
     <a href="{% url 'property_view' lead.property.pk %}" class="prop-link">
       <div>
         <div class="name">{{ lead.property.title }}</div>
@@ -254,9 +294,6 @@ a{color:inherit;text-decoration:none}
       </div>
     </a>
     {% if can_edit %}<div style="margin-top:8px"><a href="{% url 'lead_update' lead.pk %}" style="font-size:12px;color:var(--blue);font-weight:600">Change linked property</a></div>{% endif %}
-    {% else %}
-    <div style="color:var(--ink-faint);font-size:13px">No property linked yet.{% if can_edit %} It will be requested when this lead moves to Negotiation, or set one from <a href="{% url 'lead_update' lead.pk %}" style="color:var(--blue);font-weight:600">Edit Lead</a>.{% endif %}</div>
-    {% endif %}
 
     {% if document_progress %}
     <div class="progress-wrap">
@@ -275,9 +312,61 @@ a{color:inherit;text-decoration:none}
         {% endfor %}
       </div>
       {% else %}
-      <div style="font-size:12px;color:var(--green);font-weight:600;margin-top:8px">All mandatory documents provided — ready to Convert.</div>
+      <div style="font-size:12px;color:var(--green);font-weight:600;margin-top:8px">All mandatory documents provided.</div>
       {% endif %}
     </div>
+    {% endif %}
+  </div>
+  {% else %}
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Negotiating Property</div>
+    <div style="color:var(--ink-faint);font-size:13px">No property linked yet.{% if can_edit %} It will be requested when this lead moves to Visit Scheduled, or set one from <a href="{% url 'lead_update' lead.pk %}" style="color:var(--blue);font-weight:600">Edit Lead</a>.{% endif %}</div>
+  </div>
+  {% endif %}
+
+  <!-- Follow-Up -->
+  {% if status_step_index >= status_index.property_shared %}
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Follow-Up</div>
+    {% if lead.follow_up_date %}
+    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Last follow-up logged {{ lead.follow_up_date|date:"M d, Y" }} at {{ lead.follow_up_date|time:"P" }}.</div>
+    {% else %}
+    <div style="font-size:13px;color:var(--ink-faint);margin-bottom:12px">No follow-up logged yet.</div>
+    {% endif %}
+    {% if can_edit %}
+    <form method="post" action="{% url 'lead_auto_follow_up' lead.pk %}">
+      {% csrf_token %}
+      <button type="submit" class="btn primary{% if lead.status == 'property_shared' %} pulse{% endif %}" style="width:100%;justify-content:center">{% if lead.status == 'property_shared' %}🔔 Log Follow-Up Now{% else %}Log Another Follow-Up{% endif %}</button>
+    </form>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- Site Visit -->
+  {% if status_step_index >= status_index.follow_up %}
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Site Visit</div>
+    {% if lead.visit_scheduled_at %}
+    <div class="info-row"><span class="k">Scheduled</span><span class="v">{{ lead.visit_scheduled_at|date:"M d, Y" }} at {{ lead.visit_scheduled_at|time:"P" }}</span></div>
+    {% else %}
+    <div style="font-size:13px;color:var(--ink-faint);margin-bottom:10px">No site visit scheduled yet.</div>
+    {% endif %}
+    {% if can_edit %}
+    <form method="post" action="{% url 'lead_schedule_visit' lead.pk %}" style="margin-top:10px">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="fld"><label>Visit Date &amp; Time</label><input type="datetime-local" name="visit_datetime" required></div>
+        {% if not lead.property %}
+        <div class="fld"><label>Property</label>
+          <select name="property_id" required>
+            <option value="">— Select —</option>
+            {% for prop in negotiation_properties %}<option value="{{ prop.pk }}">{{ prop.title }}</option>{% endfor %}
+          </select>
+        </div>
+        {% endif %}
+      </div>
+      <button type="submit" class="btn primary" style="width:100%;justify-content:center">{% if lead.visit_scheduled_at %}Reschedule Visit{% else %}Schedule Visit{% endif %}</button>
+    </form>
     {% endif %}
   </div>
   {% endif %}
@@ -350,12 +439,46 @@ a{color:inherit;text-decoration:none}
     {% endif %}
   </div>
 
-  <!-- Token & Financial -->
-  {% if lead.token_amount or lead.documents.exists %}
+  <!-- Financial & Payments -->
+  {% if lead.booking_amount or payments or status_step_index >= status_index.booking_confirmed %}
   <div class="card">
-    <div class="card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Financial</div>
-    {% if lead.token_amount %}
-    <div class="info-row"><span class="k">Token Amount</span><span class="v" style="font-weight:700;color:var(--green)">PKR {{ lead.token_amount|floatformat:0 }}</span></div>
+    <div class="card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Financial &amp; Payments</div>
+    {% if lead.booking_amount %}
+    <div class="info-row"><span class="k">Booking Amount</span><span class="v" style="font-weight:700;color:var(--green)">PKR {{ lead.booking_amount|floatformat:0 }}</span></div>
+    {% endif %}
+    <div class="info-row"><span class="k">Total Paid</span><span class="v" style="font-weight:700;color:var(--blue)">PKR {{ total_paid|floatformat:0 }}</span></div>
+
+    {% if payments %}
+    <div class="doc-list" style="margin-top:10px">
+      {% for p in payments %}
+      <div class="doc-item">
+        <div class="doc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
+        <div class="doc-info">
+          <div class="doc-title">{{ p.amount_display }}</div>
+          <div class="doc-sub">{{ p.paid_on|date:"M d, Y" }}{% if p.note %} · {{ p.note }}{% endif %}{% if p.recorded_by %} · {{ p.recorded_by.get_full_name }}{% endif %}</div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if can_edit %}
+    <form method="post" action="{% url 'lead_add_payment' lead.pk %}" style="margin-top:14px">
+      {% csrf_token %}
+      <div class="form-row">
+        <div class="fld"><label>Amount (PKR)</label><input type="number" name="amount" step="0.01" required></div>
+        <div class="fld"><label>Paid On</label><input type="date" name="paid_on" value="{% now 'Y-m-d' %}"></div>
+      </div>
+      <div class="fld" style="margin-bottom:10px"><label>Note</label><input type="text" name="note" placeholder="e.g. Installment 2 of 4"></div>
+      <button type="submit" class="btn primary" style="font-size:12px;padding:7px 14px">+ Record Payment</button>
+    </form>
+    {% endif %}
+
+    {% if can_edit and lead.status == 'payment_tracking' %}
+    <form method="post" action="{% url 'lead_mark_possession_complete' lead.pk %}" style="margin-top:14px" onsubmit="return confirm('Mark possession as complete for this lead?')">
+      {% csrf_token %}
+      <button type="submit" class="btn" style="width:100%;justify-content:center;background:#ecfdf5;border-color:#a7f3d0;color:#065f46">🔑 Mark Possession Complete</button>
+    </form>
     {% endif %}
   </div>
   {% endif %}
@@ -479,11 +602,14 @@ a{color:inherit;text-decoration:none}
         <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         View All Properties
       </a>
-      {% if whatsapp_url %}
-      <a href="{{ whatsapp_url }}" target="_blank" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px;text-decoration:none;background:#25D366;color:#fff;border-radius:6px;font-weight:600;border:none">
-        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-        Send Top {{ recommendations|length }} on WhatsApp
-      </a>
+      {% if whatsapp_url and can_edit %}
+      <form method="post" action="{% url 'lead_share_properties' lead.pk %}" target="_blank" style="display:inline-block">
+        {% csrf_token %}
+        <button type="submit" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px;background:#25D366;color:#fff;border-radius:6px;font-weight:600;border:none;cursor:pointer;font-family:inherit">
+          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+          Send Top {{ recommendations|length }} on WhatsApp
+        </button>
+      </form>
       {% endif %}
     </div>
   </div>
@@ -510,6 +636,9 @@ a{color:inherit;text-decoration:none}
             {% elif act.activity_type == 'token' %}💰
             {% elif act.activity_type == 'follow_up' %}📅
             {% elif act.activity_type == 'collaborator' %}👥
+            {% elif act.activity_type == 'visit' %}📅
+            {% elif act.activity_type == 'payment' %}💳
+            {% elif act.activity_type == 'contacted' %}📞
             {% else %}💬{% endif %}
           </div>
           <div class="tl-body">
@@ -530,11 +659,11 @@ a{color:inherit;text-decoration:none}
 
 </div></main></div>
 
-<!-- Property picker modal (shown the first time a lead moves to Negotiation) -->
+<!-- Property picker modal (shown when a lead moves to Visit Scheduled without a property yet) -->
 <div class="modal-scrim" id="propModalScrim">
   <div class="modal-box">
-    <h3>Select the Negotiating Property</h3>
-    <p>Choose which property this lead is negotiating on before moving it to Negotiation.</p>
+    <h3>Select the Property</h3>
+    <p>Choose which property this site visit is for before scheduling it.</p>
     <select id="propModalSelect">
       <option value="">— Select a property —</option>
       {% for prop in negotiation_properties %}
@@ -543,10 +672,28 @@ a{color:inherit;text-decoration:none}
     </select>
     <div class="modal-actions">
       <button type="button" class="btn" id="propModalCancel">Cancel</button>
-      <button type="button" class="btn primary" id="propModalConfirm">Confirm &amp; Move to Negotiation</button>
+      <button type="button" class="btn primary" id="propModalConfirm">Confirm &amp; Schedule Visit</button>
     </div>
   </div>
 </div>
+
+<!-- Deal Lost modal -->
+<div class="modal-scrim" id="lostModalScrim">
+  <div class="modal-box">
+    <h3>Mark Deal as Lost</h3>
+    <p>Add a reason so the team knows why this lead didn't convert.</p>
+    <textarea id="lostReasonTextarea" rows="3" placeholder="e.g. Buyer chose a competitor property due to price."></textarea>
+    <div class="modal-actions">
+      <button type="button" class="btn" id="lostModalCancel">Cancel</button>
+      <button type="button" class="btn danger" id="lostModalConfirm">Confirm Deal Lost</button>
+    </div>
+  </div>
+</div>
+<form method="post" action="{% url 'lead_status_update' lead.pk %}" id="lostForm" style="display:none">
+  {% csrf_token %}
+  <input type="hidden" name="status" value="deal_lost">
+  <input type="hidden" name="lost_reason" id="lostReasonInput">
+</form>
 
 <script>
 var mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim'),sb=document.getElementById('sidebar');
@@ -563,10 +710,15 @@ function openDocFormFor(reqId, reqName){
   f.scrollIntoView({behavior:'smooth', block:'center'});
   if(title) title.focus();
 }
+function submitStepForm(i){
+  var form = document.getElementById('stepForm'+i);
+  if(form) form.requestSubmit();
+}
 
-// Negotiation property requirement + Converted document gate
+// Visit-Scheduled property requirement + documents-complete gate for later stages
 var LEAD_HAS_PROPERTY = {{ lead.property_id|yesno:"true,false" }};
 var missingDocNames = [{% for doc in missing_documents %}"{{ doc.name|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}];
+var DOC_GATED_STATUSES = ['payment_tracking', 'possession_complete', 'deal_closed'];
 
 var propModalScrim = document.getElementById('propModalScrim');
 var propModalSelect = document.getElementById('propModalSelect');
@@ -601,14 +753,36 @@ if(propModalConfirm) propModalConfirm.addEventListener('click', function(){
 document.querySelectorAll('.status-form').forEach(function(form){
   form.addEventListener('submit', function(e){
     var status = form.dataset.status;
-    if(status === 'negotiation' && !LEAD_HAS_PROPERTY){
+    if(status === 'visit_scheduled' && !LEAD_HAS_PROPERTY){
       e.preventDefault();
       openPropertyModal(form);
-    } else if(status === 'converted' && missingDocNames.length){
+    } else if(DOC_GATED_STATUSES.indexOf(status) !== -1 && missingDocNames.length){
       e.preventDefault();
-      alert('Add the required documents for this lead\'s property block before marking it Converted:\n' + missingDocNames.join(', '));
+      alert('Add the required documents for this lead\'s property block first:\n' + missingDocNames.join(', '));
     }
   });
+});
+
+// Deal Lost modal wiring
+var lostModalScrim = document.getElementById('lostModalScrim');
+var openLostBtn = document.getElementById('openLostModalBtn');
+var lostModalCancel = document.getElementById('lostModalCancel');
+var lostModalConfirm = document.getElementById('lostModalConfirm');
+var lostReasonTextarea = document.getElementById('lostReasonTextarea');
+var lostForm = document.getElementById('lostForm');
+if(openLostBtn) openLostBtn.addEventListener('click', function(){
+  lostReasonTextarea.value = '';
+  lostModalScrim.classList.add('open');
+});
+if(lostModalCancel) lostModalCancel.addEventListener('click', function(){ lostModalScrim.classList.remove('open'); });
+if(lostModalScrim) lostModalScrim.addEventListener('click', function(e){ if(e.target === lostModalScrim) lostModalScrim.classList.remove('open'); });
+if(lostModalConfirm) lostModalConfirm.addEventListener('click', function(){
+  if(!lostReasonTextarea.value.trim()){
+    alert('Please add a reason.');
+    return;
+  }
+  document.getElementById('lostReasonInput').value = lostReasonTextarea.value.trim();
+  lostForm.submit();
 });
 </script>
 </body></html>

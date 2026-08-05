@@ -110,7 +110,7 @@ is skipped and the lead goes straight to that agent.
   "id": 42,
   "full_name": "Ali Raza",
   "phone": "03001234567",
-  "status": "new",
+  "status": "received",
   "lead_score": "warm",
   "assigned_agent": {
     "name": "Fahad Nazeer",

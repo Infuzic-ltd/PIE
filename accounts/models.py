@@ -145,38 +145,83 @@ class BlockRequiredDocument(models.Model):
 
 
 class Lead(models.Model):
-    STATUS_NEW = 'new'
+    STATUS_RECEIVED = 'received'
+    STATUS_ASSIGNED = 'assigned'
     STATUS_CONTACTED = 'contacted'
-    STATUS_QUALIFIED = 'qualified'
+    STATUS_PROPERTY_SHARED = 'property_shared'
     STATUS_FOLLOW_UP = 'follow_up'
-    STATUS_PROPOSAL = 'proposal'
+    STATUS_VISIT_SCHEDULED = 'visit_scheduled'
     STATUS_NEGOTIATION = 'negotiation'
-    STATUS_TOKEN = 'token'
-    STATUS_CONVERTED = 'converted'
-    STATUS_LOST = 'lost'
+    STATUS_BOOKING_CONFIRMED = 'booking_confirmed'
+    STATUS_DOCUMENTATION = 'documentation'
+    STATUS_PAYMENT_TRACKING = 'payment_tracking'
+    STATUS_POSSESSION_COMPLETE = 'possession_complete'
+    STATUS_DEAL_CLOSED = 'deal_closed'
+    STATUS_DEAL_LOST = 'deal_lost'
+
+    # Sequential pipeline order — everything except the "deal_lost" branch, which can be
+    # reached from any active stage rather than being a step in the normal sequence.
+    STATUS_ORDER = [
+        STATUS_RECEIVED,
+        STATUS_ASSIGNED,
+        STATUS_CONTACTED,
+        STATUS_PROPERTY_SHARED,
+        STATUS_FOLLOW_UP,
+        STATUS_VISIT_SCHEDULED,
+        STATUS_NEGOTIATION,
+        STATUS_BOOKING_CONFIRMED,
+        STATUS_DOCUMENTATION,
+        STATUS_PAYMENT_TRACKING,
+        STATUS_POSSESSION_COMPLETE,
+        STATUS_DEAL_CLOSED,
+    ]
 
     STATUS_CHOICES = [
-        (STATUS_NEW, 'New'),
+        (STATUS_RECEIVED, 'Lead Received'),
+        (STATUS_ASSIGNED, 'Lead Assigned'),
         (STATUS_CONTACTED, 'Contacted'),
-        (STATUS_QUALIFIED, 'Qualified'),
+        (STATUS_PROPERTY_SHARED, 'Property Shared'),
         (STATUS_FOLLOW_UP, 'Follow Up'),
-        (STATUS_PROPOSAL, 'Proposal'),
+        (STATUS_VISIT_SCHEDULED, 'Visit Scheduled'),
         (STATUS_NEGOTIATION, 'Negotiation'),
-        (STATUS_TOKEN, 'Token'),
-        (STATUS_CONVERTED, 'Converted'),
-        (STATUS_LOST, 'Closed Lost'),
+        (STATUS_BOOKING_CONFIRMED, 'Booking Confirmation'),
+        (STATUS_DOCUMENTATION, 'Documentation'),
+        (STATUS_PAYMENT_TRACKING, 'Payment Tracking'),
+        (STATUS_POSSESSION_COMPLETE, 'Possession Complete'),
+        (STATUS_DEAL_CLOSED, 'Deal Closed'),
+        (STATUS_DEAL_LOST, 'Deal Lost'),
     ]
 
     STATUS_COLORS = {
-        STATUS_NEW: '#3b82f6',
+        STATUS_RECEIVED: '#3b82f6',
+        STATUS_ASSIGNED: '#6366f1',
         STATUS_CONTACTED: '#f59e0b',
-        STATUS_QUALIFIED: '#10b981',
+        STATUS_PROPERTY_SHARED: '#0ea5e9',
         STATUS_FOLLOW_UP: '#f97316',
-        STATUS_PROPOSAL: '#8b5cf6',
+        STATUS_VISIT_SCHEDULED: '#a855f7',
         STATUS_NEGOTIATION: '#06b6d4',
-        STATUS_TOKEN: '#ec4899',
-        STATUS_CONVERTED: '#059669',
-        STATUS_LOST: '#6b7280',
+        STATUS_BOOKING_CONFIRMED: '#ec4899',
+        STATUS_DOCUMENTATION: '#8b5cf6',
+        STATUS_PAYMENT_TRACKING: '#14b8a6',
+        STATUS_POSSESSION_COMPLETE: '#22c55e',
+        STATUS_DEAL_CLOSED: '#059669',
+        STATUS_DEAL_LOST: '#ef4444',
+    }
+
+    STATUS_ICONS = {
+        STATUS_RECEIVED: '📥',
+        STATUS_ASSIGNED: '🧑‍💼',
+        STATUS_CONTACTED: '📞',
+        STATUS_PROPERTY_SHARED: '🏠',
+        STATUS_FOLLOW_UP: '🔁',
+        STATUS_VISIT_SCHEDULED: '📅',
+        STATUS_NEGOTIATION: '🤝',
+        STATUS_BOOKING_CONFIRMED: '💰',
+        STATUS_DOCUMENTATION: '📄',
+        STATUS_PAYMENT_TRACKING: '💳',
+        STATUS_POSSESSION_COMPLETE: '🔑',
+        STATUS_DEAL_CLOSED: '🏆',
+        STATUS_DEAL_LOST: '❌',
     }
 
     TYPE_BUYER = 'buyer'
@@ -237,7 +282,7 @@ class Lead(models.Model):
     alternate_phone = models.CharField(max_length=20, blank=True)
     lead_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_BUYER)
     source = models.CharField(max_length=30, choices=SOURCE_CHOICES, default='website')
-    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_NEW)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_RECEIVED)
     interested_in = models.JSONField(default=list, blank=True)
     area_preferences = models.CharField(max_length=500, blank=True)
     budget_min = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
@@ -249,7 +294,7 @@ class Lead(models.Model):
     area_sqft_min = models.IntegerField(null=True, blank=True)
     area_sqft_max = models.IntegerField(null=True, blank=True)
     other_requirements = models.TextField(blank=True)
-    token_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    booking_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
     property = models.ForeignKey(
         'Property', on_delete=models.SET_NULL, null=True, blank=True, related_name='leads',
         help_text='The property this lead is negotiating on.',
@@ -257,6 +302,8 @@ class Lead(models.Model):
     notes = models.TextField(blank=True)
     follow_up_date = models.DateTimeField(null=True, blank=True)
     last_contacted = models.DateTimeField(null=True, blank=True)
+    visit_scheduled_at = models.DateTimeField(null=True, blank=True)
+    lost_reason = models.TextField(blank=True)
     lead_score = models.CharField(
         max_length=10, choices=SCORE_CHOICES, default=SCORE_COLD,
         help_text='Auto-calculated from requirement completeness and engagement signals on every save.',
@@ -295,9 +342,19 @@ class Lead(models.Model):
     def score_icon(self):
         return self.SCORE_ICONS.get(self.lead_score, '')
 
+    def status_step_index(self):
+        """Position in the sequential pipeline (STATUS_ORDER), or -1 for the deal_lost branch."""
+        try:
+            return self.STATUS_ORDER.index(self.status)
+        except ValueError:
+            return -1
+
+    def is_lost(self):
+        return self.status == self.STATUS_DEAL_LOST
+
     def calculate_lead_score(self):
         """Starter rule: requirement completeness + pipeline engagement. Retune thresholds as needed."""
-        if self.status == self.STATUS_LOST:
+        if self.status == self.STATUS_DEAL_LOST:
             return self.SCORE_COLD
 
         points = 0
@@ -311,9 +368,11 @@ class Lead(models.Model):
             points += 1
         if self.follow_up_date:
             points += 1
-        if self.status in (self.STATUS_QUALIFIED, self.STATUS_FOLLOW_UP, self.STATUS_PROPOSAL):
+
+        step = self.status_step_index()
+        if step >= self.STATUS_ORDER.index(self.STATUS_FOLLOW_UP):
             points += 2
-        if self.status in (self.STATUS_NEGOTIATION, self.STATUS_TOKEN, self.STATUS_CONVERTED):
+        if step >= self.STATUS_ORDER.index(self.STATUS_NEGOTIATION):
             points += 4
 
         if points >= 5:
@@ -424,8 +483,11 @@ class Lead(models.Model):
             return '#f59e0b'
         return '#ef4444'
 
-    def can_mark_converted(self, prop=None):
+    def documents_complete(self, prop=None):
         return len(self.missing_required_documents(prop)) == 0
+
+    def total_paid(self):
+        return self.payments.aggregate(total=models.Sum('amount'))['total'] or 0
 
 
 class LeadActivity(models.Model):
@@ -438,6 +500,8 @@ class LeadActivity(models.Model):
     TYPE_FOLLOW_UP = 'follow_up'
     TYPE_CONTACTED = 'contacted'
     TYPE_COLLABORATOR = 'collaborator'
+    TYPE_VISIT = 'visit'
+    TYPE_PAYMENT = 'payment'
 
     TYPE_CHOICES = [
         (TYPE_CREATED, 'Lead Created'),
@@ -449,6 +513,8 @@ class LeadActivity(models.Model):
         (TYPE_FOLLOW_UP, 'Follow-up Scheduled'),
         (TYPE_CONTACTED, 'Contacted'),
         (TYPE_COLLABORATOR, 'Collaborator Updated'),
+        (TYPE_VISIT, 'Site Visit Scheduled'),
+        (TYPE_PAYMENT, 'Payment Recorded'),
     ]
 
     TYPE_ICONS = {
@@ -461,6 +527,8 @@ class LeadActivity(models.Model):
         TYPE_FOLLOW_UP: '📅',
         TYPE_CONTACTED: '📞',
         TYPE_COLLABORATOR: '👥',
+        TYPE_VISIT: '📅',
+        TYPE_PAYMENT: '💳',
     }
 
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='activities')
@@ -511,6 +579,29 @@ class LeadDocument(models.Model):
     def amount_display(self):
         if not self.amount:
             return None
+        v = float(self.amount)
+        if v >= 10_000_000:
+            return f'PKR {v/10_000_000:.2f} Cr'
+        return f'PKR {v/100_000:.2f} L'
+
+
+class LeadPayment(models.Model):
+    """A single installment recorded against a lead's Payment Tracking stage —
+    e.g. the buyer paying the seller in parts after documentation is complete."""
+    lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='payments')
+    amount = models.DecimalField(max_digits=14, decimal_places=2)
+    paid_on = models.DateField()
+    note = models.CharField(max_length=255, blank=True)
+    recorded_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-paid_on', '-created_at']
+
+    def __str__(self):
+        return f'{self.lead} — PKR {self.amount} on {self.paid_on}'
+
+    def amount_display(self):
         v = float(self.amount)
         if v >= 10_000_000:
             return f'PKR {v/10_000_000:.2f} Cr'
