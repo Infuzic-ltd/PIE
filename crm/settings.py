@@ -116,6 +116,21 @@ VAPID_ADMIN_EMAIL = os.environ.get('VAPID_ADMIN_EMAIL', 'admin@pierealestate.com
 # secret via the LEAD_API_KEY environment variable before going to production.
 LEAD_API_KEY = os.environ.get('LEAD_API_KEY', 'pie-lead-api-dev-key-8f2a1c-change-in-production')
 
+# ── WhatsApp Business Cloud API (Meta) ───────────────────────────────────────
+# From WhatsApp Manager once the number is set up: Phone Number ID, WABA's
+# permanent System User access token. SITE_URL is used to build deep links
+# back into the CRM from notification messages.
+WHATSAPP_API_VERSION = os.environ.get('WHATSAPP_API_VERSION', 'v20.0')
+WHATSAPP_PHONE_ID = os.environ.get('WHATSAPP_PHONE_ID')
+WHATSAPP_API_TOKEN = os.environ.get('WHATSAPP_API_TOKEN')
+SITE_URL = os.environ.get('SITE_URL', 'http://localhost:8000')
+
+# Approved template names (set once Meta approves them in WhatsApp Manager).
+# Left unset, the lead-assignment notification falls back to plain text,
+# which only works if the agent has messaged the business number within 24h.
+WHATSAPP_LEAD_ASSIGNED_TEMPLATE = os.environ.get('WHATSAPP_LEAD_ASSIGNED_TEMPLATE')
+WHATSAPP_PROPERTY_SHARE_TEMPLATE = os.environ.get('WHATSAPP_PROPERTY_SHARE_TEMPLATE')
+
 # ── Cloudinary (direct upload — URL saved to DB) ─────────────────────────────
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'm25w8okr'),

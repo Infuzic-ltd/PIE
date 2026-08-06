@@ -20,6 +20,11 @@ from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
 from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, AgentTarget
 
+try:
+    from .utils.whatsapp import send_whatsapp_template
+except Exception:
+    send_whatsapp_template = None
+
 
 # ── Access decorators ─────────────────────────────────────────────────────────
 
@@ -311,6 +316,63 @@ def property_view(request, pk):
         'property': prop,
         'can_see_customer': can_see_customer,
     })
+
+
+@login_required
+@require_POST
+def property_share_whatsapp(request, pk):
+    """Send a property to an arbitrary WhatsApp number via the official Cloud API.
+
+    Always sends from the business number (Meta Cloud API), never the agent's
+    own WhatsApp — unlike a wa.me deep link, this is a real server-side send.
+    Business-initiated messages must use an approved template, so this can't
+    run until WHATSAPP_PROPERTY_SHARE_TEMPLATE is configured.
+    """
+    prop = get_object_or_404(Property.objects.prefetch_related('images'), pk=pk)
+
+    raw_phone = (request.POST.get('phone') or '').strip()
+    digits = re.sub(r'\D', '', raw_phone)
+    if len(digits) < 6:
+        return JsonResponse({'error': 'Enter a valid phone number.'}, status=400)
+
+    template_name = getattr(settings, 'WHATSAPP_PROPERTY_SHARE_TEMPLATE', None)
+    if not template_name or not send_whatsapp_template:
+        return JsonResponse({
+            'error': 'WhatsApp isn’t configured yet — the property-share template hasn’t been approved/set up.',
+        }, status=503)
+
+    primary_image = prop.get_primary_image()
+    if not primary_image:
+        return JsonResponse({'error': 'This property has no photos to share.'}, status=400)
+    image_url = primary_image.image
+    if not str(image_url).startswith('http'):
+        image_url = request.build_absolute_uri(image_url)
+
+    size_line = prop.size_display()
+    if prop.bedrooms:
+        size_line += f' · {prop.bedrooms} Beds'
+    if prop.bathrooms:
+        size_line += f' · {prop.bathrooms} Baths'
+
+    try:
+        send_whatsapp_template(
+            digits,
+            template_name,
+            components=[
+                {'type': 'header', 'parameters': [{'type': 'image', 'image': {'link': image_url}}]},
+                {'type': 'body', 'parameters': [
+                    {'type': 'text', 'text': prop.title},
+                    {'type': 'text', 'text': f'{prop.city}, {prop.location}'},
+                    {'type': 'text', 'text': prop.price_display()},
+                    {'type': 'text', 'text': size_line},
+                    {'type': 'text', 'text': request.user.get_full_name() or request.user.email},
+                ]},
+            ],
+        )
+    except Exception as e:
+        return JsonResponse({'error': f'Failed to send: {e}'}, status=502)
+
+    return JsonResponse({'success': True})
 
 
 @login_required

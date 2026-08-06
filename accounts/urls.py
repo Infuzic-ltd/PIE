@@ -18,6 +18,7 @@ urlpatterns = [
     path('properties/<int:pk>/edit/', views.property_update, name='property_update'),
     path('properties/<int:pk>/delete/', views.property_delete, name='property_delete'),
     path('properties/<int:pk>/set-status/', views.property_set_status, name='property_set_status'),
+    path('properties/<int:pk>/share-whatsapp/', views.property_share_whatsapp, name='property_share_whatsapp'),
     path('properties/image/<int:pk>/delete/', views.property_image_delete, name='property_image_delete'),
     path('properties/<int:pk>/document/', views.property_add_document, name='property_add_document'),
     path('properties/document/<int:pk>/delete/', views.property_document_delete, name='property_document_delete'),
