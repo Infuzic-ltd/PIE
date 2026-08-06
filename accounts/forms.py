@@ -258,6 +258,12 @@ class LeadForm(forms.ModelForm):
                     'status',
                     f"Add the required documents for this lead's property block first: {names}.",
                 )
+        possession_index = Lead.STATUS_ORDER.index(Lead.STATUS_POSSESSION_COMPLETE)
+        if target_index is not None and target_index >= possession_index and not self.instance.payments_complete():
+            self.add_error(
+                'status',
+                'Complete all deal and commission payments before moving to Possession Complete or beyond.',
+            )
         return cleaned
 
 

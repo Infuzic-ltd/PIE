@@ -1280,6 +1280,16 @@ def lead_status_update(request, pk):
         names = ', '.join(d.name for d in missing)
         return fail(f"Add the required documents for this lead's property block first: {names}.")
 
+    # Possession Complete (and beyond) requires the deal amount and commission to be fully paid.
+    possession_index = Lead.STATUS_ORDER.index(Lead.STATUS_POSSESSION_COMPLETE)
+    if target_index is not None and target_index >= possession_index and not lead.payments_complete():
+        if not lead.deal_financials_set():
+            return fail('Set the total deal amount and commission, and complete all payments, before marking possession complete.')
+        return fail(
+            f'Complete all payments before marking possession complete — remaining: '
+            f'PKR {lead.deal_remaining():,.0f} (deal), PKR {lead.commission_remaining():,.0f} (commission).'
+        )
+
     old = lead.get_status_display()
     is_contact_transition = new_status == Lead.STATUS_CONTACTED
     lead.status = new_status
@@ -1331,12 +1341,13 @@ def lead_share_properties(request, pk):
 @require_POST
 def lead_auto_follow_up(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)
+    note = request.POST.get('note', '').strip()
     lead.follow_up_date = timezone.now()
     lead.save(update_fields=['follow_up_date', 'lead_score', 'updated_at'])
     LeadActivity.objects.create(
         lead=lead,
         activity_type=LeadActivity.TYPE_FOLLOW_UP,
-        description=f'Follow-up logged by {request.user.get_full_name() or request.user.email}.',
+        description=f'Follow-up logged by {request.user.get_full_name() or request.user.email}.' + (f' — {note}' if note else ''),
         created_by=request.user,
     )
     _advance_status(lead, Lead.STATUS_FOLLOW_UP, request.user)
@@ -1473,6 +1484,16 @@ def lead_mark_possession_complete(request, pk):
     if not lead.documents_complete():
         missing = lead.missing_required_documents()
         messages.error(request, f"Add the required documents first: {', '.join(d.name for d in missing)}.")
+        return redirect('lead_detail', pk=pk)
+    if not lead.payments_complete():
+        if not lead.deal_financials_set():
+            messages.error(request, 'Set the total deal amount and commission, and complete all payments, before marking possession complete.')
+        else:
+            messages.error(
+                request,
+                f'Complete all payments first — remaining: PKR {lead.deal_remaining():,.0f} (deal), '
+                f'PKR {lead.commission_remaining():,.0f} (commission).',
+            )
         return redirect('lead_detail', pk=pk)
     old = lead.get_status_display()
     lead.status = Lead.STATUS_POSSESSION_COMPLETE

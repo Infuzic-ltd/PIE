@@ -501,6 +501,13 @@ class Lead(models.Model):
     def deal_financials_set(self):
         return self.deal_amount is not None and self.commission_amount is not None
 
+    def payments_complete(self):
+        """True only once the deal financials are locked in AND both the deal amount
+        and commission have been paid off in full — gates Possession Complete onward."""
+        if not self.deal_financials_set():
+            return False
+        return self.deal_remaining() <= 0 and self.commission_remaining() <= 0
+
     def total_paid(self):
         return self.payments.aggregate(total=models.Sum('amount'))['total'] or 0
 
