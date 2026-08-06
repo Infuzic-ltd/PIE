@@ -57,6 +57,7 @@ a{color:inherit;text-decoration:none}
 table{width:100%;border-collapse:collapse}
 thead th{background:#f7f9fc;padding:10px 14px;text-align:left;font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line)}
 tbody tr{border-bottom:1px solid var(--line);transition:background .12s}
+tbody tr.row-link{cursor:pointer}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#f9fbff}
 tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
@@ -229,7 +230,7 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
     </thead>
     <tbody>
       {% for lead in leads %}
-      <tr>
+      <tr class="row-link" data-href="{% url 'lead_detail' lead.pk %}">
         <td>
           <div class="lead-cell">
             <div class="l-av {{ lead.lead_type }}">{{ lead.initials }}</div>
@@ -285,6 +286,14 @@ function tog(){document.body.classList.toggle('nav-open')}
 if(mb)mb.addEventListener('click',tog);
 if(mbt)mbt.addEventListener('click',tog);
 if(sc)sc.addEventListener('click',tog);
+
+// ── Click anywhere on a row to view its details ──────────────────────────────
+document.querySelectorAll('.row-link[data-href]').forEach(el=>{
+  el.addEventListener('click', e=>{
+    if(e.target.closest('a,button,form,input,label,select,textarea')) return;
+    window.location = el.dataset.href;
+  });
+});
 
 // ── Check existing lead by phone ─────────────────────────────────────────────
 const leadCheckUrl = '{% url "lead_check_phone" %}';

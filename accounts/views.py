@@ -726,11 +726,13 @@ def _lead_qs(request):
     ).distinct().select_related('assigned_to', 'created_by').prefetch_related('collaborators')
 
 
-def _build_whatsapp_share_url(request, lead, recommendations):
+def _build_whatsapp_share_url(request, lead, recommendations, note=None):
     """WhatsApp deep link sharing the lead's top matching properties, or '' if there's nothing to share."""
     if not (lead.phone and recommendations):
         return ''
     lines = [f"Hi {lead.full_name}! \U0001f44b Here are top properties from PIE Real Estate matching your requirements:\n"]
+    if note:
+        lines.append(note)
     for i, prop in enumerate(recommendations, 1):
         prop_url = request.build_absolute_uri(f'/properties/{prop.pk}/')
         price = f"PKR {prop.price:,.0f}" if prop.price else 'Price on request'
@@ -1296,15 +1298,25 @@ def lead_status_update(request, pk):
 @login_required
 @require_POST
 def lead_share_properties(request, pk):
-    """The WhatsApp 'Send Top N' button — still opens WhatsApp with the same message as
-    before, plus now logs the share and advances status to Property Shared."""
+    """The WhatsApp 'Send Top N' button — opens the share modal first so the agent can
+    pick which properties to include and add a personal note, then opens WhatsApp with
+    the resulting message, logs the share, and advances status to Property Shared."""
     lead = get_object_or_404(_lead_qs(request), pk=pk)
     recommendations = lead.get_recommended_properties(limit=5)
-    whatsapp_url = _build_whatsapp_share_url(request, lead, recommendations)
+
+    selected_ids = {int(x) for x in request.POST.getlist('property_ids') if x.isdigit()}
+    selected = [p for p in recommendations if p.pk in selected_ids]
+
+    if not selected:
+        messages.error(request, 'Select at least one property to share.')
+        return redirect('lead_detail', pk=pk)
+
+    note = request.POST.get('note', '').strip()
+    whatsapp_url = _build_whatsapp_share_url(request, lead, selected, note=note)
     if not whatsapp_url:
         messages.error(request, 'No matching properties to share yet — add requirements to this lead first.')
         return redirect('lead_detail', pk=pk)
-    count = len(recommendations)
+    count = len(selected)
     LeadActivity.objects.create(
         lead=lead,
         activity_type=LeadActivity.TYPE_PROPERTY,

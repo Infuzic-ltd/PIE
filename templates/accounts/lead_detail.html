@@ -56,6 +56,9 @@ a{color:inherit;text-decoration:none}
 .action-btn svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:1.8}
 .body-grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
 .card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.card-row-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px}
+.card-row-2 .card{margin-bottom:0}
+@media(max-width:700px){.card-row-2{grid-template-columns:1fr}}
 .card-title{font-size:13.5px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
 .card-title svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;color:var(--blue)}
 .info-row{display:flex;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
@@ -325,49 +328,50 @@ a{color:inherit;text-decoration:none}
   </div>
   {% endif %}
 
-  <!-- Follow-Up -->
+  <!-- Follow-Up & Site Visit -->
   {% if status_step_index >= status_index.property_shared %}
-  <div class="card">
-    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Follow-Up</div>
-    {% if lead.follow_up_date %}
-    <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Last follow-up logged {{ lead.follow_up_date|date:"M d, Y" }} at {{ lead.follow_up_date|time:"P" }}.</div>
-    {% else %}
-    <div style="font-size:13px;color:var(--ink-faint);margin-bottom:12px">No follow-up logged yet.</div>
-    {% endif %}
-    {% if can_edit %}
-    <form method="post" action="{% url 'lead_auto_follow_up' lead.pk %}">
-      {% csrf_token %}
-      <button type="submit" class="btn primary{% if lead.status == 'property_shared' %} pulse{% endif %}" style="width:100%;justify-content:center">{% if lead.status == 'property_shared' %}🔔 Log Follow-Up Now{% else %}Log Another Follow-Up{% endif %}</button>
-    </form>
-    {% endif %}
-  </div>
-  {% endif %}
+  <div class="{% if status_step_index >= status_index.follow_up %}card-row-2{% endif %}">
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><path d="M17 2l4 4-4 4"/><path d="M3 11V9a4 4 0 0 1 4-4h14"/><path d="M7 22l-4-4 4-4"/><path d="M21 13v2a4 4 0 0 1-4 4H3"/></svg> Follow-Up</div>
+      {% if lead.follow_up_date %}
+      <div style="font-size:13px;color:var(--ink-soft);margin-bottom:12px">Last follow-up logged {{ lead.follow_up_date|date:"M d, Y" }} at {{ lead.follow_up_date|time:"P" }}.</div>
+      {% else %}
+      <div style="font-size:13px;color:var(--ink-faint);margin-bottom:12px">No follow-up logged yet.</div>
+      {% endif %}
+      {% if can_edit %}
+      <form method="post" action="{% url 'lead_auto_follow_up' lead.pk %}">
+        {% csrf_token %}
+        <button type="submit" class="btn primary{% if lead.status == 'property_shared' %} pulse{% endif %}" style="width:100%;justify-content:center">{% if lead.status == 'property_shared' %}🔔 Log Follow-Up Now{% else %}Log Another Follow-Up{% endif %}</button>
+      </form>
+      {% endif %}
+    </div>
 
-  <!-- Site Visit -->
-  {% if status_step_index >= status_index.follow_up %}
-  <div class="card">
-    <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Site Visit</div>
-    {% if lead.visit_scheduled_at %}
-    <div class="info-row"><span class="k">Scheduled</span><span class="v">{{ lead.visit_scheduled_at|date:"M d, Y" }} at {{ lead.visit_scheduled_at|time:"P" }}</span></div>
-    {% else %}
-    <div style="font-size:13px;color:var(--ink-faint);margin-bottom:10px">No site visit scheduled yet.</div>
-    {% endif %}
-    {% if can_edit %}
-    <form method="post" action="{% url 'lead_schedule_visit' lead.pk %}" style="margin-top:10px">
-      {% csrf_token %}
-      <div class="form-row">
-        <div class="fld"><label>Visit Date &amp; Time</label><input type="datetime-local" name="visit_datetime" required></div>
-        {% if not lead.property %}
-        <div class="fld"><label>Property</label>
-          <select name="property_id" required>
-            <option value="">— Select —</option>
-            {% for prop in negotiation_properties %}<option value="{{ prop.pk }}">{{ prop.title }}</option>{% endfor %}
-          </select>
+    {% if status_step_index >= status_index.follow_up %}
+    <div class="card">
+      <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg> Site Visit</div>
+      {% if lead.visit_scheduled_at %}
+      <div class="info-row"><span class="k">Scheduled</span><span class="v">{{ lead.visit_scheduled_at|date:"M d, Y" }} at {{ lead.visit_scheduled_at|time:"P" }}</span></div>
+      {% else %}
+      <div style="font-size:13px;color:var(--ink-faint);margin-bottom:10px">No site visit scheduled yet.</div>
+      {% endif %}
+      {% if can_edit %}
+      <form method="post" action="{% url 'lead_schedule_visit' lead.pk %}" style="margin-top:10px">
+        {% csrf_token %}
+        <div class="form-row">
+          <div class="fld"><label>Visit Date &amp; Time</label><input type="datetime-local" name="visit_datetime" required></div>
+          {% if not lead.property %}
+          <div class="fld"><label>Property</label>
+            <select name="property_id" required>
+              <option value="">— Select —</option>
+              {% for prop in negotiation_properties %}<option value="{{ prop.pk }}">{{ prop.title }}</option>{% endfor %}
+            </select>
+          </div>
+          {% endif %}
         </div>
-        {% endif %}
-      </div>
-      <button type="submit" class="btn primary" style="width:100%;justify-content:center">{% if lead.visit_scheduled_at %}Reschedule Visit{% else %}Schedule Visit{% endif %}</button>
-    </form>
+        <button type="submit" class="btn primary" style="width:100%;justify-content:center">{% if lead.visit_scheduled_at %}Reschedule Visit{% else %}Schedule Visit{% endif %}</button>
+      </form>
+      {% endif %}
+    </div>
     {% endif %}
   </div>
   {% endif %}
@@ -604,13 +608,10 @@ a{color:inherit;text-decoration:none}
         View All Properties
       </a>
       {% if whatsapp_url and can_edit %}
-      <form method="post" action="{% url 'lead_share_properties' lead.pk %}" target="_blank" style="display:inline-block">
-        {% csrf_token %}
-        <button type="submit" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px;background:#25D366;color:#fff;border-radius:6px;font-weight:600;border:none;cursor:pointer;font-family:inherit">
-          <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
-          Send Top {{ recommendations|length }} on WhatsApp
-        </button>
-      </form>
+      <button type="button" id="openShareModalBtn" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px;background:#25D366;color:#fff;border-radius:6px;font-weight:600;border:none;cursor:pointer;font-family:inherit">
+        <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
+        Send Top {{ recommendations|length }} on WhatsApp
+      </button>
       {% endif %}
     </div>
   </div>
@@ -695,6 +696,38 @@ a{color:inherit;text-decoration:none}
   <input type="hidden" name="status" value="deal_lost">
   <input type="hidden" name="lost_reason" id="lostReasonInput">
 </form>
+
+<!-- Share Properties on WhatsApp modal -->
+<div class="modal-scrim" id="shareModalScrim">
+  <div class="modal-box" style="max-width:460px">
+    <h3>Share Properties on WhatsApp</h3>
+    <p>Choose which properties to include and add an optional note before sending.</p>
+    <form method="post" action="{% url 'lead_share_properties' lead.pk %}" target="_blank" id="shareForm">
+      {% csrf_token %}
+      <div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
+        {% for prop in recommendations %}
+        <label style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:8px;cursor:pointer">
+          <input type="checkbox" name="property_ids" value="{{ prop.pk }}" checked style="flex:0 0 auto;width:16px;height:16px">
+          {% with img=prop.get_primary_image %}
+          {% if img %}<img src="{{ img.image_url }}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex:0 0 44px">
+          {% else %}<div style="width:44px;height:44px;border-radius:6px;background:#f1f5f9;flex:0 0 44px"></div>{% endif %}
+          {% endwith %}
+          <div style="flex:1;min-width:0">
+            <div style="font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">{{ prop.title }}</div>
+            <div style="font-size:11.5px;color:var(--ink-soft)">{{ prop.price_display }} · {{ prop.match_pct }}% match</div>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">Add a note (optional)</label>
+      <textarea name="note" rows="2" placeholder="e.g. Thought you'd like these especially…" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);margin-bottom:14px;resize:vertical"></textarea>
+      <div class="modal-actions">
+        <button type="button" class="btn" id="shareModalCancel">Cancel</button>
+        <button type="submit" class="btn primary" id="shareModalSend">Send via WhatsApp</button>
+      </div>
+    </form>
+  </div>
+</div>
 
 <script>
 var mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim'),sb=document.getElementById('sidebar');
@@ -784,6 +817,24 @@ if(lostModalConfirm) lostModalConfirm.addEventListener('click', function(){
   }
   document.getElementById('lostReasonInput').value = lostReasonTextarea.value.trim();
   lostForm.submit();
+});
+
+// Share Properties on WhatsApp modal wiring
+var shareModalScrim = document.getElementById('shareModalScrim');
+var openShareModalBtn = document.getElementById('openShareModalBtn');
+var shareModalCancel = document.getElementById('shareModalCancel');
+var shareForm = document.getElementById('shareForm');
+if(openShareModalBtn) openShareModalBtn.addEventListener('click', function(){ shareModalScrim.classList.add('open'); });
+if(shareModalCancel) shareModalCancel.addEventListener('click', function(){ shareModalScrim.classList.remove('open'); });
+if(shareModalScrim) shareModalScrim.addEventListener('click', function(e){ if(e.target === shareModalScrim) shareModalScrim.classList.remove('open'); });
+if(shareForm) shareForm.addEventListener('submit', function(e){
+  var checked = shareForm.querySelectorAll('input[name="property_ids"]:checked');
+  if(!checked.length){
+    e.preventDefault();
+    crmAlert('Select at least one property to share.', {style:'danger'});
+    return;
+  }
+  shareModalScrim.classList.remove('open');
 });
 </script>
 </body></html>
