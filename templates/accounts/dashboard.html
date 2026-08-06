@@ -1,3 +1,4 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,6 +9,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="{% static 'accounts/js/crm-modal.js' %}"></script>
 <style>
   :root{
     --navy:#0d1b3e;--navy-2:#13234d;--gold:#c9a24b;
@@ -414,9 +416,9 @@
   }
 
   async function subscribe() {
-    if (!swReg) { alert('Service worker not ready. Please refresh and try again.'); return; }
+    if (!swReg) { crmAlert('Service worker not ready. Please refresh and try again.', {style:'danger'}); return; }
     const permission = await Notification.requestPermission();
-    if (permission !== 'granted') { alert('Notification permission denied.'); return; }
+    if (permission !== 'granted') { crmAlert('Notification permission denied.', {style:'danger'}); return; }
     try {
       const sub = await swReg.pushManager.subscribe({
         userVisibleOnly: true,
@@ -429,7 +431,7 @@
         body: JSON.stringify(subJson),
       });
       updateNotifBtn();
-    } catch (e) { console.error('Subscribe failed', e); alert('Could not subscribe: ' + e.message); }
+    } catch (e) { console.error('Subscribe failed', e); crmAlert('Could not subscribe: ' + e.message, {style:'danger'}); }
   }
 
   async function handleNotifBtn() {
@@ -441,8 +443,8 @@
         headers: { 'X-CSRFToken': CSRF_TOKEN },
       });
       const data = await res.json();
-      if (data.status === 'sent') alert('Test notification sent! Check your device.');
-      else alert('Error: ' + (data.error || 'unknown'));
+      if (data.status === 'sent') crmAlert('Test notification sent! Check your device.');
+      else crmAlert('Error: ' + (data.error || 'unknown'), {style:'danger'});
     } else {
       await subscribe();
     }

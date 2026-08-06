@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Team — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/crm-modal.js' %}"></script>
 <style>
 :root{
   --navy:#0d1b3e;--gold:#c9a24b;
@@ -186,7 +187,7 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
                 <svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg>
               </a>
               {% if m.pk != request.user.pk %}
-              <form method="post" action="{% url 'team_member_delete' m.pk %}" onsubmit="return confirm('Remove {{ m.get_full_name }}?')">
+              <form method="post" action="{% url 'team_member_delete' m.pk %}" class="crm-confirm-form" data-confirm-message="Remove {{ m.get_full_name }}?" data-confirm-style="danger" data-confirm-label="Remove">
                 {% csrf_token %}
                 <button type="submit" class="act-ic danger" title="Remove">
                   <svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg>

@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Roles — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/crm-modal.js' %}"></script>
 <style>
 :root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--green:#22c55e;--purple:#8b5cf6;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
 *{box-sizing:border-box;margin:0;padding:0}
@@ -124,7 +125,7 @@ a{color:inherit;text-decoration:none}
         <div class="role-actions">
           <a href="{% url 'role_update' role.pk %}" class="act-ic" title="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg></a>
           {% if not role.is_system %}
-          <form method="post" action="{% url 'role_delete' role.pk %}" onsubmit="return confirm('Delete role {{ role.name }}? Members with this role will lose it.')">
+          <form method="post" action="{% url 'role_delete' role.pk %}" class="crm-confirm-form" data-confirm-message="Delete role {{ role.name }}? Members with this role will lose it." data-confirm-style="danger" data-confirm-label="Delete">
             {% csrf_token %}
             <button type="submit" class="act-ic danger" title="Delete"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M9 6V4h6v2"/></svg></button>
           </form>

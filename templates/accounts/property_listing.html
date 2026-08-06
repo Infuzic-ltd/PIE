@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Properties — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/crm-modal.js' %}"></script>
 <style>
 :root{
   --navy:#0d1b3e; --navy-2:#13234d; --gold:#c9a24b;
@@ -399,7 +400,7 @@ body.view-list .grid-container{display:none}
       {% else %}
       <form method="post" action="{% url 'property_set_status' prop.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="status" value="active"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="act-ic ic-activate" title="Reactivate" style="color:#4338ca"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button></form>
       {% endif %}
-      <form method="post" action="{% url 'property_delete' prop.pk %}" style="display:inline" onsubmit="return confirm('Delete this property?')">{% csrf_token %}<button type="submit" class="act-ic" title="Delete" style="color:#ef4444"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></form>
+      <form method="post" action="{% url 'property_delete' prop.pk %}" style="display:inline" class="crm-confirm-form" data-confirm-message="Delete this property? This cannot be undone." data-confirm-style="danger" data-confirm-label="Delete">{% csrf_token %}<button type="submit" class="act-ic" title="Delete" style="color:#ef4444"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></form>
     </div>
   </td>
 </tr>
@@ -455,7 +456,7 @@ body.view-list .grid-container{display:none}
           {% else %}
           <form method="post" action="{% url 'property_set_status' prop.pk %}">{% csrf_token %}<input type="hidden" name="status" value="active"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="fa-btn ic-activate" title="Reactivate"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button></form>
           {% endif %}
-          <form method="post" action="{% url 'property_delete' prop.pk %}" onsubmit="return confirm('Delete this property?')">{% csrf_token %}<button type="submit" class="fa-btn danger" title="Delete"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></form>
+          <form method="post" action="{% url 'property_delete' prop.pk %}" class="crm-confirm-form" data-confirm-message="Delete this property? This cannot be undone." data-confirm-style="danger" data-confirm-label="Delete">{% csrf_token %}<button type="submit" class="fa-btn danger" title="Delete"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></form>
         </div>
       </div>
     </div>

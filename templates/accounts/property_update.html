@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Edit {{ property.title }} — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/crm-modal.js' %}"></script>
 <style>
 :root{
   --navy:#0d1b3e; --navy-2:#13234d; --gold:#c9a24b;
@@ -473,14 +474,20 @@ if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
 document.querySelectorAll('.content > *, .kpi, .card').forEach((el,i)=>{el.classList.add('reveal');el.style.setProperty('--d',Math.min(i,8)*0.05+'s')});
 
 function quickPost(url, confirmMsg, tab){
-  if(confirmMsg && !confirm(confirmMsg)) return;
-  const f=document.getElementById('quickPostForm');
-  if(tab){
-    const next=`{% url 'property_update' property.pk %}?tab=${tab}`;
-    url += (url.includes('?')?'&':'?') + 'next=' + encodeURIComponent(next);
+  function proceed(){
+    const f=document.getElementById('quickPostForm');
+    if(tab){
+      const next=`{% url 'property_update' property.pk %}?tab=${tab}`;
+      url += (url.includes('?')?'&':'?') + 'next=' + encodeURIComponent(next);
+    }
+    f.action=url;
+    f.submit();
   }
-  f.action=url;
-  f.submit();
+  if(confirmMsg){
+    crmConfirm(confirmMsg, {style:'danger'}).then(function(ok){ if(ok) proceed(); });
+  } else {
+    proceed();
+  }
 }
 
 // ── Tab switching ─────────────────────────────────────────────────────────
