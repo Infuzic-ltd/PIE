@@ -445,34 +445,91 @@ a{color:inherit;text-decoration:none}
   </div>
 
   <!-- Financial & Payments -->
-  {% if lead.booking_amount or payments or status_step_index >= status_index.booking_confirmed %}
+  {% if lead.booking_amount or payments or lead.deal_amount or status_step_index >= status_index.booking_confirmed %}
   <div class="card">
     <div class="card-title"><svg viewBox="0 0 24 24"><line x1="12" y1="1" x2="12" y2="23"/><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Financial &amp; Payments</div>
     {% if lead.booking_amount %}
     <div class="info-row"><span class="k">Booking Amount</span><span class="v" style="font-weight:700;color:var(--green)">PKR {{ lead.booking_amount|floatformat:0 }}</span></div>
     {% endif %}
-    <div class="info-row"><span class="k">Total Paid</span><span class="v" style="font-weight:700;color:var(--blue)">PKR {{ total_paid|floatformat:0 }}</span></div>
+
+    {% if not lead.deal_financials_set %}
+      {% if can_edit %}
+      <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:10px;padding:14px;margin-top:12px">
+        <div style="font-size:12.5px;font-weight:600;color:#92400e;margin-bottom:10px">⚠ Set the total deal amount and commission first — required before any payment can be recorded, and locked once saved.</div>
+        <form method="post" action="{% url 'lead_set_deal_financials' lead.pk %}">
+          {% csrf_token %}
+          <div class="form-row">
+            <div class="fld"><label>Total Deal Amount (PKR)</label><input type="number" name="deal_amount" step="0.01" required></div>
+            <div class="fld"><label>Commission Amount (PKR)</label><input type="number" name="commission_amount" step="0.01" required></div>
+          </div>
+          <button type="submit" class="btn primary" style="width:100%;justify-content:center">Set &amp; Lock Deal Financials</button>
+        </form>
+      </div>
+      {% else %}
+      <div style="color:var(--ink-faint);font-size:13px;margin-top:10px">Deal amount and commission haven't been set yet.</div>
+      {% endif %}
+    {% else %}
+      <div class="info-row"><span class="k">Deal Amount</span><span class="v" style="font-weight:700">PKR {{ lead.deal_amount|floatformat:0 }}</span></div>
+      <div class="info-row"><span class="k">Commission</span><span class="v" style="font-weight:700">PKR {{ lead.commission_amount|floatformat:0 }}</span></div>
+
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Deal Amount Paid</span><span style="font-weight:700;color:{{ lead.deal_progress_color }}">PKR {{ lead.deal_paid_total|floatformat:0 }} / {{ lead.deal_amount|floatformat:0 }} ({{ lead.deal_paid_pct }}%)</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:{{ lead.deal_paid_pct }}%;background:{{ lead.deal_progress_color }}"></div></div>
+        <div style="font-size:11.5px;color:var(--ink-faint);margin-top:4px">Remaining: PKR {{ lead.deal_remaining|floatformat:0 }}</div>
+      </div>
+
+      <div class="progress-wrap">
+        <div class="progress-label"><span>Commission Paid</span><span style="font-weight:700;color:{{ lead.commission_progress_color }}">PKR {{ lead.commission_paid_total|floatformat:0 }} / {{ lead.commission_amount|floatformat:0 }} ({{ lead.commission_paid_pct }}%)</span></div>
+        <div class="progress-track"><div class="progress-fill" style="width:{{ lead.commission_paid_pct }}%;background:{{ lead.commission_progress_color }}"></div></div>
+        <div style="font-size:11.5px;color:var(--ink-faint);margin-top:4px">Remaining: PKR {{ lead.commission_remaining|floatformat:0 }}</div>
+      </div>
+
+      <div style="display:flex;justify-content:flex-end;margin-top:2px">
+        <a href="{% url 'lead_print_commission_invoice' lead.pk %}" target="_blank" class="btn" style="font-size:11.5px;padding:5px 10px">Print Commission Invoice</a>
+      </div>
+    {% endif %}
 
     {% if payments %}
-    <div class="doc-list" style="margin-top:10px">
+    <div class="doc-list" style="margin-top:14px">
       {% for p in payments %}
       <div class="doc-item">
         <div class="doc-icon"><svg viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg></div>
         <div class="doc-info">
-          <div class="doc-title">{{ p.amount_display }}</div>
-          <div class="doc-sub">{{ p.paid_on|date:"M d, Y" }}{% if p.note %} · {{ p.note }}{% endif %}{% if p.recorded_by %} · {{ p.recorded_by.get_full_name }}{% endif %}</div>
+          <div class="doc-title">{{ p.amount_display }} <span style="font-weight:500;color:var(--ink-faint)">— {{ p.get_payment_against_display }}</span></div>
+          <div class="doc-sub">{{ p.paid_on|date:"M d, Y" }} · {{ p.get_payment_method_display }}{% if p.reference_number %} · Ref: {{ p.reference_number }}{% endif %}{% if p.note %} · {{ p.note }}{% endif %}</div>
         </div>
+        <a href="{% url 'lead_print_payment_slip' lead.pk p.pk %}" target="_blank" class="btn" style="font-size:11px;padding:5px 9px;flex-shrink:0">Slip</a>
       </div>
       {% endfor %}
     </div>
     {% endif %}
 
-    {% if can_edit %}
-    <form method="post" action="{% url 'lead_add_payment' lead.pk %}" style="margin-top:14px">
+    {% if can_edit and lead.deal_financials_set %}
+    <form method="post" action="{% url 'lead_add_payment' lead.pk %}" style="margin-top:14px" id="paymentForm">
       {% csrf_token %}
       <div class="form-row">
         <div class="fld"><label>Amount (PKR)</label><input type="number" name="amount" step="0.01" required></div>
         <div class="fld"><label>Paid On</label><input type="date" name="paid_on" value="{% now 'Y-m-d' %}"></div>
+      </div>
+      <div class="form-row">
+        <div class="fld"><label>Against</label>
+          <select name="payment_against">
+            <option value="deal">Deal Amount</option>
+            <option value="commission">Real Estate Commission</option>
+          </select>
+        </div>
+        <div class="fld"><label>Payment Method</label>
+          <select name="payment_method" id="paymentMethodSelect">
+            <option value="cash">Cash</option>
+            <option value="online">Online Transfer</option>
+            <option value="pay_order">Pay Order</option>
+            <option value="cheque">Cheque</option>
+          </select>
+        </div>
+      </div>
+      <div class="fld" id="referenceField" style="margin-bottom:10px;display:none">
+        <label>Transaction ID / Cheque Number</label>
+        <input type="text" name="reference_number" id="referenceInput" placeholder="e.g. TXN123456 or Cheque #00234">
       </div>
       <div class="fld" style="margin-bottom:10px"><label>Note</label><input type="text" name="note" placeholder="e.g. Installment 2 of 4"></div>
       <button type="submit" class="btn primary" style="font-size:12px;padding:7px 14px">+ Record Payment</button>
@@ -836,5 +893,21 @@ if(shareForm) shareForm.addEventListener('submit', function(e){
   }
   shareModalScrim.classList.remove('open');
 });
+
+// Payment method → require a transaction/cheque reference for non-cash methods
+var paymentMethodSelect = document.getElementById('paymentMethodSelect');
+var referenceField = document.getElementById('referenceField');
+var referenceInput = document.getElementById('referenceInput');
+var METHODS_REQUIRING_REFERENCE = ['online', 'pay_order', 'cheque'];
+function updateReferenceVisibility(){
+  if(!paymentMethodSelect) return;
+  var needsRef = METHODS_REQUIRING_REFERENCE.indexOf(paymentMethodSelect.value) !== -1;
+  referenceField.style.display = needsRef ? 'block' : 'none';
+  if(referenceInput) referenceInput.required = needsRef;
+}
+if(paymentMethodSelect){
+  paymentMethodSelect.addEventListener('change', updateReferenceVisibility);
+  updateReferenceVisibility();
+}
 </script>
 </body></html>

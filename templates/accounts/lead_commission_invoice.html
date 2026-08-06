@@ -1,0 +1,438 @@
+{% load humanize %}<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Commission Invoice – PIE-LEAD-{{ lead.pk|stringformat:"04d" }}</title>
+<style>
+  @page {
+    size: A4 portrait;
+    margin: 16mm 18mm;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    font-size: 10.5pt;
+    color: #1a1a2e;
+    background: #fff;
+  }
+
+  /* ── Screen toolbar ── */
+  .toolbar {
+    background: #0f3460;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .toolbar button {
+    background: #c9a84c;
+    color: #fff;
+    border: none;
+    padding: 8px 22px;
+    border-radius: 4px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .toolbar a { color: #c9a84c; font-size: 13px; text-decoration: none; }
+
+  /* ── A4 wrapper ── */
+  .page {
+    width: 210mm;
+    min-height: 297mm;
+    margin: 20px auto;
+    background: #fff;
+    padding: 16mm 18mm;
+    box-shadow: 0 2px 24px rgba(0,0,0,.12);
+    position: relative;
+  }
+
+  /* ── Top stripe ── */
+  .top-stripe {
+    background: #0f3460;
+    height: 6px;
+    margin: -16mm -18mm 0;
+    margin-bottom: 0;
+  }
+
+  /* ── Header block ── */
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    padding: 18px 0 16px;
+    border-bottom: 2px solid #0f3460;
+    margin-bottom: 0;
+  }
+  .brand-name {
+    font-size: 28pt;
+    font-weight: 800;
+    color: #0f3460;
+    letter-spacing: -0.5px;
+    line-height: 1;
+  }
+  .brand-name span { color: #c9a84c; }
+  .brand-sub {
+    font-size: 8pt;
+    color: #777;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    margin-top: 3px;
+  }
+  .invoice-meta { text-align: right; }
+  .invoice-title {
+    font-size: 20pt;
+    font-weight: 800;
+    text-transform: uppercase;
+    color: #0f3460;
+    letter-spacing: 3px;
+  }
+  .invoice-meta table { border-collapse: collapse; margin-top: 8px; margin-left: auto; }
+  .invoice-meta td { padding: 2px 6px; font-size: 9pt; }
+  .invoice-meta td:first-child { color: #888; text-align: right; }
+  .invoice-meta td:last-child { font-weight: 600; color: #1a1a2e; text-align: left; }
+
+  /* ── Bill-to / Company grid ── */
+  .party-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+    background: #f5f7fb;
+    border: 1px solid #e0e4ef;
+    margin: 18px 0;
+  }
+  .party-cell { padding: 14px 18px; }
+  .party-cell:first-child { border-right: 1px solid #e0e4ef; }
+  .party-heading {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #0f3460;
+    margin-bottom: 8px;
+  }
+  .party-name { font-size: 12pt; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+  .party-detail { font-size: 9pt; color: #555; line-height: 1.6; }
+
+  /* ── Section heading ── */
+  .sec-heading {
+    font-size: 7.5pt;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: #0f3460;
+    border-bottom: 1px solid #e0e4ef;
+    padding-bottom: 5px;
+    margin-bottom: 10px;
+  }
+
+  /* ── Deal summary grid ── */
+  .summary-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    margin: 18px 0;
+  }
+  .summary-box {
+    border: 1px solid #e0e4ef;
+    border-radius: 6px;
+    padding: 10px 12px;
+  }
+  .summary-label {
+    font-size: 7.5pt;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: .6px;
+    margin-bottom: 4px;
+  }
+  .summary-value { font-size: 12pt; font-weight: 700; color: #0f3460; }
+
+  /* ── Items table ── */
+  table.items {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 0;
+    font-size: 10pt;
+  }
+  table.items thead tr {
+    background: #0f3460;
+    color: #fff;
+  }
+  table.items thead th {
+    padding: 9px 12px;
+    font-size: 8pt;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+    text-align: left;
+  }
+  table.items thead th.right { text-align: right; }
+  table.items tbody tr { border-bottom: 1px solid #edf0f7; }
+  table.items tbody tr:last-child { border-bottom: none; }
+  table.items tbody td { padding: 10px 12px; color: #333; vertical-align: top; }
+  table.items tbody td.right { text-align: right; font-weight: 600; }
+  table.items tbody td.muted { font-size: 8.5pt; color: #888; }
+  table.items tbody tr:nth-child(even) { background: #fafbfd; }
+
+  /* ── Totals box ── */
+  .totals-outer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0;
+    border-top: 2px solid #0f3460;
+  }
+  .totals-box {
+    width: 280px;
+    border: 1px solid #e0e4ef;
+    border-top: none;
+  }
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 14px;
+    font-size: 10pt;
+    border-bottom: 1px solid #edf0f7;
+    color: #555;
+  }
+  .totals-row:last-child {
+    background: #0f3460;
+    color: #fff;
+    font-weight: 700;
+    font-size: 11pt;
+    border-bottom: none;
+  }
+  .totals-row:last-child .label { color: #c9a84c; text-transform: uppercase; letter-spacing: .8px; }
+
+  /* ── Notes / Terms ── */
+  .terms-box { font-size: 8.5pt; color: #666; line-height: 1.7; margin-top: 22px; }
+  .terms-box ol { padding-left: 16px; }
+
+  /* ── Sig row ── */
+  .sig-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-top: 36px;
+  }
+  .sig-block { text-align: center; }
+  .sig-line { border-top: 1.5px solid #bbb; margin-bottom: 6px; margin-top: 40px; }
+  .sig-label { font-size: 8.5pt; color: #666; }
+
+  /* ── Footer ── */
+  .footer {
+    position: absolute;
+    bottom: 16mm;
+    left: 18mm;
+    right: 18mm;
+    border-top: 1px solid #e0e0e0;
+    padding-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 8pt;
+    color: #aaa;
+  }
+
+  /* ── Watermark ── */
+  .watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-35deg);
+    font-size: 90pt;
+    font-weight: 900;
+    color: rgba(15,52,96,.03);
+    white-space: nowrap;
+    pointer-events: none;
+    user-select: none;
+    letter-spacing: 6px;
+  }
+
+  /* ── No-docs message ── */
+  .no-docs {
+    text-align: center;
+    padding: 24px;
+    color: #aaa;
+    font-style: italic;
+    font-size: 10pt;
+  }
+
+  @media print {
+    .toolbar { display: none !important; }
+    .page { margin: 0; box-shadow: none; padding: 0; }
+    body { background: #fff; }
+  }
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <button onclick="window.print()">&#128424; Print / Save as PDF</button>
+  <a href="{% url 'lead_detail' lead.pk %}">&larr; Back to Lead</a>
+</div>
+
+<div class="page">
+
+  <div class="top-stripe"></div>
+  <div class="watermark">PIE</div>
+
+  <!-- Header -->
+  <div class="header">
+    <div>
+      <div class="brand-name">PIE<span>.</span></div>
+      <div class="brand-sub">Real Estate Solutions &bull; Pakistan</div>
+    </div>
+    <div class="invoice-meta">
+      <div class="invoice-title">Commission Invoice</div>
+      <table>
+        <tr>
+          <td>Invoice No.</td>
+          <td>COM-{{ lead.pk|stringformat:"04d" }}</td>
+        </tr>
+        <tr>
+          <td>Lead Ref.</td>
+          <td>PIE-LEAD-{{ lead.pk|stringformat:"04d" }}</td>
+        </tr>
+        <tr>
+          <td>Date</td>
+          <td>{% now "d F Y" %}</td>
+        </tr>
+        <tr>
+          <td>Status</td>
+          <td>{{ lead.get_status_display }}</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+
+  <!-- Bill to / From -->
+  <div class="party-row">
+    <div class="party-cell">
+      <div class="party-heading">Client</div>
+      <div class="party-name">{{ lead.full_name }}</div>
+      <div class="party-detail">
+        {% if lead.phone %}&#9990; {{ lead.phone }}<br>{% endif %}
+        {% if lead.email %}&#9993; {{ lead.email }}<br>{% endif %}
+        {% if lead.property %}Property: {{ lead.property.title }}{% endif %}
+      </div>
+    </div>
+    <div class="party-cell">
+      <div class="party-heading">Issued By</div>
+      <div class="party-name">PIE Real Estate</div>
+      <div class="party-detail">
+        Pakistan<br>
+        Agent: {{ lead.created_by.get_full_name|default:lead.created_by.email }}<br>
+        {% if lead.assigned_to %}Assigned To: {{ lead.assigned_to.get_full_name|default:lead.assigned_to.email }}{% endif %}
+      </div>
+    </div>
+  </div>
+
+  <!-- Deal summary -->
+  <div class="sec-heading">Deal Summary</div>
+  <div class="summary-grid">
+    <div class="summary-box">
+      <div class="summary-label">Total Deal Amount</div>
+      <div class="summary-value">{% if lead.deal_amount %}PKR {{ lead.deal_amount|floatformat:"0"|intcomma }}{% else %}&mdash;{% endif %}</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">Total Commission</div>
+      <div class="summary-value">{% if lead.commission_amount %}PKR {{ lead.commission_amount|floatformat:"0"|intcomma }}{% else %}&mdash;{% endif %}</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">Commission Received</div>
+      <div class="summary-value">PKR {{ lead.commission_paid_total|floatformat:"0"|intcomma }}</div>
+    </div>
+    <div class="summary-box">
+      <div class="summary-label">Commission Remaining</div>
+      <div class="summary-value">{% if lead.commission_amount %}PKR {{ lead.commission_remaining|floatformat:"0"|intcomma }}{% else %}&mdash;{% endif %}</div>
+    </div>
+  </div>
+
+  <!-- Commission payments -->
+  <div class="sec-heading" style="margin-top:6px;">Commission Payments Received</div>
+
+  {% if commission_payments %}
+  <table class="items">
+    <thead>
+      <tr>
+        <th style="width:40px;">#</th>
+        <th>Date</th>
+        <th>Method</th>
+        <th>Reference</th>
+        <th class="right" style="width:140px;">Amount (PKR)</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in commission_payments %}
+      <tr>
+        <td>{{ forloop.counter }}</td>
+        <td>{{ p.paid_on|date:"d M Y" }}</td>
+        <td>{{ p.get_payment_method_display }}</td>
+        <td class="muted">{{ p.reference_number|default:"—" }}{% if p.note %} &middot; {{ p.note }}{% endif %}</td>
+        <td class="right">{{ p.amount_display }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <!-- Totals -->
+  <div class="totals-outer">
+    <div class="totals-box">
+      <div class="totals-row">
+        <span class="label">Total Commission</span>
+        <span>PKR {{ lead.commission_amount|floatformat:"0"|intcomma }}</span>
+      </div>
+      <div class="totals-row">
+        <span class="label">Received to Date</span>
+        <span>PKR {{ lead.commission_paid_total|floatformat:"0"|intcomma }}</span>
+      </div>
+      <div class="totals-row">
+        <span class="label">Balance Due</span>
+        <span>PKR {{ lead.commission_remaining|floatformat:"0"|intcomma }}</span>
+      </div>
+    </div>
+  </div>
+
+  {% else %}
+  <div class="no-docs">No commission payments recorded for this lead yet.</div>
+  {% endif %}
+
+  <!-- Terms -->
+  <div class="terms-box">
+    <div class="sec-heading">Terms &amp; Conditions</div>
+    <ol>
+      <li>This commission invoice is system-generated and represents transactions recorded in PIE CRM.</li>
+      <li>Commission figures are locked once set for this deal and reflect the agreed terms.</li>
+      <li>Disputes must be raised within 7 working days of the invoice date.</li>
+    </ol>
+  </div>
+
+  <!-- Signatures -->
+  <div class="sig-row">
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Authorized Signatory &mdash; PIE Real Estate</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-label">Client Acknowledgement</div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    <span>PIE Real Estate &bull; Pakistan</span>
+    <span>COM-{{ lead.pk|stringformat:"04d" }} &bull; System-generated on {% now "d M Y" %}</span>
+    <span>Confidential</span>
+  </div>
+
+</div>
+
+<script>
+  window.addEventListener('load', function() {
+    document.querySelector('.toolbar button').focus();
+  });
+</script>
+
+</body>
+</html>

@@ -1388,20 +1388,77 @@ def lead_schedule_visit(request, pk):
 
 @login_required
 @require_POST
+def lead_set_deal_financials(request, pk):
+    """Sets the total deal amount and commission for a lead — one-time and permanent.
+    Must be done before any payment can be recorded, per the client's requirement that
+    these figures be locked in before partial payments start."""
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    if lead.deal_financials_set():
+        messages.error(request, 'Deal amount and commission are already locked for this lead.')
+        return redirect('lead_detail', pk=pk)
+
+    deal_amount = _decimal_or_none(request.POST.get('deal_amount'))
+    commission_amount = _decimal_or_none(request.POST.get('commission_amount'))
+    if not deal_amount or deal_amount <= 0:
+        messages.error(request, 'Enter a valid total deal amount.')
+        return redirect('lead_detail', pk=pk)
+    if commission_amount is None or commission_amount < 0:
+        messages.error(request, 'Enter a valid commission amount.')
+        return redirect('lead_detail', pk=pk)
+
+    lead.deal_amount = deal_amount
+    lead.commission_amount = commission_amount
+    lead.save(update_fields=['deal_amount', 'commission_amount', 'lead_score', 'updated_at'])
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_STATUS,
+        description=(
+            f'Deal amount set to PKR {deal_amount:,.0f} and commission to PKR {commission_amount:,.0f} '
+            f'by {request.user.get_full_name() or request.user.email}.'
+        ),
+        created_by=request.user,
+    )
+    return redirect('lead_detail', pk=pk)
+
+
+@login_required
+@require_POST
 def lead_add_payment(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)
+    if not lead.deal_financials_set():
+        messages.error(request, 'Set the total deal amount and commission before recording payments.')
+        return redirect('lead_detail', pk=pk)
+
     amount = _decimal_or_none(request.POST.get('amount'))
     paid_on = parse_date(request.POST.get('paid_on', '')) or timezone.localdate()
     note = request.POST.get('note', '').strip()
+    method = request.POST.get('payment_method', LeadPayment.METHOD_CASH)
+    against = request.POST.get('payment_against', LeadPayment.AGAINST_DEAL)
+    reference_number = request.POST.get('reference_number', '').strip()
+
     if not amount or amount <= 0:
         messages.error(request, 'Enter a valid payment amount.')
         return redirect('lead_detail', pk=pk)
+    if method not in dict(LeadPayment.METHOD_CHOICES):
+        method = LeadPayment.METHOD_CASH
+    if against not in dict(LeadPayment.AGAINST_CHOICES):
+        against = LeadPayment.AGAINST_DEAL
+    if method in LeadPayment.METHODS_REQUIRING_REFERENCE and not reference_number:
+        messages.error(request, 'Enter a transaction ID or cheque/pay order number for this payment method.')
+        return redirect('lead_detail', pk=pk)
 
-    LeadPayment.objects.create(lead=lead, amount=amount, paid_on=paid_on, note=note, recorded_by=request.user)
+    payment = LeadPayment.objects.create(
+        lead=lead, amount=amount, paid_on=paid_on, note=note,
+        payment_method=method, payment_against=against, reference_number=reference_number,
+        recorded_by=request.user,
+    )
     LeadActivity.objects.create(
         lead=lead,
         activity_type=LeadActivity.TYPE_PAYMENT,
-        description=f'Payment of PKR {amount:,.0f} recorded on {paid_on:%b %d, %Y}.' + (f' — {note}' if note else ''),
+        description=(
+            f'Payment of PKR {amount:,.0f} ({payment.get_payment_against_display()}, '
+            f'{payment.get_payment_method_display()}) recorded on {paid_on:%b %d, %Y}.'
+        ) + (f' — {note}' if note else ''),
         created_by=request.user,
     )
     if lead.status == Lead.STATUS_DOCUMENTATION:
@@ -1445,4 +1502,23 @@ def lead_print_invoice(request, pk):
         'lead': lead,
         'docs_with_amount': docs_with_amount,
         'total': total,
+    })
+
+
+@login_required
+def lead_print_payment_slip(request, pk, payment_pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    payment = get_object_or_404(LeadPayment, pk=payment_pk, lead=lead)
+    return render(request, 'accounts/lead_payment_receipt.html', {'lead': lead, 'payment': payment})
+
+
+@login_required
+def lead_print_commission_invoice(request, pk):
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    commission_payments = lead.payments.filter(
+        payment_against=LeadPayment.AGAINST_COMMISSION
+    ).order_by('paid_on', 'created_at')
+    return render(request, 'accounts/lead_commission_invoice.html', {
+        'lead': lead,
+        'commission_payments': commission_payments,
     })

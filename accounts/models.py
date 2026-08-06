@@ -295,6 +295,14 @@ class Lead(models.Model):
     area_sqft_max = models.IntegerField(null=True, blank=True)
     other_requirements = models.TextField(blank=True)
     booking_amount = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    deal_amount = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True,
+        help_text='Total sale/deal amount. Locked once set — required before payments can be recorded.',
+    )
+    commission_amount = models.DecimalField(
+        max_digits=14, decimal_places=2, null=True, blank=True,
+        help_text='Total real estate commission owed on this deal. Locked once set.',
+    )
     property = models.ForeignKey(
         'Property', on_delete=models.SET_NULL, null=True, blank=True, related_name='leads',
         help_text='The property this lead is negotiating on.',
@@ -477,17 +485,58 @@ class Lead(models.Model):
         progress = self.document_progress()
         if progress is None:
             return None
-        if progress['pct'] >= 100:
+        return self._progress_bucket_color(progress['pct'])
+
+    @staticmethod
+    def _progress_bucket_color(pct):
+        if pct >= 100:
             return '#22c55e'
-        if progress['pct'] >= 50:
+        if pct >= 50:
             return '#f59e0b'
         return '#ef4444'
 
     def documents_complete(self, prop=None):
         return len(self.missing_required_documents(prop)) == 0
 
+    def deal_financials_set(self):
+        return self.deal_amount is not None and self.commission_amount is not None
+
     def total_paid(self):
         return self.payments.aggregate(total=models.Sum('amount'))['total'] or 0
+
+    def deal_paid_total(self):
+        return self.payments.filter(payment_against=LeadPayment.AGAINST_DEAL).aggregate(
+            total=models.Sum('amount'))['total'] or 0
+
+    def commission_paid_total(self):
+        return self.payments.filter(payment_against=LeadPayment.AGAINST_COMMISSION).aggregate(
+            total=models.Sum('amount'))['total'] or 0
+
+    def deal_remaining(self):
+        if self.deal_amount is None:
+            return None
+        return max(self.deal_amount - self.deal_paid_total(), 0)
+
+    def commission_remaining(self):
+        if self.commission_amount is None:
+            return None
+        return max(self.commission_amount - self.commission_paid_total(), 0)
+
+    def deal_paid_pct(self):
+        if not self.deal_amount:
+            return 0
+        return min(int(self.deal_paid_total() * 100 / self.deal_amount), 100)
+
+    def commission_paid_pct(self):
+        if not self.commission_amount:
+            return 0
+        return min(int(self.commission_paid_total() * 100 / self.commission_amount), 100)
+
+    def deal_progress_color(self):
+        return self._progress_bucket_color(self.deal_paid_pct())
+
+    def commission_progress_color(self):
+        return self._progress_bucket_color(self.commission_paid_pct())
 
 
 class LeadActivity(models.Model):
@@ -588,9 +637,39 @@ class LeadDocument(models.Model):
 class LeadPayment(models.Model):
     """A single installment recorded against a lead's Payment Tracking stage —
     e.g. the buyer paying the seller in parts after documentation is complete."""
+    METHOD_CASH = 'cash'
+    METHOD_ONLINE = 'online'
+    METHOD_PAY_ORDER = 'pay_order'
+    METHOD_CHEQUE = 'cheque'
+
+    METHOD_CHOICES = [
+        (METHOD_CASH, 'Cash'),
+        (METHOD_ONLINE, 'Online Transfer'),
+        (METHOD_PAY_ORDER, 'Pay Order'),
+        (METHOD_CHEQUE, 'Cheque'),
+    ]
+
+    # Payment methods that settle via a traceable instrument/transaction rather than
+    # handed-over cash, so a reference number is required for an auditable record.
+    METHODS_REQUIRING_REFERENCE = {METHOD_ONLINE, METHOD_PAY_ORDER, METHOD_CHEQUE}
+
+    AGAINST_DEAL = 'deal'
+    AGAINST_COMMISSION = 'commission'
+
+    AGAINST_CHOICES = [
+        (AGAINST_DEAL, 'Deal Amount'),
+        (AGAINST_COMMISSION, 'Real Estate Commission'),
+    ]
+
     lead = models.ForeignKey(Lead, on_delete=models.CASCADE, related_name='payments')
     amount = models.DecimalField(max_digits=14, decimal_places=2)
     paid_on = models.DateField()
+    payment_method = models.CharField(max_length=20, choices=METHOD_CHOICES, default=METHOD_CASH)
+    payment_against = models.CharField(max_length=20, choices=AGAINST_CHOICES, default=AGAINST_DEAL)
+    reference_number = models.CharField(
+        max_length=100, blank=True,
+        help_text='Transaction ID (online) or cheque/pay order number — required for non-cash methods.',
+    )
     note = models.CharField(max_length=255, blank=True)
     recorded_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True)
     created_at = models.DateTimeField(auto_now_add=True)
