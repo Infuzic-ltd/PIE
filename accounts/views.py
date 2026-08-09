@@ -585,6 +585,26 @@ def notifications_mark_all_read(request):
     return redirect(next_url)
 
 
+@login_required
+def notifications_feed(request):
+    """Polled by the notification bell widget on every authenticated page."""
+    notifications = request.user.notifications.all()[:10]
+    return JsonResponse({
+        'unread_count': request.user.notifications.filter(is_read=False).count(),
+        'notifications': [
+            {
+                'id': n.pk,
+                'title': n.title,
+                'body': n.body,
+                'url': n.url or reverse('dashboard'),
+                'is_read': n.is_read,
+                'created_at': n.created_at.isoformat(),
+            }
+            for n in notifications
+        ],
+    })
+
+
 # ── Customers ─────────────────────────────────────────────────────────────────
 
 @login_required
@@ -615,12 +635,64 @@ def customer_detail(request, pk):
     return render(request, 'accounts/customer_detail.html', {'customer': customer})
 
 
+def _parse_children_json(request):
+    """The dynamic children editor in customer_form.html serializes its rows into a
+    hidden 'children_json' input — parse and sanitize it into a plain list of dicts."""
+    try:
+        raw = json.loads(request.POST.get('children_json') or '[]')
+    except (ValueError, TypeError):
+        return []
+    if not isinstance(raw, list):
+        return []
+    children = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        name = str(item.get('name') or '').strip()[:100]
+        if not name:
+            continue
+        children.append({
+            'name': name,
+            'age': str(item.get('age') or '').strip()[:10],
+            'school': str(item.get('school') or '').strip()[:150],
+            'class_grade': str(item.get('class_grade') or '').strip()[:50],
+        })
+    return children
+
+
+def _parse_vehicles_json(request):
+    """The dynamic vehicles editor in customer_form.html serializes its rows into a
+    hidden 'vehicles_json' input — parse and sanitize it into a plain list of dicts."""
+    try:
+        raw = json.loads(request.POST.get('vehicles_json') or '[]')
+    except (ValueError, TypeError):
+        return []
+    if not isinstance(raw, list):
+        return []
+    vehicles = []
+    for item in raw:
+        if not isinstance(item, dict):
+            continue
+        vtype = str(item.get('type') or '').strip()[:30]
+        if not vtype:
+            continue
+        vehicles.append({
+            'type': vtype,
+            'make': str(item.get('make') or '').strip()[:50],
+            'model': str(item.get('model') or '').strip()[:50],
+            'year': str(item.get('year') or '').strip()[:10],
+        })
+    return vehicles
+
+
 @login_required
 def customer_create(request):
     form = CustomerForm(request.POST or None, user=request.user)
     if request.method == 'POST' and form.is_valid():
         customer = form.save(commit=False)
         customer.created_by = request.user
+        customer.children = _parse_children_json(request)
+        customer.vehicles = _parse_vehicles_json(request)
         customer.save()
         form.save_m2m()
         next_url = request.GET.get('next')
@@ -638,7 +710,11 @@ def customer_update(request, pk):
         customer = get_object_or_404(Customer, pk=pk, created_by=request.user)
     form = CustomerForm(request.POST or None, instance=customer, user=request.user)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        customer = form.save(commit=False)
+        customer.children = _parse_children_json(request)
+        customer.vehicles = _parse_vehicles_json(request)
+        customer.save()
+        form.save_m2m()
         return redirect('customer_detail', pk=customer.pk)
     return render(request, 'accounts/customer_form.html', {'form': form, 'customer': customer, 'action': 'Edit Customer'})
 

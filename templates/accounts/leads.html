@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Leads — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
 <script src="{% static 'accounts/js/crm-modal.js' %}"></script>
 <style>
 :root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--blue-light:#3b82f6;--green:#22c55e;--orange:#f59e0b;--purple:#8b5cf6;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
@@ -135,7 +136,6 @@ tbody td{padding:11px 14px;font-size:13px;vertical-align:middle}
 </div>
 <a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
 <a href="{% url 'customer_list' %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
-<a href="{% url 'notifications_list' %}"><svg viewBox="0 0 24 24"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg> Notifications{% if unread_notifications_count %}<span class="nav-badge">{{ unread_notifications_count }}</span>{% endif %}</a>
 {% if request.user.is_crm_admin %}
 <a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
 <div class="subnav">

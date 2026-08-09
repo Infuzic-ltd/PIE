@@ -65,6 +65,15 @@ class User(AbstractUser):
         return self.get_role_display()
 
 
+def progress_bucket_color(pct):
+    """Shared red/amber/green grading for any 0-100 progress metric in the CRM."""
+    if pct >= 100:
+        return '#22c55e'
+    if pct >= 50:
+        return '#f59e0b'
+    return '#ef4444'
+
+
 class Customer(models.Model):
     TYPE_SELLER = 'seller'
     TYPE_BUYER = 'buyer'
@@ -76,6 +85,36 @@ class Customer(models.Model):
         (TYPE_BUYER, 'Buyer'),
         (TYPE_LANDLORD, 'Landlord'),
         (TYPE_TENANT, 'Tenant'),
+    ]
+
+    MARITAL_SINGLE = 'single'
+    MARITAL_MARRIED = 'married'
+    MARITAL_DIVORCED = 'divorced'
+    MARITAL_WIDOWED = 'widowed'
+
+    MARITAL_STATUS_CHOICES = [
+        (MARITAL_SINGLE, 'Single'),
+        (MARITAL_MARRIED, 'Married'),
+        (MARITAL_DIVORCED, 'Divorced'),
+        (MARITAL_WIDOWED, 'Widowed'),
+    ]
+
+    RESIDENCY_RESIDENT = 'resident'
+    RESIDENCY_OVERSEAS = 'overseas'
+    RESIDENCY_FOREIGN = 'foreign'
+
+    RESIDENCY_CHOICES = [
+        (RESIDENCY_RESIDENT, 'Resident Pakistani'),
+        (RESIDENCY_OVERSEAS, 'Overseas Pakistani'),
+        (RESIDENCY_FOREIGN, 'Foreign National'),
+    ]
+
+    INCOME_CHOICES = [
+        ('below_100k', 'Below PKR 100,000/month'),
+        ('100k_300k', 'PKR 100,000 – 300,000/month'),
+        ('300k_500k', 'PKR 300,000 – 500,000/month'),
+        ('500k_1m', 'PKR 500,000 – 1,000,000/month'),
+        ('above_1m', 'Above PKR 1,000,000/month'),
     ]
 
     name = models.CharField(max_length=150)
@@ -90,6 +129,32 @@ class Customer(models.Model):
     interested_in = models.ManyToManyField(
         'Property', blank=True, related_name='interested_customers'
     )
+
+    # ── Demographic & lifestyle detail — used for marketing segmentation, not
+    # required for basic CRM use, hence all blank=True/null=True. ──────────────
+    occupation = models.CharField(max_length=150, blank=True)
+    company_name = models.CharField(max_length=150, blank=True, verbose_name='Company / Employer')
+    marital_status = models.CharField(max_length=20, choices=MARITAL_STATUS_CHOICES, blank=True)
+    residency_status = models.CharField(max_length=20, choices=RESIDENCY_CHOICES, blank=True)
+    monthly_income_range = models.CharField(max_length=20, choices=INCOME_CHOICES, blank=True)
+    children = models.JSONField(
+        default=list, blank=True,
+        help_text='List of children — name, age, school, and class/grade.',
+    )
+    club_membership = models.CharField(
+        max_length=255, blank=True,
+        help_text='e.g. Karachi Gymkhana, DHA Country & Golf Club, Sindh Club…',
+    )
+    vehicles = models.JSONField(
+        default=list, blank=True,
+        help_text='List of vehicles owned — type, make, model, and year.',
+    )
+    referral_source = models.CharField(max_length=150, blank=True, help_text='How did they hear about us?')
+    social_media_handle = models.CharField(
+        max_length=150, blank=True,
+        help_text='Instagram/Facebook handle or profile link — useful for retargeting.',
+    )
+
     notes = models.TextField(blank=True)
     created_by = models.ForeignKey(
         'User', on_delete=models.SET_NULL, null=True, related_name='customers'
@@ -119,6 +184,45 @@ class Customer(models.Model):
             return f'PKR {crore:.2f} Cr'
         lakh = self.budget / 100_000
         return f'PKR {lakh:.2f} L'
+
+    def vehicles_summary(self):
+        if not self.vehicles:
+            return None
+        counts = {}
+        for v in self.vehicles:
+            label = (v.get('type') or 'Vehicle').strip() or 'Vehicle'
+            counts[label] = counts.get(label, 0) + 1
+        return ', '.join(f'{n} {label}{"s" if n != 1 else ""}' for label, n in counts.items())
+
+    def profile_completeness(self):
+        """How much marketing-useful detail is on file for this customer — used to
+        prompt agents to enrich profiles, not a required/gating metric."""
+        checks = [
+            bool(self.email),
+            bool(self.cnic),
+            bool(self.address),
+            bool(self.budget),
+            bool(self.occupation),
+            bool(self.company_name),
+            bool(self.marital_status),
+            bool(self.residency_status),
+            bool(self.monthly_income_range),
+            bool(self.club_membership),
+            bool(self.referral_source),
+            bool(self.social_media_handle),
+            bool(self.children),
+            bool(self.vehicles),
+            bool(self.notes),
+        ]
+        total = len(checks)
+        done = sum(1 for c in checks if c)
+        return {'done': done, 'total': total, 'pct': int(done * 100 / total) if total else 0}
+
+    def profile_completeness_pct(self):
+        return self.profile_completeness()['pct']
+
+    def profile_completeness_color(self):
+        return progress_bucket_color(self.profile_completeness_pct())
 
 
 class Block(models.Model):
@@ -485,15 +589,7 @@ class Lead(models.Model):
         progress = self.document_progress()
         if progress is None:
             return None
-        return self._progress_bucket_color(progress['pct'])
-
-    @staticmethod
-    def _progress_bucket_color(pct):
-        if pct >= 100:
-            return '#22c55e'
-        if pct >= 50:
-            return '#f59e0b'
-        return '#ef4444'
+        return progress_bucket_color(progress['pct'])
 
     def documents_complete(self, prop=None):
         return len(self.missing_required_documents(prop)) == 0
@@ -540,10 +636,10 @@ class Lead(models.Model):
         return min(int(self.commission_paid_total() * 100 / self.commission_amount), 100)
 
     def deal_progress_color(self):
-        return self._progress_bucket_color(self.deal_paid_pct())
+        return progress_bucket_color(self.deal_paid_pct())
 
     def commission_progress_color(self):
-        return self._progress_bucket_color(self.commission_paid_pct())
+        return progress_bucket_color(self.commission_paid_pct())
 
 
 class LeadActivity(models.Model):

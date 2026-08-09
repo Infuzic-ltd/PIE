@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ customer.name }} — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
 <style>
 :root{
   --navy:#0d1b3e;--gold:#c9a24b;
@@ -106,6 +107,12 @@ a{color:inherit;text-decoration:none}
 /* Notes */
 .notes-box{background:#f7f9fc;border-radius:10px;padding:14px;font-size:13.5px;color:var(--ink-soft);line-height:1.6;white-space:pre-wrap}
 
+/* Profile completeness */
+.completeness-wrap{margin-top:10px;max-width:360px}
+.completeness-label{display:flex;justify-content:space-between;align-items:center;font-size:12px;color:var(--ink-soft);margin-bottom:5px}
+.progress-track{height:8px;border-radius:20px;background:#f1f5f9;overflow:hidden}
+.progress-fill{height:100%;border-radius:20px;transition:width .25s}
+
 /* Timeline */
 .timeline{display:flex;flex-direction:column;gap:0}
 .tl-item{display:flex;gap:12px;padding:10px 0;position:relative}
@@ -195,6 +202,10 @@ a{color:inherit;text-decoration:none}
           {% if customer.email %}<span class="chip"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>{{ customer.email }}</span>{% endif %}
           {% if customer.cnic %}<span class="chip"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 10h2M7 14h6"/></svg>{{ customer.cnic }}</span>{% endif %}
         </div>
+        <div class="completeness-wrap">
+          <div class="completeness-label"><span>Profile Completeness</span><span style="font-weight:700;color:{{ customer.profile_completeness_color }}">{{ customer.profile_completeness_pct }}%</span></div>
+          <div class="progress-track"><div class="progress-fill" style="width:{{ customer.profile_completeness_pct }}%;background:{{ customer.profile_completeness_color }}"></div></div>
+        </div>
       </div>
       <div class="profile-actions">
         <span style="font-size:12px;color:var(--ink-faint)">Added by {{ customer.created_by.get_full_name|default:"—" }}<br>{{ customer.created_at|date:"M d, Y" }}</span>
@@ -273,6 +284,58 @@ a{color:inherit;text-decoration:none}
       <div class="sc">
         <div class="sc-head"><span class="title"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>Properties</span></div>
         <div class="sc-body"><div class="empty-sc"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg>No properties linked</div></div>
+      </div>
+      {% endif %}
+
+      <!-- Personal & demographic details -->
+      <div class="sc">
+        <div class="sc-head"><span class="title"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20a6 6 0 0 1 12 0"/></svg>Personal &amp; Demographic Details</span></div>
+        <div class="sc-body" style="padding:0 18px">
+          {% if customer.occupation %}<div class="info-row"><span class="k">Occupation</span><span class="v">{{ customer.occupation }}</span></div>{% endif %}
+          {% if customer.company_name %}<div class="info-row"><span class="k">Company</span><span class="v">{{ customer.company_name }}</span></div>{% endif %}
+          {% if customer.marital_status %}<div class="info-row"><span class="k">Marital Status</span><span class="v">{{ customer.get_marital_status_display }}</span></div>{% endif %}
+          {% if customer.residency_status %}<div class="info-row"><span class="k">Residency</span><span class="v">{{ customer.get_residency_status_display }}</span></div>{% endif %}
+          {% if customer.monthly_income_range %}<div class="info-row"><span class="k">Monthly Income</span><span class="v">{{ customer.get_monthly_income_range_display }}</span></div>{% endif %}
+          {% if customer.club_membership %}<div class="info-row"><span class="k">Club / Gymkhana</span><span class="v">{{ customer.club_membership }}</span></div>{% endif %}
+          {% if customer.referral_source %}<div class="info-row"><span class="k">Referral Source</span><span class="v">{{ customer.referral_source }}</span></div>{% endif %}
+          {% if customer.social_media_handle %}<div class="info-row"><span class="k">Social Media</span><span class="v">{{ customer.social_media_handle }}</span></div>{% endif %}
+          {% if not customer.occupation and not customer.company_name and not customer.marital_status and not customer.residency_status and not customer.monthly_income_range and not customer.club_membership and not customer.referral_source and not customer.social_media_handle %}
+          <div class="empty-sc" style="padding:20px 0"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20a6 6 0 0 1 12 0"/></svg>No demographic details on file yet — <a href="{% url 'customer_update' customer.pk %}" style="color:var(--blue);font-weight:600">add some</a> to improve the profile score.</div>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if customer.children %}
+      <div class="sc">
+        <div class="sc-head">
+          <span class="title"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M6 20a6 6 0 0 1 12 0"/></svg>Children</span>
+          <span class="count">{{ customer.children|length }}</span>
+        </div>
+        <div class="sc-body" style="padding:0 18px">
+          {% for child in customer.children %}
+          <div class="info-row">
+            <span class="k">{{ child.name }}</span>
+            <span class="v">{% if child.age %}Age {{ child.age }}{% endif %}{% if child.school %} · {{ child.school }}{% endif %}{% if child.class_grade %} · Class {{ child.class_grade }}{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endif %}
+
+      {% if customer.vehicles %}
+      <div class="sc">
+        <div class="sc-head">
+          <span class="title"><svg viewBox="0 0 24 24"><path d="M5 11h14l-1.5-5.5a2 2 0 0 0-1.9-1.5H8.4a2 2 0 0 0-1.9 1.5L5 11z"/><circle cx="7.5" cy="16.5" r="1.5"/><circle cx="16.5" cy="16.5" r="1.5"/><path d="M3 11v4a1 1 0 0 0 1 1h1M21 11v4a1 1 0 0 1-1 1h-1"/></svg>Vehicles</span>
+          <span class="count">{{ customer.vehicles|length }}</span>
+        </div>
+        <div class="sc-body" style="padding:0 18px">
+          {% for vehicle in customer.vehicles %}
+          <div class="info-row">
+            <span class="k">{{ vehicle.type }}</span>
+            <span class="v">{% if vehicle.make %}{{ vehicle.make }}{% endif %}{% if vehicle.model %} {{ vehicle.model }}{% endif %}{% if vehicle.year %} ({{ vehicle.year }}){% endif %}{% if not vehicle.make and not vehicle.model and not vehicle.year %}—{% endif %}</span>
+          </div>
+          {% endfor %}
+        </div>
       </div>
       {% endif %}
 

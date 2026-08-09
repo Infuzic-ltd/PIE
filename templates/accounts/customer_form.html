@@ -3,6 +3,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ action }} — PIE Real Estate</title>
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
 <style>
 :root{
   --navy:#0d1b3e;--gold:#c9a24b;
@@ -67,6 +68,16 @@ textarea{resize:vertical;min-height:80px}
 .type-btn.sel-landlord{border-color:#7c3aed;background:#ede9fe;color:#7c3aed}
 .type-btn.sel-tenant{border-color:#1d4ed8;background:#dbeafe;color:#1d4ed8}
 .err{color:var(--red);font-size:12px;margin-top:3px}
+.section-label{grid-column:1/-1;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:var(--ink-faint);margin-top:8px;padding-top:16px;border-top:1px solid var(--line)}
+.child-row{display:grid;grid-template-columns:1fr 70px 1fr 100px auto;gap:8px;margin-bottom:8px;align-items:center}
+.child-row input{padding:7px 10px;font-size:13px}
+.vehicle-row{display:grid;grid-template-columns:130px 1fr 1fr 90px auto;gap:8px;margin-bottom:8px;align-items:center}
+.vehicle-row input,.vehicle-row select{padding:7px 10px;font-size:13px}
+.rm-row-btn{border:1.5px solid var(--line);background:#fff;color:var(--red);border-radius:8px;width:34px;height:34px;cursor:pointer;font-size:16px;line-height:1;flex:0 0 34px}
+.rm-row-btn:hover{background:#fef2f2;border-color:#fecaca}
+.completeness-banner{grid-column:1/-1;display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:10px;background:#f7f9fc;border:1px solid var(--line);margin-bottom:6px}
+.completeness-track{flex:1;height:8px;border-radius:20px;background:#e7ecf3;overflow:hidden}
+.completeness-fill{height:100%;border-radius:20px}
 .form-actions{display:flex;gap:10px;margin-top:22px}
 .crumb{font-size:13px;color:var(--ink-soft);margin-bottom:18px;display:flex;align-items:center;gap:7px}
 .crumb a{color:var(--blue);font-weight:500}
@@ -131,9 +142,16 @@ textarea{resize:vertical;min-height:80px}
 
   <div class="form-card">
     <div class="form-title">{{ action }}</div>
-    <form method="post" novalidate>
+    <form method="post" novalidate id="customerForm">
       {% csrf_token %}
       <div class="form-grid">
+        {% if customer %}
+        <div class="completeness-banner">
+          <span style="font-size:12.5px;font-weight:600;color:var(--ink-soft);white-space:nowrap">Profile Completeness</span>
+          <div class="completeness-track"><div class="completeness-fill" style="width:{{ customer.profile_completeness_pct }}%;background:{{ customer.profile_completeness_color }}"></div></div>
+          <span style="font-size:12.5px;font-weight:700;color:{{ customer.profile_completeness_color }}">{{ customer.profile_completeness_pct }}%</span>
+        </div>
+        {% endif %}
         <!-- Basic info -->
         <div class="form-group">
           <label for="{{ form.name.id_for_label }}">Full Name *</label>
@@ -194,6 +212,70 @@ textarea{resize:vertical;min-height:80px}
         </div>
         {% endif %}
 
+        <!-- Personal & demographic details -->
+        <div class="section-label">Personal &amp; Demographic Details</div>
+        <div class="form-group">
+          <label for="{{ form.occupation.id_for_label }}">Occupation</label>
+          {{ form.occupation }}
+          {% for e in form.occupation.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.company_name.id_for_label }}">Company / Employer</label>
+          {{ form.company_name }}
+          {% for e in form.company_name.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.marital_status.id_for_label }}">Marital Status</label>
+          {{ form.marital_status }}
+          {% for e in form.marital_status.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.residency_status.id_for_label }}">Residency Status</label>
+          {{ form.residency_status }}
+          {% for e in form.residency_status.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group full">
+          <label for="{{ form.monthly_income_range.id_for_label }}">Monthly Income Range</label>
+          {{ form.monthly_income_range }}
+          {% for e in form.monthly_income_range.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
+        <!-- Family -->
+        <div class="section-label">Family</div>
+        <div class="form-group full">
+          <label>Children</label>
+          <div id="childrenRows"></div>
+          <button type="button" class="btn" id="addChildBtn" style="align-self:flex-start;margin-top:4px">+ Add Child</button>
+          <input type="hidden" name="children_json" id="childrenJsonInput">
+          {% if customer %}{{ customer.children|json_script:"childrenData" }}{% else %}<script type="application/json" id="childrenData">[]</script>{% endif %}
+        </div>
+
+        <!-- Lifestyle & marketing -->
+        <div class="section-label">Lifestyle &amp; Marketing</div>
+        <div class="form-group full">
+          <label for="{{ form.club_membership.id_for_label }}">Club / Gymkhana Membership</label>
+          {{ form.club_membership }}
+          <div style="font-size:12px;color:var(--ink-faint);margin-top:4px">e.g. Karachi Gymkhana, DHA Country &amp; Golf Club, Sindh Club…</div>
+          {% for e in form.club_membership.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group full">
+          <label>Vehicles Owned</label>
+          <div id="vehicleRows"></div>
+          <button type="button" class="btn" id="addVehicleBtn" style="align-self:flex-start;margin-top:4px">+ Add Vehicle</button>
+          <input type="hidden" name="vehicles_json" id="vehiclesJsonInput">
+          {% if customer %}{{ customer.vehicles|json_script:"vehiclesData" }}{% else %}<script type="application/json" id="vehiclesData">[]</script>{% endif %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.referral_source.id_for_label }}">Referral Source</label>
+          {{ form.referral_source }}
+          {% for e in form.referral_source.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+        <div class="form-group">
+          <label for="{{ form.social_media_handle.id_for_label }}">Social Media Handle</label>
+          {{ form.social_media_handle }}
+          {% for e in form.social_media_handle.errors %}<div class="err">{{ e }}</div>{% endfor %}
+        </div>
+
         <div class="form-group full">
           <label for="{{ form.notes.id_for_label }}">Notes</label>
           {{ form.notes }}
@@ -239,5 +321,91 @@ document.querySelectorAll('#typeBtns .type-btn').forEach(b => {
 });
 
 updateTypeUI(typeInput.value || 'buyer');
+
+// Dynamic "Children" rows
+function escapeAttr(s){
+  return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+function childRow(data){
+  data = data || {};
+  var row = document.createElement('div');
+  row.className = 'child-row';
+  row.innerHTML =
+    '<input type="text" class="child-name" placeholder="Child\'s name" value="' + escapeAttr(data.name) + '">' +
+    '<input type="text" class="child-age" placeholder="Age" value="' + escapeAttr(data.age) + '">' +
+    '<input type="text" class="child-school" placeholder="School" value="' + escapeAttr(data.school) + '">' +
+    '<input type="text" class="child-class" placeholder="Class / Grade" value="' + escapeAttr(data.class_grade) + '">' +
+    '<button type="button" class="rm-row-btn" title="Remove">&times;</button>';
+  row.querySelector('.rm-row-btn').addEventListener('click', function(){ row.remove(); });
+  return row;
+}
+var childrenRowsEl = document.getElementById('childrenRows');
+var addChildBtn = document.getElementById('addChildBtn');
+if(addChildBtn) addChildBtn.addEventListener('click', function(){ childrenRowsEl.appendChild(childRow()); });
+
+var existingChildrenEl = document.getElementById('childrenData');
+var existingChildren = [];
+if(existingChildrenEl){
+  try { existingChildren = JSON.parse(existingChildrenEl.textContent || '[]'); } catch(e) { existingChildren = []; }
+}
+existingChildren.forEach(function(c){ childrenRowsEl.appendChild(childRow(c)); });
+
+// Dynamic "Vehicles" rows
+var VEHICLE_TYPES = ['Car', 'Bike', 'Electric Vehicle'];
+function vehicleRow(data){
+  data = data || {};
+  var row = document.createElement('div');
+  row.className = 'vehicle-row';
+  var options = '<option value="">Type…</option>' + VEHICLE_TYPES.map(function(t){
+    return '<option value="' + escapeAttr(t) + '"' + (data.type === t ? ' selected' : '') + '>' + t + '</option>';
+  }).join('');
+  row.innerHTML =
+    '<select class="vehicle-type">' + options + '</select>' +
+    '<input type="text" class="vehicle-make" placeholder="Make (e.g. Toyota)" value="' + escapeAttr(data.make) + '">' +
+    '<input type="text" class="vehicle-model" placeholder="Model (e.g. Corolla)" value="' + escapeAttr(data.model) + '">' +
+    '<input type="text" class="vehicle-year" placeholder="Year" value="' + escapeAttr(data.year) + '">' +
+    '<button type="button" class="rm-row-btn" title="Remove">&times;</button>';
+  row.querySelector('.rm-row-btn').addEventListener('click', function(){ row.remove(); });
+  return row;
+}
+var vehicleRowsEl = document.getElementById('vehicleRows');
+var addVehicleBtn = document.getElementById('addVehicleBtn');
+if(addVehicleBtn) addVehicleBtn.addEventListener('click', function(){ vehicleRowsEl.appendChild(vehicleRow()); });
+
+var existingVehiclesEl = document.getElementById('vehiclesData');
+var existingVehicles = [];
+if(existingVehiclesEl){
+  try { existingVehicles = JSON.parse(existingVehiclesEl.textContent || '[]'); } catch(e) { existingVehicles = []; }
+}
+existingVehicles.forEach(function(v){ vehicleRowsEl.appendChild(vehicleRow(v)); });
+
+var customerForm = document.getElementById('customerForm');
+if(customerForm) customerForm.addEventListener('submit', function(){
+  var data = [];
+  childrenRowsEl.querySelectorAll('.child-row').forEach(function(row){
+    var name = row.querySelector('.child-name').value.trim();
+    if(!name) return;
+    data.push({
+      name: name,
+      age: row.querySelector('.child-age').value.trim(),
+      school: row.querySelector('.child-school').value.trim(),
+      class_grade: row.querySelector('.child-class').value.trim(),
+    });
+  });
+  document.getElementById('childrenJsonInput').value = JSON.stringify(data);
+
+  var vdata = [];
+  vehicleRowsEl.querySelectorAll('.vehicle-row').forEach(function(row){
+    var type = row.querySelector('.vehicle-type').value.trim();
+    if(!type) return;
+    vdata.push({
+      type: type,
+      make: row.querySelector('.vehicle-make').value.trim(),
+      model: row.querySelector('.vehicle-model').value.trim(),
+      year: row.querySelector('.vehicle-year').value.trim(),
+    });
+  });
+  document.getElementById('vehiclesJsonInput').value = JSON.stringify(vdata);
+});
 </script>
 </body></html>

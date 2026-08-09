@@ -189,7 +189,12 @@ class CustomerForm(forms.ModelForm):
 
     class Meta:
         model = Customer
-        fields = ['name', 'phone', 'email', 'cnic', 'address', 'customer_type', 'budget', 'notes', 'interested_in']
+        fields = [
+            'name', 'phone', 'email', 'cnic', 'address', 'customer_type', 'budget',
+            'occupation', 'company_name', 'marital_status', 'residency_status',
+            'monthly_income_range', 'club_membership', 'referral_source',
+            'social_media_handle', 'notes', 'interested_in',
+        ]
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
@@ -200,6 +205,11 @@ class CustomerForm(forms.ModelForm):
                 self.fields['interested_in'].queryset = Property.objects.filter(created_by=user)
         if self.instance.pk:
             self.initial['interested_in'] = self.instance.interested_in.values_list('pk', flat=True)
+        for name in ('marital_status', 'residency_status', 'monthly_income_range'):
+            choices = list(self.fields[name].choices)
+            if choices and choices[0][0] == '':
+                choices[0] = ('', '— Not specified —')
+            self.fields[name].choices = choices
         for name, field in self.fields.items():
             field.error_messages = {'required': 'This field is required.'}
 
