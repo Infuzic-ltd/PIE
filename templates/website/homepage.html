@@ -560,7 +560,7 @@
   </div>
   <div class="nav-links">
     <a href="#home" class="active">Home</a>
-    <a href="#properties">Properties</a>
+    <a href="{% url 'website_properties' %}">Properties</a>
     <a href="{% url 'website_services' %}">Services</a>
     <a href="{% url 'website_about' %}">About Us</a>
     <a href="{% url 'website_contact' %}">Contact</a>
@@ -580,7 +580,7 @@
     <h1><span class="rotator-word" id="rotatorWord">Naya Nazimabad</span></h1>
     <p>Your trusted partner for buying, selling, and renting across Karachi's top housing communities — verified plots, bungalows, and houses, backed by local block experts.</p>
     <div class="hero-cta">
-      <a href="#properties" class="btn btn-gold">Explore Properties →</a>
+      <a href="{% url 'website_properties' %}" class="btn btn-gold">Explore Properties →</a>
       <a href="#sell" class="btn btn-outline">List Your Property 🏠</a>
     </div>
 
@@ -645,21 +645,21 @@
       <p class="sub">Verified listings across some of the region's most sought-after gated communities.</p>
     </div>
     <div class="communities-grid">
-      <a href="#properties" class="community-card">
+      <a href="{% url 'website_properties' %}" class="community-card">
         <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/naya_nazimabad_fudnv1.jpg" alt="Naya Nazimabad">
         <div class="community-overlay">
           <h4>Naya Nazimabad</h4>
           <p>Karachi · Blocks A to P</p>
         </div>
       </a>
-      <a href="#properties" class="community-card">
+      <a href="{% url 'website_properties' %}" class="community-card">
         <img src="https://images.unsplash.com/photo-1560184897-ae75f418493e?auto=format&fit=crop&w=700&q=80" alt="Bahria Town">
         <div class="community-overlay">
           <h4>Bahria Town</h4>
           <p>Gated community living</p>
         </div>
       </a>
-      <a href="#properties" class="community-card">
+      <a href="{% url 'website_properties' %}" class="community-card">
         <img src="https://images.unsplash.com/photo-1493809842364-78817add7ffb?auto=format&fit=crop&w=700&q=80" alt="Silk Gardens">
         <div class="community-overlay">
           <h4>Silk Gardens</h4>
@@ -922,8 +922,8 @@
     <div>
       <h5>Quick Links</h5>
       <ul>
-        <li><a href="#">Buy Properties</a></li>
-        <li><a href="#">Rent Properties</a></li>
+        <li><a href="{% url 'website_properties' %}">Buy Properties</a></li>
+        <li><a href="{% url 'website_properties' %}">Rent Properties</a></li>
         <li><a href="#">Sell Properties</a></li>
         <li><a href="#">Find Agents</a></li>
       </ul>

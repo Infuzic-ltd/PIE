@@ -448,7 +448,7 @@
   </div>
   <div class="nav-links">
     <a href="{% url 'website_homepage' %}">Home</a>
-    <a href="{% url 'website_homepage' %}#properties">Properties</a>
+    <a href="{% url 'website_properties' %}">Properties</a>
     <a href="{% url 'website_services' %}" class="active">Services</a>
     <a href="{% url 'website_about' %}">About Us</a>
     <a href="{% url 'website_contact' %}">Contact</a>
@@ -468,7 +468,7 @@
       <h1>Comprehensive Real Estate Solutions for <span>Every Step of the Way</span></h1>
       <p class="desc">At PIE Real Estate, we offer end-to-end real estate services designed to help you buy, sell, rent, build, renovate, and invest with confidence across Naya Nazimabad, Bahria Town, and Silk Gardens.</p>
       <div class="hero-ctas">
-        <a href="{% url 'website_homepage' %}#properties" class="btn btn-dark">Explore Properties →</a>
+        <a href="{% url 'website_properties' %}" class="btn btn-dark">Explore Properties →</a>
         <a class="play-mini" href="#buying-selling">
           <span class="circle"><svg width="12" height="12" viewBox="0 0 12 12"><path d="M2 1L10 6L2 11V1Z" fill="#16213a"/></svg></span>
           See All Services
@@ -810,8 +810,8 @@
     <div>
       <h5>Quick Links</h5>
       <ul>
-        <li><a href="{% url 'website_homepage' %}#properties">Buy Properties</a></li>
-        <li><a href="{% url 'website_homepage' %}#properties">Rent Properties</a></li>
+        <li><a href="{% url 'website_properties' %}">Buy Properties</a></li>
+        <li><a href="{% url 'website_properties' %}">Rent Properties</a></li>
         <li><a href="{% url 'website_homepage' %}#sell">Sell Properties</a></li>
         <li><a href="{% url 'website_homepage' %}#agents">Find Agents</a></li>
       </ul>
