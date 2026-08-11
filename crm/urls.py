@@ -18,13 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import website_homepage, website_about, website_services, lead_api_create, lead_api_docs
+from accounts.views import website_homepage, website_about, website_services, website_properties, lead_api_create, lead_api_docs
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', website_homepage, name='website_homepage'),
     path('about/', website_about, name='website_about'),
     path('services/', website_services, name='website_services'),
+    path('properties/', website_properties, name='website_properties'),
     path('api/leads/create/', lead_api_create, name='lead_api_create'),
     path('api/leads/docs/', lead_api_docs, name='lead_api_docs'),
     path('crm/', include('accounts.urls')),
