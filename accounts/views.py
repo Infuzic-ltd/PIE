@@ -128,6 +128,10 @@ def website_properties(request):
     return render(request, 'website/properties.html')
 
 
+def website_contact(request):
+    return render(request, 'website/contact.html')
+
+
 def lead_api_docs(request):
     return render(request, 'website/lead_api_docs.html')
 

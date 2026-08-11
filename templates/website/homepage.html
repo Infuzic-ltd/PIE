@@ -566,11 +566,11 @@
     <a href="#agents">Agents</a>
     <a href="{% url 'website_services' %}">Services</a>
     <a href="{% url 'website_about' %}">About Us</a>
-    <a href="#contact">Contact</a>
+    <a href="{% url 'website_contact' %}">Contact</a>
   </div>
   <div class="nav-right">
     <div class="phone-pill">📞 +92 300 1234567</div>
-    <a href="#contact" class="btn btn-gold btn-sm">Book a Call</a>
+    <a href="{% url 'website_contact' %}" class="btn btn-gold btn-sm">Book a Call</a>
   </div>
   <button class="menu-toggle">☰</button>
 </nav>
@@ -905,7 +905,7 @@
             <span>Quick &amp; Secure Process</span>
           </div>
         </div>
-        <a href="#contact" class="btn btn-gold">Get Started →</a>
+        <a href="{% url 'website_contact' %}" class="btn btn-gold">Get Started →</a>
       </div>
       <div class="cta-right">
         <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/cta-interior_hjh8uu.jpg" alt="Naya Nazimabad home interior">
@@ -938,7 +938,7 @@
         <li><a href="{% url 'website_services' %}">Our Services</a></li>
         <li><a href="#agents">Our Agents</a></li>
         <li><a href="#">Careers</a></li>
-        <li><a href="#contact">Contact Us</a></li>
+        <li><a href="{% url 'website_contact' %}">Contact Us</a></li>
       </ul>
     </div>
     <div>
