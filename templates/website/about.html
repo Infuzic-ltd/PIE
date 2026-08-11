@@ -61,7 +61,6 @@
   .section-head h2{ font-size:34px; font-weight:700; }
   .section-head h2 span{ color:var(--gold); }
   .section-head p.sub{ font-size:15px; color:var(--text-gray); margin-top:12px; max-width:520px; }
-  .placeholder-note{ font-size:12.5px; color:var(--text-mute); margin-top:-28px; margin-bottom:36px; text-align:center; }
 
   /* =========================================================
      PRELOADER
@@ -110,177 +109,204 @@
   .menu-toggle{ display:none; color:var(--text-dark); font-size:26px; }
 
   /* =========================================================
-     ABOUT HERO
+     ABOUT HERO — asymmetric photo collage, no split-badge cliché
   ========================================================= */
-  .about-hero{ padding:64px 0 30px; overflow:hidden; }
-  .about-hero .wrap{ display:grid; grid-template-columns:1.05fr 1fr; gap:60px; align-items:center; }
+  .about-hero{ padding:64px 0 50px; overflow:hidden; }
+  .about-hero .wrap{ display:grid; grid-template-columns:1.05fr 1fr; gap:70px; align-items:center; }
   .about-hero h1{ font-size:44px; font-weight:700; margin:14px 0 18px; }
   .about-hero h1 span{ color:var(--gold); }
   .about-hero > .wrap > div:first-child > p{ font-size:15.5px; color:var(--text-gray); line-height:1.7; max-width:480px; margin-bottom:30px; }
-  .about-hero-cta{ display:flex; gap:14px; margin-bottom:44px; flex-wrap:wrap; }
+  .about-hero-cta{ display:flex; gap:14px; margin-bottom:8px; flex-wrap:wrap; }
 
-  .hero-stats{ display:flex; gap:30px; flex-wrap:wrap; }
-  .hero-stat{ display:flex; align-items:center; gap:12px; }
-  .hero-stat .ic{
-    width:44px; height:44px; border-radius:12px; flex:0 0 44px;
-    display:flex; align-items:center; justify-content:center; font-size:18px;
-  }
-  .hero-stat:nth-child(1) .ic{ background:#eef2ff; color:#4f46e5; }
-  .hero-stat:nth-child(2) .ic{ background:#eafbf1; color:#16a34a; }
-  .hero-stat:nth-child(3) .ic{ background:#fdf3e4; color:var(--gold-dark); }
-  .hero-stat:nth-child(4) .ic{ background:#fdf1f4; color:#e0475a; }
-  .hero-stat h3{ font-size:19px; font-weight:700; }
-  .hero-stat p{ font-size:12px; color:var(--text-gray); margin-top:1px; }
-
-  .about-hero-media{ position:relative; }
-  .dot-pattern{
-    position:absolute; top:-24px; right:-24px; width:120px; height:120px; z-index:0;
+  .about-hero-media{ position:relative; height:440px; }
+  .collage-dots{
+    position:absolute; top:-24px; right:10px; width:120px; height:120px; z-index:0;
     background-image:radial-gradient(var(--gold) 1.6px, transparent 1.6px);
     background-size:14px 14px; opacity:.5;
   }
-  .about-hero-img{
+  .collage-main{
     position:relative; z-index:1; border-radius:var(--radius-lg); overflow:hidden;
-    box-shadow:var(--shadow); height:420px;
+    box-shadow:var(--shadow); height:100%; margin-left:60px;
   }
-  .about-hero-img img{ width:100%; height:100%; object-fit:cover; }
-  .about-hero-img .play-overlay{
-    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
-    background:rgba(10,15,28,.15);
+  .collage-main img{ width:100%; height:100%; object-fit:cover; }
+  .collage-accent{
+    position:absolute; z-index:2; left:0; bottom:30px; width:220px; height:170px;
+    border-radius:var(--radius-md); overflow:hidden; border:6px solid var(--white);
+    box-shadow:0 18px 40px rgba(16,26,46,.22); animation:floatY 4.6s ease-in-out infinite;
   }
-  .play-btn{
-    width:64px; height:64px; border-radius:50%; background:rgba(255,255,255,.92);
-    display:flex; align-items:center; justify-content:center; color:var(--navy); font-size:20px;
-    transition:.2s; animation:pulseRing 2.4s ease-out infinite;
-  }
-  .play-btn:hover{ background:#fff; transform:scale(1.08); }
-  @keyframes pulseRing{
-    0%{ box-shadow:0 0 0 0 rgba(255,255,255,.5); }
-    70%{ box-shadow:0 0 0 18px rgba(255,255,255,0); }
-    100%{ box-shadow:0 0 0 0 rgba(255,255,255,0); }
-  }
-  .floating-badge{
-    position:absolute; z-index:2; bottom:-22px; right:24px; background:var(--white);
-    border-radius:var(--radius-md); box-shadow:0 14px 34px rgba(16,26,46,.18);
-    padding:14px 20px; display:flex; align-items:center; gap:12px;
-    animation:floatY 3.6s ease-in-out infinite;
-  }
-  .floating-badge .ic{ font-size:22px; }
-  .floating-badge h4{ font-size:18px; font-weight:800; color:var(--gold-dark); }
-  .floating-badge p{ font-size:11px; color:var(--text-gray); }
+  .collage-accent img{ width:100%; height:100%; object-fit:cover; }
   @keyframes floatY{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-10px); } }
 
   /* =========================================================
-     WHO WE ARE + MISSION/VISION
+     OUR STORY — vertical animated timeline (new centerpiece)
   ========================================================= */
-  .who-we-are .wrap{ display:grid; grid-template-columns:1fr 1.1fr; gap:70px; align-items:center; }
-  .who-media{ position:relative; }
-  .who-media-img{ border-radius:var(--radius-lg); overflow:hidden; height:400px; box-shadow:var(--shadow); }
-  .who-media-img img{ width:100%; height:100%; object-fit:cover; }
-  .mv-card{
-    position:absolute; width:210px; background:var(--white); border-radius:var(--radius-md);
-    box-shadow:0 14px 34px rgba(16,26,46,.18); padding:16px 18px; animation:floatY 4.2s ease-in-out infinite;
+  .story-section{ background:var(--bg-light); }
+  .timeline{ position:relative; margin-top:20px; padding:10px 0; }
+  .timeline-track{
+    position:absolute; left:50%; top:0; bottom:0; width:3px; background:var(--border);
+    transform:translateX(-50%); border-radius:10px; overflow:hidden;
   }
-  .mv-card .ic{
-    width:36px; height:36px; border-radius:10px; background:#fdf3e4; color:var(--gold-dark);
-    display:flex; align-items:center; justify-content:center; font-size:16px; margin-bottom:10px;
+  .timeline-track-fill{
+    position:absolute; left:0; top:0; width:100%; height:0%;
+    background:linear-gradient(180deg,var(--gold),var(--gold-dark));
+    transition:height 1.8s cubic-bezier(.22,.9,.32,1);
   }
-  .mv-card h4{ font-size:14px; margin-bottom:5px; }
-  .mv-card p{ font-size:11.5px; color:var(--text-gray); line-height:1.5; }
-  .mv-mission{ left:-30px; bottom:-26px; animation-delay:0s; }
-  .mv-vision{ right:-30px; top:-26px; animation-delay:1.6s; }
-
-  .who-content h2{ font-size:32px; font-weight:700; margin-bottom:14px; }
-  .who-content h2 span{ color:var(--gold); }
-  .who-content > p{ font-size:15px; color:var(--text-gray); line-height:1.7; margin-bottom:30px; }
-  .value-grid{ display:grid; grid-template-columns:repeat(2, 1fr); gap:22px; }
-  .value-item .ic{
-    width:46px; height:46px; border-radius:12px; display:flex; align-items:center; justify-content:center;
-    font-size:19px; margin-bottom:12px;
+  .timeline.in-view .timeline-track-fill{ height:100%; }
+  .milestone{
+    position:relative; width:calc(50% - 46px); margin-bottom:60px;
+    opacity:0; transform:translateY(24px);
+    transition:opacity .6s ease, transform .6s ease; transition-delay:calc(var(--i,0)*150ms);
   }
-  .value-item:nth-child(1) .ic{ background:#eef2ff; color:#4f46e5; }
-  .value-item:nth-child(2) .ic{ background:#eafbf1; color:#16a34a; }
-  .value-item:nth-child(3) .ic{ background:#f2ecff; color:#7c3aed; }
-  .value-item:nth-child(4) .ic{ background:#fdf3e4; color:var(--gold-dark); }
-  .value-item h4{ font-size:15.5px; margin-bottom:6px; }
-  .value-item p{ font-size:12.5px; color:var(--text-gray); line-height:1.6; }
-
-  /* =========================================================
-     TEAM
-  ========================================================= */
-  .team-section{ background:var(--bg-light); }
-  .team-wrap{ display:flex; justify-content:center; }
-  .team-card{
-    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
-    overflow:hidden; text-align:center; padding-bottom:22px; transition:.25s; width:100%; max-width:270px;
+  .timeline.in-view .milestone{ opacity:1; transform:translateY(0); }
+  .milestone:last-child{ margin-bottom:0; }
+  .milestone-left{ margin-right:auto; text-align:right; }
+  .milestone-right{ margin-left:auto; text-align:left; }
+  .milestone-dot{
+    position:absolute; top:4px; width:16px; height:16px; border-radius:50%;
+    background:var(--gold); border:3px solid var(--bg-light); box-shadow:0 0 0 3px var(--border);
   }
-  .team-card:hover{ box-shadow:var(--shadow); transform:translateY(-4px); }
-  .team-photo{ height:220px; overflow:hidden; }
-  .team-photo img{ width:100%; height:100%; object-fit:cover; }
-  .team-card h4{ font-size:16px; margin-top:18px; }
-  .team-card .role{ font-size:12.5px; color:var(--text-gray); margin-bottom:12px; }
-  .team-social{ display:flex; justify-content:center; gap:8px; }
-  .team-social a{
-    width:30px; height:30px; border-radius:50%; background:var(--bg-light); color:var(--text-gray);
-    display:flex; align-items:center; justify-content:center; font-size:12.5px; transition:.2s;
+  .milestone-left .milestone-dot{ right:-54px; }
+  .milestone-right .milestone-dot{ left:-54px; }
+  .milestone .tag{
+    display:inline-block; font-size:11px; font-weight:700; letter-spacing:1px; color:var(--gold-dark);
+    background:#fdf3e4; padding:5px 14px; border-radius:20px; margin-bottom:12px;
   }
-  .team-card:hover .team-social a{ background:var(--white); }
-  .team-social a:hover{ background:var(--gold) !important; color:var(--white); }
-  .team-more{ text-align:center; margin-top:26px; font-size:13px; color:var(--text-gray); }
+  .milestone h4{ font-size:20px; margin-bottom:8px; }
+  .milestone p{ font-size:13.5px; color:var(--text-gray); line-height:1.7; }
+  .milestone-stats{ display:flex; gap:20px; margin-top:16px; }
+  .milestone-left .milestone-stats{ justify-content:flex-end; }
+  .milestone-stat h3{ font-size:24px; font-weight:800; color:var(--gold-dark); }
+  .milestone-stat p{ font-size:11px; color:var(--text-mute); margin-top:2px; }
 
   /* =========================================================
-     DARK STATS BAND
+     MISSION & VISION — 3D flip cards
   ========================================================= */
-  .dark-stats{
-    background:linear-gradient(120deg, var(--navy-2), var(--navy-3));
-    padding:56px 0; display:flex; justify-content:space-between; flex-wrap:wrap; gap:24px;
+  .mv-flip-grid{ display:grid; grid-template-columns:1fr 1fr; gap:28px; }
+  .flip-card{ perspective:1300px; height:270px; cursor:pointer; }
+  .flip-inner{
+    position:relative; width:100%; height:100%; transform-style:preserve-3d;
+    transition:transform .7s cubic-bezier(.22,.9,.32,1);
   }
-  .dark-stat{ text-align:center; flex:1; min-width:130px; }
-  .dark-stat .ic{ font-size:22px; color:var(--gold); margin-bottom:10px; }
-  .dark-stat h3{ color:var(--white); font-size:32px; font-weight:700; }
-  .dark-stat p{ color:rgba(255,255,255,.65); font-size:12.5px; margin-top:6px; letter-spacing:.3px; }
+  .flip-card:hover .flip-inner, .flip-card.flipped .flip-inner{ transform:rotateY(180deg); }
+  .flip-face{
+    position:absolute; inset:0; border-radius:var(--radius-lg); padding:36px;
+    backface-visibility:hidden; display:flex; flex-direction:column; justify-content:center;
+  }
+  .flip-front{ background:var(--white); border:1px solid var(--border); box-shadow:var(--shadow); }
+  .flip-front .ic{ font-size:40px; margin-bottom:18px; }
+  .flip-front h3{ font-size:23px; margin-bottom:10px; }
+  .flip-front p.hint{ font-size:12.5px; color:var(--text-mute); }
+  .flip-back{ background:linear-gradient(135deg,var(--navy-2),var(--navy-3)); color:var(--white); transform:rotateY(180deg); }
+  .flip-back h4{ color:var(--gold); font-size:15px; margin-bottom:10px; letter-spacing:.5px; }
+  .flip-back p{ font-size:14.5px; line-height:1.75; color:rgba(255,255,255,.85); }
 
   /* =========================================================
-     TESTIMONIALS
+     OUR VALUES — interactive tab switcher
   ========================================================= */
-  .testimonials-grid{ display:grid; grid-template-columns:repeat(3, 1fr); gap:22px; }
-  .testimonial-card{
-    background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
-    padding:28px; position:relative;
+  .values-tabs{ background:var(--white); border:1px solid var(--border); border-radius:var(--radius-lg); padding:44px; box-shadow:var(--shadow); }
+  .values-tab-nav{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:34px; }
+  .v-tab{
+    display:flex; align-items:center; gap:9px; padding:12px 22px; border-radius:30px;
+    background:var(--bg-light); border:1.5px solid var(--border); font-size:14px; font-weight:600;
+    color:var(--text-gray); transition:.25s ease;
   }
-  .quote-mark{ position:absolute; top:18px; right:22px; color:var(--gold); font-size:30px; opacity:.5; }
-  .t-user{ display:flex; align-items:center; gap:12px; margin-bottom:12px; }
-  .t-avatar{
-    width:42px; height:42px; border-radius:50%; background:var(--bg-light); color:var(--gold-dark);
-    display:flex; align-items:center; justify-content:center; font-size:17px; flex:0 0 42px;
-  }
-  .t-user h5{ font-size:14px; }
-  .t-user span{ font-size:11.5px; color:var(--text-gray); }
-  .stars{ color:var(--gold); font-size:12.5px; margin-bottom:12px; letter-spacing:2px; }
-  .t-text{ font-size:13.5px; color:var(--text-gray); line-height:1.7; }
-  .dots{ display:flex; gap:6px; justify-content:center; margin-top:32px; }
-  .dots span{ width:7px; height:7px; border-radius:50%; background:var(--border); }
-  .dots span.active{ background:var(--gold); width:20px; border-radius:4px; transition:.3s; }
+  .v-tab .ic{ font-size:16px; }
+  .v-tab.active, .v-tab:hover{ background:var(--navy); color:var(--white); border-color:var(--navy); }
+  .values-tab-panels{ position:relative; min-height:130px; }
+  .v-panel{ display:none; opacity:0; transform:translateY(10px); animation:panelIn .45s ease forwards; }
+  .v-panel.active{ display:block; }
+  @keyframes panelIn{ from{ opacity:0; transform:translateY(10px); } to{ opacity:1; transform:translateY(0); } }
+  .v-panel h3{ font-size:25px; margin-bottom:12px; }
+  .v-panel h3 span{ color:var(--gold-dark); }
+  .v-panel p{ font-size:15px; color:var(--text-gray); line-height:1.85; max-width:660px; }
 
   /* =========================================================
-     CTA
+     FOUNDER'S NOTE — editorial spotlight (replaces generic team grid)
   ========================================================= */
-  .cta-banner{
-    background:linear-gradient(120deg, var(--navy-2), var(--navy-3));
-    border-radius:var(--radius-lg); padding:64px; display:grid; grid-template-columns:1.1fr 1fr;
-    gap:50px; align-items:center; color:var(--white); overflow:hidden;
+  .founder-note{ background:var(--bg-light); }
+  .founder-grid{ display:grid; grid-template-columns:0.85fr 1.15fr; gap:64px; align-items:center; }
+  .founder-photo{ position:relative; }
+  .founder-photo-frame{
+    position:absolute; inset:16px -16px -16px 16px; border:3px solid var(--gold);
+    border-radius:var(--radius-lg); z-index:0;
   }
-  .cta-left .badge2{
-    display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:1px; color:var(--gold);
-    background:rgba(234,163,59,.12); padding:7px 16px; border-radius:20px; margin-bottom:20px;
+  .founder-photo img{
+    position:relative; z-index:1; width:100%; height:400px; object-fit:cover;
+    border-radius:var(--radius-lg); box-shadow:var(--shadow);
   }
-  .cta-left h2{ font-size:34px; margin-bottom:16px; color:var(--white); }
-  .cta-left h2 span{ color:var(--gold); }
-  .cta-left > p{ color:rgba(255,255,255,.65); font-size:15px; margin-bottom:30px; max-width:420px; }
-  .cta-btns{ display:flex; gap:14px; flex-wrap:wrap; }
+  .founder-quote-mark{
+    position:absolute; z-index:2; top:-24px; left:-22px; font-size:30px; color:var(--gold);
+    background:var(--white); width:60px; height:60px; border-radius:50%;
+    display:flex; align-items:center; justify-content:center; box-shadow:var(--shadow);
+  }
+  .founder-content .eyebrow{ margin-bottom:14px; }
+  .founder-quote{
+    font-family:'Poppins',sans-serif; font-size:25px; font-weight:600; line-height:1.5;
+    color:var(--text-dark); margin-bottom:26px;
+  }
+  .founder-name{ font-size:18px; font-weight:700; }
+  .founder-role{ font-size:13px; color:var(--text-gray); margin-top:4px; }
+  .founder-divider{ width:46px; height:3px; background:var(--gold); border-radius:4px; margin:22px 0; }
+
+  /* =========================================================
+     COMMUNITIES — horizontal scroll-snap gallery (new pattern)
+  ========================================================= */
+  .communities{ overflow:hidden; }
+  .communities-scroll{
+    display:flex; gap:22px; overflow-x:auto; padding:6px 40px 16px;
+    scroll-snap-type:x mandatory; -webkit-overflow-scrolling:touch;
+  }
+  .communities-scroll::-webkit-scrollbar{ height:6px; }
+  .communities-scroll::-webkit-scrollbar-thumb{ background:var(--border); border-radius:10px; }
+  .community-card{
+    position:relative; flex:0 0 380px; height:300px; border-radius:var(--radius-lg);
+    overflow:hidden; scroll-snap-align:start; box-shadow:var(--shadow);
+    opacity:0; transform:translateY(24px); transition:opacity .6s ease, transform .6s ease;
+    transition-delay:calc(var(--i,0)*140ms);
+  }
+  .communities-scroll.in-view .community-card{ opacity:1; transform:translateY(0); }
+  .community-card img{ width:100%; height:100%; object-fit:cover; transition:transform .6s ease; }
+  .community-card:hover img{ transform:scale(1.08); }
+  .community-overlay{
+    position:absolute; inset:0; background:linear-gradient(180deg, transparent 42%, rgba(12,20,36,.92));
+    display:flex; flex-direction:column; justify-content:flex-end; padding:26px;
+  }
+  .community-overlay .tag{
+    display:inline-block; font-size:10.5px; font-weight:700; letter-spacing:1px; color:var(--gold);
+    background:rgba(234,163,59,.18); padding:5px 12px; border-radius:20px; margin-bottom:10px; width:fit-content;
+  }
+  .community-overlay h4{ color:var(--white); font-size:21px; margin-bottom:6px; }
+  .community-overlay p{
+    color:rgba(255,255,255,.75); font-size:13px; line-height:1.6;
+    transform:translateY(8px); opacity:.85; transition:.3s;
+  }
+  .community-card:hover .community-overlay p{ transform:translateY(0); opacity:1; }
+  .scroll-hint{ font-size:13px; color:var(--text-mute); display:flex; align-items:center; gap:8px; }
+  .scroll-hint svg{ width:16px; height:16px; animation:hintSlide 1.6s ease-in-out infinite; }
+  @keyframes hintSlide{ 0%,100%{ transform:translateX(0); opacity:.5; } 50%{ transform:translateX(6px); opacity:1; } }
+
+  /* =========================================================
+     CTA — full navy panel with subtle dot pattern (distinct composition)
+  ========================================================= */
+  .cta-banner-v2{
+    position:relative; background:linear-gradient(135deg, var(--navy-2), var(--navy-3));
+    border-radius:var(--radius-lg); padding:84px 40px; text-align:center; color:var(--white);
+    overflow:hidden;
+  }
+  .cta-pattern{
+    position:absolute; inset:0; background-image:radial-gradient(rgba(234,163,59,.14) 2px, transparent 2px);
+    background-size:26px 26px; opacity:.7;
+  }
+  .cta-banner-v2 .badge2{
+    position:relative; z-index:1; display:inline-block; font-size:11.5px; font-weight:700; letter-spacing:1px;
+    color:var(--gold); background:rgba(234,163,59,.14); padding:7px 18px; border-radius:20px; margin-bottom:22px;
+  }
+  .cta-banner-v2 h2{ position:relative; z-index:1; font-size:36px; margin-bottom:16px; color:var(--white); }
+  .cta-banner-v2 h2 span{ color:var(--gold); }
+  .cta-banner-v2 > p{ position:relative; z-index:1; color:rgba(255,255,255,.65); font-size:15.5px; max-width:480px; margin:0 auto 32px; }
+  .cta-btns{ position:relative; z-index:1; display:flex; gap:14px; flex-wrap:wrap; justify-content:center; }
   .cta-btns .btn-outline-light{ background:transparent; color:var(--white); border:1.5px solid rgba(255,255,255,.5); }
   .cta-btns .btn-outline-light:hover{ background:rgba(255,255,255,.12); }
-  .cta-right{ position:relative; border-radius:14px; overflow:hidden; height:320px; }
-  .cta-right img{ width:100%; height:100%; object-fit:cover; }
 
   /* =========================================================
      FOOTER
@@ -350,20 +376,26 @@
   }
 
   /* =========================================================
-     SCROLL-REVEAL
+     SCROLL-REVEAL (with stagger support + reduced-motion)
   ========================================================= */
-  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s ease; }
+  .reveal{ opacity:0; transform:translateY(28px); transition:opacity .7s ease, transform .7s ease; transition-delay:calc(var(--i,0)*120ms); }
   .reveal.in-view{ opacity:1; transform:translateY(0); }
+  @media (prefers-reduced-motion: reduce){
+    .reveal, .milestone, .community-card{ transition:none !important; opacity:1 !important; transform:none !important; }
+    .timeline-track-fill{ transition:none !important; height:100% !important; }
+    .collage-accent, .whatsapp-float, .scroll-hint svg{ animation:none !important; }
+    .flip-inner{ transition:none !important; }
+  }
 
   /* =========================================================
      RESPONSIVE
   ========================================================= */
   @media (max-width:1180px){
     .about-hero .wrap{ grid-template-columns:1fr; }
-    .about-hero-media{ order:-1; }
-    .who-we-are .wrap{ grid-template-columns:1fr; }
-    .value-grid{ grid-template-columns:repeat(2,1fr); }
-    .testimonials-grid{ grid-template-columns:1fr 1fr; }
+    .about-hero-media{ order:-1; margin-bottom:20px; }
+    .founder-grid{ grid-template-columns:1fr; }
+    .founder-photo img{ height:320px; }
+    .mv-flip-grid{ grid-template-columns:1fr; }
     .footer-grid{ grid-template-columns:1fr 1fr; }
   }
   @media (max-width:860px){
@@ -373,16 +405,18 @@
     .wrap{ padding:0 24px; }
     section{ padding:64px 0; }
     .about-hero h1{ font-size:34px; }
-    .hero-stats{ gap:20px; }
-    .dark-stats{ padding:44px 24px; }
+    .milestone{ width:100%; text-align:left !important; margin-right:0 !important; margin-left:0 !important; padding-left:38px; }
+    .milestone-left .milestone-dot, .milestone-right .milestone-dot{ left:0; right:auto; }
+    .milestone-left .milestone-stats{ justify-content:flex-start; }
+    .timeline-track{ left:6px; }
     footer{ padding:50px 24px 20px; }
   }
   @media (max-width:600px){
-    .testimonials-grid{ grid-template-columns:1fr; }
     .footer-grid{ grid-template-columns:1fr; }
-    .cta-banner{ grid-template-columns:1fr; padding:34px; }
-    .mv-card{ position:static; width:100%; margin-top:16px; animation:none; }
-    .who-media{ display:flex; flex-direction:column; }
+    .cta-banner-v2{ padding:50px 26px; }
+    .founder-photo-frame{ display:none; }
+    .communities-scroll{ padding:6px 24px 16px; }
+    .community-card{ flex:0 0 280px; height:260px; }
     .nav, .nav.solid{ padding:14px 18px; }
     .phone-pill{ font-size:12.5px; padding:8px 12px; gap:6px; }
     .whatsapp-widget{ right:16px; bottom:16px; }
@@ -430,150 +464,217 @@
   <div class="wrap">
     <div class="reveal">
       <span class="eyebrow">About Us</span>
-      <h1>Building Trust. Delivering Dreams.<br>Creating <span>Futures.</span></h1>
-      <p>At PIE Real Estate, we believe in more than just properties — we believe in people, relationships, and the dreams that inspire every move across Naya Nazimabad, Bahria Town, and Silk Gardens.</p>
+      <h1>We Don't Just Sell Houses.<br>We Build <span>Communities.</span></h1>
+      <p>PIE Real Estate began with a simple idea: real estate should feel personal, transparent, and genuinely helpful. That idea still guides everything we do across Naya Nazimabad, Bahria Town, and Silk Gardens.</p>
       <div class="about-hero-cta">
-        <a href="{% url 'website_homepage' %}#properties" class="btn btn-gold">Explore Properties →</a>
+        <a href="#story" class="btn btn-gold">Read Our Story ↓</a>
         <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-dark">Contact Us</a>
-      </div>
-      <div class="hero-stats">
-        <div class="hero-stat"><div class="ic">🏠</div><div><h3 data-count="5">0+</h3><p>Years of Experience</p></div></div>
-        <div class="hero-stat"><div class="ic">👥</div><div><h3 data-count="150">0+</h3><p>Properties Sold</p></div></div>
-        <div class="hero-stat"><div class="ic">🙂</div><div><h3 data-count="300">0+</h3><p>Happy Clients</p></div></div>
-        <div class="hero-stat"><div class="ic">⭐</div><div><h3>Growing</h3><p>Expert Agent Team</p></div></div>
       </div>
     </div>
     <div class="about-hero-media reveal">
-      <div class="dot-pattern"></div>
-      <div class="about-hero-img">
-        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/video-tour-thumbnail_imbag2.jpg" alt="PIE Real Estate">
-        <div class="play-overlay"><button class="play-btn">▶</button></div>
+      <div class="collage-dots"></div>
+      <div class="collage-main">
+        <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?q=80&w=900&auto=format&fit=crop" alt="Modern living space">
       </div>
-      <div class="floating-badge">
-        <span class="ic">🏆</span>
-        <div><h4 data-count="5">0+ Years</h4><p>Of Excellence</p></div>
+      <div class="collage-accent">
+        <img src="https://images.unsplash.com/photo-1523217582562-09d0def993a6?q=80&w=500&auto=format&fit=crop" alt="Modern house exterior">
       </div>
     </div>
   </div>
 </section>
 
-<!-- ============ WHO WE ARE ============ -->
-<section class="who-we-are">
-  <div class="wrap">
-    <div class="who-media reveal">
-      <div class="who-media-img">
-        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/cta-interior_hjh8uu.jpg" alt="Interior">
-      </div>
-      <div class="mv-card mv-mission">
-        <div class="ic">🎯</div>
-        <h4>Our Mission</h4>
-        <p>To make every real estate experience smooth, transparent, and rewarding for every client we serve.</p>
-      </div>
-      <div class="mv-card mv-vision">
-        <div class="ic">🔭</div>
-        <h4>Our Vision</h4>
-        <p>To be the most trusted name across Karachi and Lahore's leading housing communities.</p>
-      </div>
-    </div>
-    <div class="who-content reveal">
-      <span class="eyebrow">Who We Are</span>
-      <h2>Your Trusted Partner<br>in <span>Real Estate</span></h2>
-      <p>PIE Real Estate is a forward-thinking real estate company dedicated to providing exceptional property solutions across Naya Nazimabad, Bahria Town, and Silk Gardens. Whether you're buying, selling, or investing, our expert team is here to guide you every step of the way.</p>
-      <div class="value-grid">
-        <div class="value-item"><div class="ic">🛡</div><h4>Integrity</h4><p>We operate with honesty and transparency in every transaction.</p></div>
-        <div class="value-item"><div class="ic">🤝</div><h4>Client First</h4><p>Your goals are our priority. We listen, we care, we deliver.</p></div>
-        <div class="value-item"><div class="ic">📈</div><h4>Excellence</h4><p>We are committed to delivering the highest standards.</p></div>
-        <div class="value-item"><div class="ic">💡</div><h4>Innovation</h4><p>We leverage modern technology to bring you better results.</p></div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- ============ TEAM ============ -->
-<section class="team-section">
+<!-- ============ OUR STORY — TIMELINE ============ -->
+<section class="story-section" id="story">
   <div class="wrap">
     <div class="section-head center reveal">
-      <span class="eyebrow">Our Team</span>
-      <h2>Meet Our <span>Expert Team</span></h2>
-      <p class="sub">Experienced, and dedicated to finding you the right match across every community we serve.</p>
+      <span class="eyebrow">Our Journey</span>
+      <h2>The Story So <span>Far</span></h2>
+      <p class="sub">Every listing, every closed deal, every family we've helped — it all started with a single decision to do real estate differently.</p>
     </div>
-    <div class="team-wrap reveal">
-      <div class="team-card">
-        <div class="team-photo"><img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/agent-fahad-nazeer_diudpr.jpg" alt="Fahad Nazeer"></div>
-        <h4>Fahad Nazeer</h4>
-        <div class="role">Property Consultant</div>
-        <div class="team-social"><a href="#">📞</a><a href="#">💬</a><a href="#">✉</a></div>
+    <div class="timeline reveal" id="timeline">
+      <div class="timeline-track"><div class="timeline-track-fill"></div></div>
+
+      <div class="milestone milestone-left" style="--i:0">
+        <div class="milestone-dot"></div>
+        <span class="tag">THE BEGINNING</span>
+        <h4>A Small Team, A Big Idea</h4>
+        <p>PIE Real Estate started with a handful of people who believed clients deserved more honesty and less hassle from their property search.</p>
+      </div>
+
+      <div class="milestone milestone-right" style="--i:1">
+        <div class="milestone-dot"></div>
+        <span class="tag">FIRST BREAKTHROUGH</span>
+        <h4>Roots in Naya Nazimabad</h4>
+        <p>Our first real partnerships took shape in Naya Nazimabad, where word-of-mouth from happy clients became our best marketing.</p>
+      </div>
+
+      <div class="milestone milestone-left" style="--i:2">
+        <div class="milestone-dot"></div>
+        <span class="tag">GROWING TRUST</span>
+        <h4>Expanding to New Communities</h4>
+        <p>As our reputation grew, so did our reach — into Bahria Town and Silk Gardens, guided by the same values we started with.</p>
+      </div>
+
+      <div class="milestone milestone-right" style="--i:3">
+        <div class="milestone-dot"></div>
+        <span class="tag">TODAY</span>
+        <h4>A Trusted Name, Still Growing</h4>
+        <p>Today our team keeps that founding promise alive — for every buyer, seller, and family who puts their trust in us.</p>
+        <div class="milestone-stats">
+          <div class="milestone-stat"><h3 data-count="150">0+</h3><p>Properties Sold</p></div>
+          <div class="milestone-stat"><h3 data-count="300">0+</h3><p>Happy Clients</p></div>
+          <div class="milestone-stat"><h3 data-count="5">0+</h3><p>Years Strong</p></div>
+        </div>
       </div>
     </div>
-    <div class="team-more">More specialists joining the team soon.</div>
   </div>
 </section>
 
-<!-- ============ DARK STATS ============ -->
-<section class="dark-stats reveal">
-  <div class="dark-stat"><div class="ic">👥</div><h3 data-count="150">0+</h3><p>Properties Sold</p></div>
-  <div class="dark-stat"><div class="ic">🙂</div><h3 data-count="300">0+</h3><p>Happy Clients</p></div>
-  <div class="dark-stat"><div class="ic">📍</div><h3 data-count="3">0+</h3><p>Communities Covered</p></div>
-  <div class="dark-stat"><div class="ic">⭐</div><h3>Growing</h3><p>Expert Agents</p></div>
-  <div class="dark-stat"><div class="ic">🏆</div><h3 data-count="5">0+</h3><p>Years of Experience</p></div>
-</section>
-
-<!-- ============ TESTIMONIALS ============ -->
+<!-- ============ MISSION & VISION — FLIP CARDS ============ -->
 <section>
   <div class="wrap">
     <div class="section-head center reveal">
-      <span class="eyebrow">Clients Love Us</span>
-      <h2>What Our <span>Clients</span> Say</h2>
+      <span class="eyebrow">What Drives Us</span>
+      <h2>Mission &amp; <span>Vision</span></h2>
+      <p class="sub">Hover or tap a card to see what it means in practice.</p>
     </div>
-    <p class="placeholder-note">Sample testimonials shown below — replace with real client reviews before publishing.</p>
-    <div class="testimonials-grid reveal">
-      <div class="testimonial-card">
-        <span class="quote-mark">&#10077;</span>
-        <div class="t-user">
-          <div class="t-avatar">🙂</div>
-          <div><h5>Verified Buyer</h5><span>Naya Nazimabad</span></div>
+    <div class="mv-flip-grid reveal">
+      <div class="flip-card">
+        <div class="flip-inner">
+          <div class="flip-face flip-front">
+            <div class="ic">🎯</div>
+            <h3>Our Mission</h3>
+            <p class="hint">Hover to reveal →</p>
+          </div>
+          <div class="flip-face flip-back">
+            <h4>IN PRACTICE</h4>
+            <p>To make every real estate experience smooth, transparent, and rewarding — from the first viewing to the final signature — for every client we serve.</p>
+          </div>
         </div>
-        <div class="stars">★★★★★</div>
-        <p class="t-text">PIE Real Estate made my home buying experience smooth and stress-free. Their team is professional, responsive, and truly cares.</p>
       </div>
-      <div class="testimonial-card">
-        <span class="quote-mark">&#10077;</span>
-        <div class="t-user">
-          <div class="t-avatar">🙂</div>
-          <div><h5>Property Seller</h5><span>Bahria Town</span></div>
+      <div class="flip-card">
+        <div class="flip-inner">
+          <div class="flip-face flip-front">
+            <div class="ic">🔭</div>
+            <h3>Our Vision</h3>
+            <p class="hint">Hover to reveal →</p>
+          </div>
+          <div class="flip-face flip-back">
+            <h4>WHERE WE'RE HEADED</h4>
+            <p>To become the most trusted name across Karachi and Lahore's leading housing communities — known as much for our integrity as our results.</p>
+          </div>
         </div>
-        <div class="stars">★★★★★</div>
-        <p class="t-text">I sold my property within weeks at a fair price. Highly recommend PIE Real Estate for their market knowledge and dedication.</p>
-      </div>
-      <div class="testimonial-card">
-        <span class="quote-mark">&#10077;</span>
-        <div class="t-user">
-          <div class="t-avatar">🙂</div>
-          <div><h5>Happy Tenant</h5><span>Silk Gardens</span></div>
-        </div>
-        <div class="stars">★★★★★</div>
-        <p class="t-text">Excellent service and support throughout the rental process. They found the perfect place for my family within budget.</p>
       </div>
     </div>
-    <div class="dots"><span class="active"></span><span></span><span></span></div>
+  </div>
+</section>
+
+<!-- ============ OUR VALUES — TAB SWITCHER ============ -->
+<section class="story-section">
+  <div class="wrap">
+    <div class="section-head center reveal">
+      <span class="eyebrow">Our Values</span>
+      <h2>What We <span>Stand For</span></h2>
+    </div>
+    <div class="values-tabs reveal">
+      <div class="values-tab-nav">
+        <button class="v-tab active" data-tab="0"><span class="ic">🛡</span>Integrity</button>
+        <button class="v-tab" data-tab="1"><span class="ic">🤝</span>Client First</button>
+        <button class="v-tab" data-tab="2"><span class="ic">📈</span>Excellence</button>
+        <button class="v-tab" data-tab="3"><span class="ic">💡</span>Innovation</button>
+      </div>
+      <div class="values-tab-panels">
+        <div class="v-panel active" data-panel="0">
+          <h3><span>01.</span> Integrity</h3>
+          <p>We operate with honesty and transparency in every transaction — no hidden terms, no surprises. If a property isn't right for you, we'll say so.</p>
+        </div>
+        <div class="v-panel" data-panel="1">
+          <h3><span>02.</span> Client First</h3>
+          <p>Your goals are our priority. We listen before we recommend, and we measure success by how well a deal fits your life — not just our commission.</p>
+        </div>
+        <div class="v-panel" data-panel="2">
+          <h3><span>03.</span> Excellence</h3>
+          <p>From paperwork to property tours, we hold ourselves to a higher standard — because your biggest investment deserves nothing less.</p>
+        </div>
+        <div class="v-panel" data-panel="3">
+          <h3><span>04.</span> Innovation</h3>
+          <p>We use modern tools and clear communication to keep you informed at every step, so buying or selling never feels like a black box.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ FOUNDER'S NOTE ============ -->
+<section class="founder-note">
+  <div class="wrap">
+    <div class="founder-grid">
+      <div class="founder-photo reveal">
+        <div class="founder-photo-frame"></div>
+        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/agent-fahad-nazeer_diudpr.jpg" alt="Fahad Nazeer">
+        <div class="founder-quote-mark">&#10077;</div>
+      </div>
+      <div class="founder-content reveal">
+        <span class="eyebrow">From Our Team</span>
+        <p class="founder-quote">"Real estate isn't just about transactions — it's about trust. Every family we help find a home becomes part of the PIE story."</p>
+        <div class="founder-divider"></div>
+        <div class="founder-name">Fahad Nazeer</div>
+        <div class="founder-role">Property Consultant, PIE Real Estate</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ COMMUNITIES ============ -->
+<section class="communities">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <div>
+        <span class="eyebrow">Where We Build</span>
+        <h2>Communities We're <span>Proud to Serve</span></h2>
+      </div>
+      <span class="scroll-hint">Scroll to explore <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span>
+    </div>
+  </div>
+  <div class="communities-scroll reveal" id="communitiesScroll">
+    <div class="community-card" style="--i:0">
+      <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/naya_nazimabad_fudnv1.jpg" alt="Naya Nazimabad">
+      <div class="community-overlay">
+        <span class="tag">FLAGSHIP COMMUNITY</span>
+        <h4>Naya Nazimabad</h4>
+        <p>Where our journey began — Karachi's fastest-growing planned community.</p>
+      </div>
+    </div>
+    <div class="community-card" style="--i:1">
+      <img src="https://images.unsplash.com/photo-1560184897-502a475f7a37?q=80&w=900&auto=format&fit=crop" alt="Bahria Town">
+      <div class="community-overlay">
+        <span class="tag">GATED LIVING</span>
+        <h4>Bahria Town</h4>
+        <p>Premium, secure living with world-class amenities for growing families.</p>
+      </div>
+    </div>
+    <div class="community-card" style="--i:2">
+      <img src="https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=900&auto=format&fit=crop" alt="Silk Gardens">
+      <div class="community-overlay">
+        <span class="tag">FAMILY-FIRST</span>
+        <h4>Silk Gardens</h4>
+        <p>Modern comfort in a serene setting, built around everyday family life.</p>
+      </div>
+    </div>
   </div>
 </section>
 
 <!-- ============ CTA ============ -->
 <section>
   <div class="wrap">
-    <div class="cta-banner reveal">
-      <div class="cta-left">
-        <span class="badge2">READY TO FIND YOUR DREAM PROPERTY?</span>
-        <h2>Let's Make Your Next Move<br>Your <span>Best Move.</span></h2>
-        <p>Whether you're buying, selling, or investing, we're here to help you achieve your real estate goals.</p>
-        <div class="cta-btns">
-          <a href="{% url 'website_homepage' %}#properties" class="btn btn-gold">Explore Properties →</a>
-          <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-light">Contact Us</a>
-        </div>
-      </div>
-      <div class="cta-right">
-        <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576097/property-1-block-a-house_w2g49h.jpg" alt="PIE Real Estate property">
+    <div class="cta-banner-v2 reveal">
+      <div class="cta-pattern"></div>
+      <span class="badge2">JOIN THE PIE FAMILY</span>
+      <h2>Your Story With PIE<br>Starts <span>Today.</span></h2>
+      <p>Let's find the property that fits your next chapter — or list yours with a team that treats it like our own.</p>
+      <div class="cta-btns">
+        <a href="{% url 'website_homepage' %}#properties" class="btn btn-gold">Explore Properties →</a>
+        <a href="{% url 'website_homepage' %}#contact" class="btn btn-outline-light">Talk to Us</a>
       </div>
     </div>
   </div>
@@ -651,7 +752,7 @@
   window.addEventListener('load', ()=> setTimeout(hidePreloader, 300));
   setTimeout(hidePreloader, 4000);
 
-  // Scroll-reveal animation
+  // Scroll-reveal animation (also drives .timeline and .communities-scroll fills)
   const revealEls = document.querySelectorAll('.reveal');
   const revealObserver = new IntersectionObserver((entries)=>{
     entries.forEach(entry=>{
@@ -685,14 +786,20 @@
   }, { threshold: 0.4 });
   counters.forEach(el=> counterObserver.observe(el));
 
-  // Testimonial dots auto-cycle
-  const dots = document.querySelectorAll('.dots span');
-  let dotIdx = 0;
-  setInterval(()=>{
-    dots.forEach(d=>d.classList.remove('active'));
-    dotIdx = (dotIdx + 1) % dots.length;
-    dots[dotIdx].classList.add('active');
-  }, 3500);
+  // Values tab switcher
+  document.querySelectorAll('.v-tab').forEach(tab=>{
+    tab.addEventListener('click', function(){
+      document.querySelectorAll('.v-tab').forEach(t=>t.classList.remove('active'));
+      document.querySelectorAll('.v-panel').forEach(p=>p.classList.remove('active'));
+      this.classList.add('active');
+      document.querySelector('.v-panel[data-panel="'+this.dataset.tab+'"]').classList.add('active');
+    });
+  });
+
+  // Flip cards — tap support for touch devices (hover already works via CSS)
+  document.querySelectorAll('.flip-card').forEach(card=>{
+    card.addEventListener('click', ()=> card.classList.toggle('flipped'));
+  });
 
   // Back to top
   const backTop = document.getElementById('backTop');
@@ -708,7 +815,6 @@
   }, 2500);
 
   // Mobile menu toggle
-  const nav = document.getElementById('mainNav');
   document.querySelector('.menu-toggle').addEventListener('click', function(){
     const links = document.querySelector('.nav-links');
     const visible = links.style.display === 'flex';
