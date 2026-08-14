@@ -1046,3 +1046,91 @@ class AgentTarget(models.Model):
 
     def month_label(self):
         return f'{self.MONTH_NAMES[self.month]} {self.year}'
+
+
+class PropertySubmission(models.Model):
+    """A property submitted via the public website — either to be listed for sale/rent,
+    or just for a free market evaluation. Staff triage these in the CRM; approving one
+    creates a real Property (visible on the website) and links back here via converted_property."""
+    TYPE_LISTING = 'listing'
+    TYPE_EVALUATION = 'evaluation'
+
+    TYPE_CHOICES = [
+        (TYPE_LISTING, 'List My Property'),
+        (TYPE_EVALUATION, 'Property Evaluation'),
+    ]
+
+    STATUS_PENDING = 'pending'
+    STATUS_CONTACTED = 'contacted'
+    STATUS_EVALUATED = 'evaluated'
+    STATUS_LISTED = 'listed'
+    STATUS_REJECTED = 'rejected'
+
+    STATUS_CHOICES = [
+        (STATUS_PENDING, 'Under Review'),
+        (STATUS_CONTACTED, 'Contacted'),
+        (STATUS_EVALUATED, 'Evaluated'),
+        (STATUS_LISTED, 'Listed'),
+        (STATUS_REJECTED, 'Rejected'),
+    ]
+
+    STATUS_COLORS = {
+        STATUS_PENDING: '#f59e0b',
+        STATUS_CONTACTED: '#3b82f6',
+        STATUS_EVALUATED: '#8b5cf6',
+        STATUS_LISTED: '#22c55e',
+        STATUS_REJECTED: '#ef4444',
+    }
+
+    submission_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_LISTING)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+
+    property_type = models.CharField(max_length=20, choices=Property.PROPERTY_TYPE_CHOICES)
+    purpose = models.CharField(max_length=10, choices=Property.LISTING_TYPE_CHOICES, blank=True)
+    bedrooms = models.PositiveSmallIntegerField(null=True, blank=True)
+    bathrooms = models.PositiveSmallIntegerField(null=True, blank=True)
+    area_size = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    area_unit = models.CharField(max_length=10, choices=Property.AREA_UNIT_CHOICES, default=Property.UNIT_MARLA)
+    city = models.CharField(max_length=100)
+    location = models.CharField(max_length=200, blank=True)
+    description = models.TextField(blank=True)
+    asking_price = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+
+    full_name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=20)
+    email = models.EmailField(blank=True)
+
+    assigned_to = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True, related_name='property_submissions'
+    )
+    internal_notes = models.TextField(blank=True)
+    converted_property = models.OneToOneField(
+        'Property', on_delete=models.SET_NULL, null=True, blank=True, related_name='source_submission'
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.get_submission_type_display()} — {self.full_name} ({self.city})'
+
+    def reference_code(self):
+        return f'PIE-{self.pk:06d}'
+
+    def status_color(self):
+        return self.STATUS_COLORS.get(self.status, '#6b7280')
+
+
+class PropertySubmissionImage(models.Model):
+    submission = models.ForeignKey(PropertySubmission, on_delete=models.CASCADE, related_name='images')
+    image_url = models.URLField(max_length=500)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'Image for {self.submission}'

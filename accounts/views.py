@@ -19,7 +19,7 @@ import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -130,6 +130,73 @@ def website_properties(request):
 
 def website_contact(request):
     return render(request, 'website/contact.html')
+
+
+def website_listing(request):
+    return render(request, 'website/listing.html', {
+        'property_type_choices': Property.PROPERTY_TYPE_CHOICES,
+        'listing_type_choices': Property.LISTING_TYPE_CHOICES,
+        'area_unit_choices': Property.AREA_UNIT_CHOICES,
+    })
+
+
+@require_POST
+def submit_property_listing(request):
+    """Public endpoint behind the 'List My Property' / 'Property Evaluation' form —
+    creates a PropertySubmission for CRM staff to triage. No login required."""
+    submission_type = request.POST.get('submission_type', PropertySubmission.TYPE_LISTING)
+    if submission_type not in dict(PropertySubmission.TYPE_CHOICES):
+        submission_type = PropertySubmission.TYPE_LISTING
+
+    full_name = request.POST.get('full_name', '').strip()
+    phone = request.POST.get('phone', '').strip()
+    city = request.POST.get('city', '').strip()
+    property_type = request.POST.get('property_type', '').strip()
+
+    errors = {}
+    if not full_name:
+        errors['full_name'] = 'Your name is required.'
+    if not phone:
+        errors['phone'] = 'A contact phone number is required.'
+    if not city:
+        errors['city'] = 'City is required.'
+    if property_type not in dict(Property.PROPERTY_TYPE_CHOICES):
+        errors['property_type'] = 'Select a valid property type.'
+    if errors:
+        return JsonResponse({'ok': False, 'errors': errors}, status=400)
+
+    purpose = request.POST.get('purpose', '').strip()
+    if purpose not in dict(Property.LISTING_TYPE_CHOICES):
+        purpose = ''
+
+    area_unit = request.POST.get('area_unit', Property.UNIT_MARLA).strip()
+    if area_unit not in dict(Property.AREA_UNIT_CHOICES):
+        area_unit = Property.UNIT_MARLA
+
+    submission = PropertySubmission.objects.create(
+        submission_type=submission_type,
+        property_type=property_type,
+        purpose=purpose,
+        bedrooms=_int_or_none(request.POST.get('bedrooms')),
+        bathrooms=_int_or_none(request.POST.get('bathrooms')),
+        area_size=_decimal_or_none(request.POST.get('area_size')),
+        area_unit=area_unit,
+        city=city,
+        location=request.POST.get('location', '').strip(),
+        description=request.POST.get('description', '').strip(),
+        asking_price=_decimal_or_none(request.POST.get('asking_price')),
+        full_name=full_name,
+        phone=phone,
+        email=request.POST.get('email', '').strip(),
+    )
+
+    for f in request.FILES.getlist('images')[:10]:
+        if not f.content_type.startswith('image/'):
+            continue
+        result = cloudinary.uploader.upload(f, folder='pie-website/submissions', resource_type='image')
+        PropertySubmissionImage.objects.create(submission=submission, image_url=result['secure_url'])
+
+    return JsonResponse({'ok': True, 'reference': submission.reference_code()}, status=201)
 
 
 def lead_api_docs(request):
@@ -429,6 +496,113 @@ def property_document_delete(request, pk):
     )
     next_url = request.GET.get('next') or request.POST.get('next')
     return redirect(next_url) if next_url else redirect('property_update', pk=prop.pk)
+
+
+# ── Property Submissions (website "List My Property" / "Property Evaluation") ──
+
+@login_required
+def property_submission_list(request):
+    qs = PropertySubmission.objects.select_related('assigned_to', 'converted_property').all()
+
+    q = request.GET.get('q', '').strip()
+    status = request.GET.get('status', '')
+    submission_type = request.GET.get('type', '')
+
+    if q:
+        qs = qs.filter(Q(full_name__icontains=q) | Q(phone__icontains=q) | Q(city__icontains=q))
+    if status:
+        qs = qs.filter(status=status)
+    if submission_type:
+        qs = qs.filter(submission_type=submission_type)
+
+    total = PropertySubmission.objects.count()
+    pending = PropertySubmission.objects.filter(status=PropertySubmission.STATUS_PENDING).count()
+    listed = PropertySubmission.objects.filter(status=PropertySubmission.STATUS_LISTED).count()
+    evaluations = PropertySubmission.objects.filter(submission_type=PropertySubmission.TYPE_EVALUATION).count()
+
+    return render(request, 'accounts/property_submissions.html', {
+        'submissions': qs,
+        'total': total,
+        'pending': pending,
+        'listed': listed,
+        'evaluations': evaluations,
+        'filters': {'q': q, 'status': status, 'type': submission_type},
+    })
+
+
+@login_required
+def property_submission_detail(request, pk):
+    submission = get_object_or_404(
+        PropertySubmission.objects.select_related('assigned_to', 'converted_property').prefetch_related('images'),
+        pk=pk,
+    )
+    return render(request, 'accounts/property_submission_detail.html', {
+        'submission': submission,
+        'agents': User.objects.filter(is_active=True),
+    })
+
+
+@login_required
+@require_POST
+def property_submission_update(request, pk):
+    submission = get_object_or_404(PropertySubmission, pk=pk)
+    status = request.POST.get('status', '').strip()
+    if status in dict(PropertySubmission.STATUS_CHOICES):
+        submission.status = status
+    submission.internal_notes = request.POST.get('internal_notes', '').strip()
+    agent_id = request.POST.get('assigned_to', '').strip()
+    submission.assigned_to = User.objects.filter(pk=agent_id).first() if agent_id else None
+    submission.save()
+    messages.success(request, 'Submission updated.')
+    return redirect('property_submission_detail', pk=pk)
+
+
+@login_required
+def property_submission_convert(request, pk):
+    submission = get_object_or_404(PropertySubmission.objects.prefetch_related('images'), pk=pk)
+    if submission.converted_property_id:
+        return redirect('property_view', pk=submission.converted_property_id)
+
+    initial = {
+        'title': f'{submission.get_property_type_display()} in {submission.location or submission.city}',
+        'property_type': submission.property_type,
+        'listing_type': submission.purpose or Property.LISTING_SALE,
+        'price': submission.asking_price,
+        'area_size': submission.area_size,
+        'area_unit': submission.area_unit,
+        'bedrooms': submission.bedrooms,
+        'bathrooms': submission.bathrooms,
+        'city': submission.city,
+        'location': submission.location,
+        'address': submission.location or submission.city,
+        'description': submission.description,
+    }
+    form = PropertyForm(request.POST or None, initial=initial, user=request.user)
+
+    if request.method == 'POST' and form.is_valid():
+        prop = form.save(commit=False)
+        prop.created_by = request.user
+        prop.save()
+        for img in submission.images.all():
+            PropertyImage.objects.create(property=prop, image=img.image_url, is_primary=not prop.images.exists())
+        _upload_images(request.FILES, prop)
+        submission.converted_property = prop
+        submission.status = PropertySubmission.STATUS_LISTED
+        submission.save(update_fields=['converted_property', 'status', 'updated_at'])
+        PropertyActivity.objects.create(
+            property=prop,
+            activity_type=PropertyActivity.TYPE_CREATED,
+            description=f'Property created from submission {submission.reference_code()} by {request.user.get_full_name() or request.user.email}.',
+            created_by=request.user,
+        )
+        messages.success(request, f'Property created and listed from submission {submission.reference_code()}.')
+        return redirect('property_view', pk=prop.pk)
+
+    return render(request, 'accounts/property_submission_convert.html', {
+        'form': form,
+        'submission': submission,
+        'blocks': Block.objects.all(),
+    })
 
 
 # ── Web Push ──────────────────────────────────────────────────────────────────

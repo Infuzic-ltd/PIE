@@ -1,0 +1,228 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>{{ submission.reference_code }} — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
+<script src="{% static 'accounts/js/crm-modal.js' %}"></script>
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--blue-light:#3b82f6;--green:#22c55e;--orange:#f59e0b;--purple:#8b5cf6;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+.serif{font-family:'Playfair Display',serif}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.sidebar{width:248px;flex:0 0 248px;background:linear-gradient(180deg,var(--navy),#0a1530);color:#cdd6e6;padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50}
+.brand{text-align:center;padding:14px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.brand .logo{font-size:32px;font-weight:700;letter-spacing:6px;color:var(--gold);line-height:1}
+.brand .sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+.nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.nav::-webkit-scrollbar{width:0}
+.nav a{display:flex;align-items:center;gap:13px;padding:10px 13px;border-radius:10px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;transition:background .15s,color .15s;position:relative}
+.nav a svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:var(--blue);color:#fff;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.nav-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px}
+.subnav{display:flex;flex-direction:column;gap:1px;margin:2px 0 4px 30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.subnav a{font-size:13px;padding:8px 12px;color:#93a1c2}
+.subnav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.profile{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:12px}
+.profile .nm{font-size:13px;font-weight:600;color:#fff}
+.profile .rl{font-size:11px;color:#8b97b3}
+.av-lg{width:52px;height:52px;border-radius:50%;display:grid;place-items:center;color:#fff;font-size:18px;font-weight:700;flex:0 0 52px}
+.av-sm{width:36px;height:36px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:0 0 36px}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:12px;padding:12px 24px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.crumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft)}
+.crumb a{color:var(--blue)}
+.crumb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.topbar-actions{display:flex;align-items:center;gap:8px;margin-left:auto}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:8px 15px;border-radius:9px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:background .12s,box-shadow .12s;white-space:nowrap;text-decoration:none;font-family:inherit}
+.btn:hover{background:#f7f9fc}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.btn.success{background:#16a34a;border-color:#16a34a;color:#fff}
+.btn.success:hover{background:#15803d}
+.content{padding:22px 24px 40px;flex:1}
+.sub-header{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;box-shadow:var(--shadow);display:flex;align-items:flex-start;gap:18px}
+.sub-header .info{flex:1}
+.sh-name{font-size:22px;font-weight:800;line-height:1.2}
+.sh-meta{font-size:13px;color:var(--ink-soft);margin-top:5px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.body-grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);margin-bottom:16px}
+.card-title{font-size:13.5px;font-weight:700;margin-bottom:14px;display:flex;align-items:center;gap:8px}
+.card-title svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;color:var(--blue)}
+.info-row{display:flex;align-items:flex-start;padding:9px 0;border-bottom:1px solid var(--line)}
+.info-row:last-child{border-bottom:none}
+.info-row .k{width:130px;flex:0 0 130px;font-size:12px;font-weight:600;color:var(--ink-faint);text-transform:uppercase;letter-spacing:.3px;padding-top:1px}
+.info-row .v{font-size:13.5px;color:var(--ink)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:600}
+.b-listing{background:#dbeafe;color:#2563eb} .b-evaluation{background:#ede9fe;color:#7c3aed}
+.st{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.st::before{content:'';width:6px;height:6px;border-radius:50%;background:currentColor;opacity:.7}
+.st-pending{background:#fef3c7;color:#92400e}.st-contacted{background:#dbeafe;color:#1d4ed8}.st-evaluated{background:#ede9fe;color:#6d28d9}.st-listed{background:#dcfce7;color:#166534}.st-rejected{background:#fee2e2;color:#b91c1c}
+.fld label{font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px}
+.fld input,.fld select,.fld textarea{width:100%;border:1px solid var(--line);border-radius:8px;padding:8px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);background:#fff}
+.fld input:focus,.fld select:focus,.fld textarea:focus{border-color:var(--blue)}
+.fld{margin-bottom:12px}
+.media-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.media-grid img{width:100%;height:96px;object-fit:cover;border-radius:10px;border:1px solid var(--line);cursor:pointer}
+.convert-banner{background:linear-gradient(135deg,#0d1b3e,#13234d);color:#fff;border-radius:var(--radius);padding:22px 24px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.convert-banner h3{font-size:16px;font-weight:700;margin-bottom:4px}
+.convert-banner p{font-size:13px;color:rgba(255,255,255,.7)}
+.converted-banner{background:#f0fdf4;border:1px solid #bbf7d0;color:#166534;border-radius:var(--radius);padding:18px 22px;margin-bottom:20px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap}
+.msg-list{margin-bottom:16px}
+.msg{padding:11px 16px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:8px;background:#f0fdf4;color:#166534;border:1px solid #bbf7d0}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:960px){.body-grid{grid-template-columns:1fr}}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:18px 16px 40px}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+<aside class="sidebar" id="sidebar">
+<div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
+<nav class="nav">
+<a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
+<a href="{% url 'lead_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+<a href="{% url 'property_submission_list' %}" class="active"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Submissions{% if pending_submissions_count %}<span class="nav-badge">{{ pending_submissions_count }}</span>{% endif %}</a>
+<a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+<a href="{% url 'customer_list' %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
+{% if request.user.is_crm_admin %}
+<a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
+{% endif %}
+<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+</nav>
+<div class="profile"><div class="av-sm">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div><div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_effective_role_name }}</div></div></div>
+<a href="{% url 'logout' %}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px">Sign out</a>
+</aside>
+
+<main class="main">
+<div class="topbar">
+  <button class="float-menu" id="menuBtnTop" style="position:static;width:36px;height:36px;border-radius:9px;background:var(--navy)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <div class="crumb">
+    <a href="{% url 'property_submission_list' %}">Submissions</a>
+    <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg>
+    {{ submission.reference_code }}
+  </div>
+  <div class="topbar-actions">
+    {% if submission.full_name %}<a href="tel:{{ submission.phone }}" class="btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.5 19.5 0 0 1 4.69 12 19.79 19.79 0 0 1 1.61 3.4a2 2 0 0 1 2-2.18h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 8.91a16 16 0 0 0 5.94 5.94l.73-.73a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/></svg> Call</a>{% endif %}
+    <a href="https://wa.me/{{ submission.phone|cut:'+' }}" target="_blank" class="btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg> WhatsApp</a>
+  </div>
+</div>
+
+<div class="content">
+
+{% if messages %}
+<div class="msg-list">
+  {% for message in messages %}<div class="msg">{{ message }}</div>{% endfor %}
+</div>
+{% endif %}
+
+{% if submission.converted_property %}
+<div class="converted-banner">
+  <div><strong>✓ Converted to a live property.</strong> This submission has been approved and is now listed on the website.</div>
+  <a href="{% url 'property_view' submission.converted_property.pk %}" class="btn success">View Live Property →</a>
+</div>
+{% else %}
+<div class="convert-banner">
+  <div>
+    <h3>Approve this submission?</h3>
+    <p>Create a real property listing from these details — it will go live on the website immediately.</p>
+  </div>
+  <a href="{% url 'property_submission_convert' submission.pk %}" class="btn success">✓ Approve &amp; Create Property</a>
+</div>
+{% endif %}
+
+<!-- Header -->
+<div class="sub-header">
+  <div class="av-lg" style="background:{% if submission.submission_type == 'listing' %}#3b82f6{% else %}#8b5cf6{% endif %}">{{ submission.full_name|first|upper }}</div>
+  <div class="info">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <div class="sh-name">{{ submission.full_name }}</div>
+      <span class="st st-{{ submission.status }}">{{ submission.get_status_display }}</span>
+      {% if submission.submission_type == 'listing' %}<span class="badge b-listing">List My Property</span>{% else %}<span class="badge b-evaluation">Property Evaluation</span>{% endif %}
+    </div>
+    <div class="sh-meta">
+      <span>{{ submission.reference_code }}</span>
+      <span>·</span>
+      <span>Submitted {{ submission.created_at|date:"M d, Y" }}</span>
+      {% if submission.assigned_to %}<span>·</span><span>Assigned to <strong>{{ submission.assigned_to.get_full_name }}</strong></span>{% endif %}
+    </div>
+  </div>
+</div>
+
+<div class="body-grid">
+<!-- Left Column -->
+<div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Property Details</div>
+    <div class="info-row"><span class="k">Property Type</span><span class="v">{{ submission.get_property_type_display }}</span></div>
+    {% if submission.purpose %}<div class="info-row"><span class="k">Purpose</span><span class="v">For {{ submission.get_purpose_display }}</span></div>{% endif %}
+    <div class="info-row"><span class="k">Bedrooms</span><span class="v">{{ submission.bedrooms|default:"—" }}</span></div>
+    <div class="info-row"><span class="k">Bathrooms</span><span class="v">{{ submission.bathrooms|default:"—" }}</span></div>
+    {% if submission.area_size %}<div class="info-row"><span class="k">Area</span><span class="v">{{ submission.area_size }} {{ submission.get_area_unit_display }}</span></div>{% endif %}
+    <div class="info-row"><span class="k">City</span><span class="v">{{ submission.city }}</span></div>
+    {% if submission.location %}<div class="info-row"><span class="k">Location</span><span class="v">{{ submission.location }}</span></div>{% endif %}
+    {% if submission.asking_price %}<div class="info-row"><span class="k">Asking Price</span><span class="v" style="font-weight:700;color:var(--blue)">PKR {{ submission.asking_price|floatformat:0 }}</span></div>{% endif %}
+    {% if submission.description %}<div class="info-row" style="align-items:flex-start"><span class="k">Description</span><span class="v">{{ submission.description }}</span></div>{% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m4 18 5-4 4 3 3-3 4 4"/></svg> Photos</div>
+    {% if submission.images.all %}
+    <div class="media-grid">
+      {% for img in submission.images.all %}<a href="{{ img.image_url }}" target="_blank"><img src="{{ img.image_url }}" alt="Submitted photo"></a>{% endfor %}
+    </div>
+    {% else %}
+    <div style="color:var(--ink-faint);font-size:13px;text-align:center;padding:14px 0">No photos were submitted.</div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Contact Information</div>
+    <div class="info-row"><span class="k">Full Name</span><span class="v">{{ submission.full_name }}</span></div>
+    <div class="info-row"><span class="k">Phone</span><span class="v">{{ submission.phone }}</span></div>
+    {% if submission.email %}<div class="info-row"><span class="k">Email</span><span class="v">{{ submission.email }}</span></div>{% endif %}
+  </div>
+</div>
+
+<!-- Right Column -->
+<div>
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg> Manage Submission</div>
+    <form method="post" action="{% url 'property_submission_update' submission.pk %}">
+      {% csrf_token %}
+      <div class="fld">
+        <label>Status</label>
+        <select name="status">
+          {% for val, label in submission.STATUS_CHOICES %}<option value="{{ val }}" {% if submission.status == val %}selected{% endif %}>{{ label }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fld">
+        <label>Assign To</label>
+        <select name="assigned_to">
+          <option value="">Unassigned</option>
+          {% for agent in agents %}<option value="{{ agent.pk }}" {% if submission.assigned_to_id == agent.pk %}selected{% endif %}>{{ agent.get_full_name }}</option>{% endfor %}
+        </select>
+      </div>
+      <div class="fld">
+        <label>Internal Notes</label>
+        <textarea name="internal_notes" rows="4" placeholder="Notes visible only to staff…">{{ submission.internal_notes }}</textarea>
+      </div>
+      <button type="submit" class="btn primary" style="width:100%;justify-content:center">Save Changes</button>
+    </form>
+  </div>
+</div>
+</div>
+
+</div></main></div><script>
+const body=document.body,mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim');
+if(mb)mb.addEventListener('click',()=>body.classList.toggle('nav-open'));
+if(mbt)mbt.addEventListener('click',()=>body.classList.toggle('nav-open'));
+if(sc)sc.addEventListener('click',()=>body.classList.remove('nav-open'));
+</script>
+</body></html>

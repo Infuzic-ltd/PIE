@@ -563,6 +563,7 @@
     <a href="{% url 'website_properties' %}">Properties</a>
     <a href="{% url 'website_services' %}">Services</a>
     <a href="{% url 'website_about' %}">About Us</a>
+    <a href="{% url 'website_listing' %}">List Property</a>
     <a href="{% url 'website_contact' %}">Contact</a>
   </div>
   <div class="nav-right">
@@ -581,7 +582,7 @@
     <p>Your trusted partner for buying, selling, and renting across Karachi's top housing communities — verified plots, bungalows, and houses, backed by local block experts.</p>
     <div class="hero-cta">
       <a href="{% url 'website_properties' %}" class="btn btn-gold">Explore Properties →</a>
-      <a href="#sell" class="btn btn-outline">List Your Property 🏠</a>
+      <a href="{% url 'website_listing' %}" class="btn btn-outline">List Your Property 🏠</a>
     </div>
 
     <div class="search-card">
@@ -902,7 +903,7 @@
             <span>Quick &amp; Secure Process</span>
           </div>
         </div>
-        <a href="{% url 'website_contact' %}" class="btn btn-gold">Get Started →</a>
+        <a href="{% url 'website_listing' %}" class="btn btn-gold">Get Started →</a>
       </div>
       <div class="cta-right">
         <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/cta-interior_hjh8uu.jpg" alt="Naya Nazimabad home interior">
@@ -924,7 +925,7 @@
       <ul>
         <li><a href="{% url 'website_properties' %}">Buy Properties</a></li>
         <li><a href="{% url 'website_properties' %}">Rent Properties</a></li>
-        <li><a href="#">Sell Properties</a></li>
+        <li><a href="{% url 'website_listing' %}">Sell Properties</a></li>
         <li><a href="#">Find Agents</a></li>
       </ul>
     </div>

@@ -22,6 +22,12 @@ urlpatterns = [
     path('properties/<int:pk>/document/', views.property_add_document, name='property_add_document'),
     path('properties/document/<int:pk>/delete/', views.property_document_delete, name='property_document_delete'),
 
+    # Property Submissions (website listing/evaluation requests)
+    path('property-submissions/', views.property_submission_list, name='property_submission_list'),
+    path('property-submissions/<int:pk>/', views.property_submission_detail, name='property_submission_detail'),
+    path('property-submissions/<int:pk>/update/', views.property_submission_update, name='property_submission_update'),
+    path('property-submissions/<int:pk>/convert/', views.property_submission_convert, name='property_submission_convert'),
+
     # Team management (admin only)
     path('team/', views.team_list, name='team_list'),
     path('team/add/', views.team_member_create, name='team_member_create'),
