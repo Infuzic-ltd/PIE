@@ -137,6 +137,7 @@ def website_listing(request):
         'property_type_choices': Property.PROPERTY_TYPE_CHOICES,
         'listing_type_choices': Property.LISTING_TYPE_CHOICES,
         'area_unit_choices': Property.AREA_UNIT_CHOICES,
+        'blocks': Block.objects.all(),
     })
 
 

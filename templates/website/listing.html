@@ -498,7 +498,10 @@
               </div>
               <div class="field">
                 <label>Location / Area</label>
-                <input type="text" name="location" placeholder="e.g. Naya Nazimabad">
+                <select name="location">
+                  <option value="">— Select —</option>
+                  {% for block in blocks %}<option value="{{ block.name }}">{{ block.name }}</option>{% endfor %}
+                </select>
               </div>
             </div>
             <div class="field">
