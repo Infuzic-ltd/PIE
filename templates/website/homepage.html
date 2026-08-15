@@ -755,72 +755,40 @@
       <p class="sub">Handpicked listings from Naya Nazimabad, Karachi — verified, priced fairly, and ready to view.</p>
     </div>
 
+    {% if featured_properties %}
     <div class="filters">
       <button class="filter-pill active" data-filter="all">All</button>
-      <button class="filter-pill" data-filter="house">House</button>
-      <button class="filter-pill" data-filter="plot">Plot</button>
+      {% for val, label in featured_types %}<button class="filter-pill" data-filter="{{ val }}">{{ label }}</button>{% endfor %}
     </div>
+    {% endif %}
 
     <div class="property-grid" id="propertyGrid">
-      <!-- Real listing — Property #4 in the CRM -->
-      <div class="property-card" data-cat="house">
-        <div class="property-media">
-          <span class="featured-tag">★ Featured</span>
-          <button class="fav-btn">♥</button>
-          <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576097/property-1-block-a-house_w2g49h.jpg" alt="Naya Nazimabad New House for Sale">
-          <span class="price-tag">PKR 2.5 Crore</span>
-        </div>
-        <div class="property-info">
-          <h3>Naya Nazimabad New House for Sale</h3>
-          <div class="property-loc">📍 Block A, Naya Nazimabad, Karachi</div>
-          <div class="property-stats"><span>🛏 4 Beds</span><span>🛁 4 Baths</span><span>▭ 240 sq yd</span></div>
-        </div>
-      </div>
-      <!-- Real listing — Property #1 in the CRM (for rent) -->
-      <div class="property-card" data-cat="house">
+      {% for prop in featured_properties %}
+      <div class="property-card" data-cat="{{ prop.property_type }}" data-href="{% url 'website_property_detail' prop.pk %}" style="cursor:pointer">
         <div class="property-media">
           <button class="fav-btn">♥</button>
-          <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576097/property-2-block-a-bungalow_w23drv.jpg" alt="Naya Nazimabad 160 Square Yards Bungalow">
-          <span class="price-tag">PKR 140,000 / month</span>
+          {% with img=prop.get_primary_image %}
+          {% if img %}<img src="{{ img.image }}" alt="{{ prop.title }}">{% else %}<img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=600&q=80" alt="{{ prop.title }}">{% endif %}
+          {% endwith %}
+          <span class="price-tag">{{ prop.price_display }}{% if prop.listing_type == 'rent' %} / month{% endif %}</span>
         </div>
         <div class="property-info">
-          <h3>160 Square Yards Bungalow</h3>
-          <div class="property-loc">📍 Block A, Naya Nazimabad, Karachi</div>
-          <div class="property-stats"><span>▭ 160 sq yd</span><span>For Rent</span></div>
+          <h3>{{ prop.title }}</h3>
+          <div class="property-loc">📍 {{ prop.location }}, {{ prop.city }}</div>
+          <div class="property-stats">
+            {% if prop.bedrooms %}<span>🛏 {{ prop.bedrooms }} Beds</span>{% endif %}
+            {% if prop.bathrooms %}<span>🛁 {{ prop.bathrooms }} Baths</span>{% endif %}
+            <span>▭ {{ prop.size_display }}</span>
+          </div>
         </div>
       </div>
-      <!-- Draft sample listing — not yet in the CRM, confirm details before publishing -->
-      <div class="property-card" data-cat="house">
-        <div class="property-media">
-          <span class="draft-tag">Sample</span>
-          <button class="fav-btn">♥</button>
-          <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576097/property-3-block-b-house_qmije0.jpg" alt="Naya Nazimabad Block B House">
-          <span class="price-tag">PKR 1.75 Crore</span>
-        </div>
-        <div class="property-info">
-          <h3>Family House in Block B</h3>
-          <div class="property-loc">📍 Block B, Naya Nazimabad, Karachi</div>
-          <div class="property-stats"><span>🛏 4 Beds</span><span>🛁 3 Baths</span><span>▭ 240 sq yd</span></div>
-        </div>
-      </div>
-      <!-- Draft sample listing — not yet in the CRM, confirm details before publishing -->
-      <div class="property-card" data-cat="plot">
-        <div class="property-media">
-          <span class="draft-tag">Sample</span>
-          <button class="fav-btn">♥</button>
-          <img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576097/property-4-block-m-plot_x9tljg.jpg" alt="Residential Plot in Naya Nazimabad Block M">
-          <span class="price-tag">Price on Request</span>
-        </div>
-        <div class="property-info">
-          <h3>Residential Plot in Block M</h3>
-          <div class="property-loc">📍 Block M, Naya Nazimabad, Karachi</div>
-          <div class="property-stats"><span>▭ 120 sq yd</span><span>Investor Pick</span></div>
-        </div>
-      </div>
+      {% empty %}
+      <div style="grid-column:1/-1;text-align:center;padding:40px 20px;color:var(--text-gray)">No properties listed yet — check back soon.</div>
+      {% endfor %}
     </div>
 
     <div class="view-all-wrap">
-      <a href="#" class="btn btn-outline-dark">View All Properties</a>
+      <a href="{% url 'website_properties' %}" class="btn btn-outline-dark">View All Properties</a>
     </div>
   </div>
 </section>
@@ -834,13 +802,20 @@
       <p class="sub">Experienced, and dedicated to finding you the right match. More agents joining soon.</p>
     </div>
 
-    <div class="agents-grid" style="grid-template-columns:repeat(1, minmax(0, 280px));justify-content:center">
+    <div class="agents-grid"{% if agents|length < 4 %} style="grid-template-columns:repeat({{ agents|length|default:1 }}, minmax(0, 280px));justify-content:center"{% endif %}>
+      {% for agent in agents %}
       <div class="agent-card">
-        <div class="agent-photo"><img src="https://res.cloudinary.com/m25w8okr/image/upload/v1785576098/agent-fahad-nazeer_diudpr.jpg" alt="Fahad Nazeer"></div>
-        <h4>Fahad Nazeer</h4>
-        <div class="role">Property Consultant</div>
-        <div class="agent-social"><a href="#">📞</a><a href="#">💬</a><a href="#">✉</a></div>
+        <div class="agent-photo" style="display:flex;align-items:center;justify-content:center;background:var(--bg-light);font-family:'Poppins',sans-serif;font-size:44px;font-weight:700;color:var(--gold-dark)">{{ agent.first_name|first|upper }}{{ agent.last_name|first|upper }}</div>
+        <h4>{{ agent.get_full_name }}</h4>
+        <div class="role">{{ agent.get_effective_role_name }}</div>
+        <div class="agent-social">
+          {% if agent.phone %}<a href="tel:{{ agent.phone }}">📞</a><a href="https://wa.me/{{ agent.phone|cut:'+' }}" target="_blank">💬</a>{% endif %}
+          <a href="mailto:{{ agent.email }}">✉</a>
+        </div>
       </div>
+      {% empty %}
+      <div style="grid-column:1/-1;text-align:center;color:var(--text-gray)">Agent profiles coming soon.</div>
+      {% endfor %}
     </div>
   </div>
 </section>
@@ -1028,7 +1003,12 @@
 
   // Favorite toggle
   document.querySelectorAll('.fav-btn').forEach(btn=>{
-    btn.addEventListener('click', ()=> btn.classList.toggle('active'));
+    btn.addEventListener('click', (e)=>{ e.stopPropagation(); btn.classList.toggle('active'); });
+  });
+
+  // Property card click-through
+  document.querySelectorAll('.property-card[data-href]').forEach(card=>{
+    card.addEventListener('click', ()=> window.location = card.dataset.href);
   });
 
   // Testimonial dots auto-cycle (demo)

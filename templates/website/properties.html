@@ -501,40 +501,37 @@
 </section>
 
 <!-- ============ SEARCH CARD ============ -->
+<form method="get" action="{% url 'website_properties' %}" id="propertiesFilterForm">
+<input type="hidden" name="listing_type" id="listingTypeInput" value="{{ filters.listing_type }}">
+<input type="hidden" name="bedrooms_min" id="bedroomsMinInput" value="{{ filters.bedrooms_min }}">
+
 <div class="search-card reveal">
   <div class="tabs">
-    <div class="tab active">Buy</div>
-    <div class="tab">Rent</div>
-    <div class="tab">Commercial</div>
+    <button type="button" class="tab{% if filters.listing_type == 'sale' %} active{% endif %}" onclick="setListingType('sale', this)">Buy</button>
+    <button type="button" class="tab{% if filters.listing_type == 'rent' %} active{% endif %}" onclick="setListingType('rent', this)">Rent</button>
+    <button type="button" class="tab{% if not filters.listing_type %} active{% endif %}" onclick="setListingType('', this)">All</button>
   </div>
   <div class="search-fields">
     <div class="field">
       <label>Location</label>
-      <div class="field-input"><span>City, Area or Locality</span><span class="ico">📍</span></div>
+      <input type="text" name="q" value="{{ filters.q }}" placeholder="City, Area or Locality" class="field-input" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:11px 12px;font-size:13.5px;color:var(--text-dark);font-family:inherit;font-weight:500">
     </div>
     <div class="field">
-      <label>Property Type</label>
-      <div class="field-input"><span>All Types</span><span class="ico">⌄</span></div>
+      <label>Min Price (PKR)</label>
+      <input type="number" name="price_min" value="{{ filters.price_min }}" placeholder="e.g. 5000000" class="field-input" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:11px 12px;font-size:13.5px;color:var(--text-dark);font-family:inherit;font-weight:500">
     </div>
     <div class="field">
-      <label>Price Range</label>
-      <div class="field-input"><span>Min - Max Price</span><span class="ico">⌄</span></div>
+      <label>Max Price (PKR)</label>
+      <input type="number" name="price_max" value="{{ filters.price_max }}" placeholder="e.g. 50000000" class="field-input" style="width:100%;border:1px solid var(--border);border-radius:8px;padding:11px 12px;font-size:13.5px;color:var(--text-dark);font-family:inherit;font-weight:500">
     </div>
-    <div class="field">
-      <label>Beds</label>
-      <div class="field-input"><span>Any</span><span class="ico">⌄</span></div>
-    </div>
-    <button class="btn-search">Search Properties 🔍</button>
+    <button type="submit" class="btn-search">Search Properties 🔍</button>
   </div>
+  {% if city_counts %}
   <div class="popular">
     <span>Popular Searches:</span>
-    <div class="chip">DHA Lahore</div>
-    <div class="chip">Bahria Town</div>
-    <div class="chip">Gulberg</div>
-    <div class="chip">Lake City</div>
-    <div class="chip">Islamabad</div>
-    <div class="chip">Karachi</div>
+    {% for row in city_counts %}<button type="submit" name="city" value="{{ row.city }}" class="chip" style="cursor:pointer">{{ row.city }}</button>{% endfor %}
   </div>
+  {% endif %}
 </div>
 
 <!-- ============ MAIN CONTENT ============ -->
@@ -543,180 +540,92 @@
   <!-- SIDEBAR -->
   <aside class="sidebar reveal">
     <div class="filter-panel">
-      <div class="filter-head"><h3>Filter Properties</h3><span class="reset">Reset</span></div>
+      <div class="filter-head"><h3>Filter Properties</h3><a class="reset" href="{% url 'website_properties' %}">Reset</a></div>
 
       <div class="facet">
-        <div class="facet-title">Location <span class="chev">⌃</span></div>
-        <div class="facet-select"><span>All Locations</span><span>⌄</span></div>
+        <div class="facet-title">Property Type</div>
+        {% for val, label, count in property_type_facets %}
+        <div class="check-row"><label class="left"><input type="checkbox" name="type" value="{{ val }}" {% if val in filters.types %}checked{% endif %} onchange="this.form.submit()"> {{ label }}</label><span class="count">{{ count }}</span></div>
+        {% endfor %}
       </div>
 
       <div class="facet">
-        <div class="facet-title">Location Detail <span class="chev">⌃</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> DHA Lahore</label><span class="count">320</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> Bahria Town</label><span class="count">280</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> Gulberg</label><span class="count">160</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> Lake City</label><span class="count">120</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> Islamabad</label><span class="count">200</span></div>
-        <div class="view-more">View More ⌄</div>
-      </div>
-
-      <div class="facet">
-        <div class="facet-title">Property Type <span class="chev">⌃</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox" checked> 🏠 House</label><span class="count">450</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> 🏢 Apartment</label><span class="count">320</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> 📐 Plot</label><span class="count">180</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> 🏬 Commercial</label><span class="count">100</span></div>
-        <div class="check-row"><label class="left"><input type="checkbox"> 🌾 Farm House</label><span class="count">50</span></div>
-      </div>
-
-      <div class="facet">
-        <div class="facet-title">Price Range <span class="chev">⌃</span></div>
-        <div class="range-track">
-          <div class="range-fill"></div>
-          <div class="range-dot" style="left:10%;"></div>
-          <div class="range-dot" style="left:90%;"></div>
-        </div>
-        <div class="range-labels"><span>PKR 1 Lakh</span><span>PKR 10 Crore+</span></div>
+        <div class="facet-title">City</div>
+        {% for row in city_counts %}
+        <div class="check-row"><label class="left"><input type="checkbox" name="city" value="{{ row.city }}" {% if row.city in filters.cities %}checked{% endif %} onchange="this.form.submit()"> {{ row.city }}</label><span class="count">{{ row.c }}</span></div>
+        {% empty %}
+        <div style="font-size:12.5px;color:var(--text-mute)">No cities listed yet.</div>
+        {% endfor %}
       </div>
 
       <div class="facet">
         <div class="facet-title">Bedrooms</div>
         <div class="pill-row">
-          <div class="pill">1+</div><div class="pill selected">2+</div><div class="pill">3+</div><div class="pill">4+</div><div class="pill">5+</div>
+          {% for n in "12345" %}<button type="button" class="pill{% if filters.bedrooms_min == n %} selected{% endif %}" onclick="setBedroomsMin('{{ n }}', this)">{{ n }}+</button>{% endfor %}
         </div>
       </div>
 
-      <div class="facet"><div class="facet-title">Bathrooms <span class="chev">⌄</span></div></div>
-      <div class="facet"><div class="facet-title">Area (Marla / Sqft) <span class="chev">⌄</span></div></div>
-      <div class="facet"><div class="facet-title">Amenities <span class="chev">⌄</span></div></div>
-
-      <button class="btn-apply">Apply Filters 🏠</button>
+      <button type="submit" class="btn-apply">Apply Filters 🏠</button>
     </div>
 
     <div class="promo-card">
       <h4>Not sure what you're looking for?</h4>
       <p>Let our experts help you find the perfect property.</p>
-      <div class="btn-consult">Get Free Consultation</div>
+      <a href="{% url 'website_contact' %}" class="btn-consult">Get Free Consultation</a>
     </div>
   </aside>
 
   <!-- RESULTS BAR -->
   <div class="results-bar reveal">
-    <div class="results-count"><b>1,250+</b> Properties Found</div>
+    <div class="results-count"><b>{{ page_obj.paginator.count }}</b> Propert{{ page_obj.paginator.count|pluralize:"y,ies" }} Found</div>
     <div class="sort-row">
       <label>Sort by:</label>
-      <div class="sort-select">Newest First ⌄</div>
-      <div class="view-toggle"><button class="active">▦</button><button>☰</button></div>
+      <select name="sort" onchange="this.form.submit()" class="sort-select" style="border:1px solid var(--border);background:none;font-family:inherit;font-weight:600;color:var(--text-dark)">
+        <option value="newest" {% if filters.sort == 'newest' %}selected{% endif %}>Newest First</option>
+        <option value="price_asc" {% if filters.sort == 'price_asc' %}selected{% endif %}>Price: Low to High</option>
+        <option value="price_desc" {% if filters.sort == 'price_desc' %}selected{% endif %}>Price: High to Low</option>
+      </select>
     </div>
   </div>
 
   <!-- PROPERTY GRID -->
   <div class="grid reveal">
-
-    <div class="card" style="--i:0">
+    {% for prop in properties %}
+    <a href="{% url 'website_property_detail' prop.pk %}" class="card" style="--i:{{ forloop.counter0 }};display:block">
       <div class="card-media">
-        <span class="badge featured">Featured</span>
-        <span class="heart">♡</span>
-        <img src="https://images.unsplash.com/photo-1600596542815-ffad4c1539a9?auto=format&fit=crop&w=500&q=80" alt="Modern Luxury House">
+        {% with img=prop.get_primary_image %}
+        {% if img %}<img src="{{ img.image }}" alt="{{ prop.title }}">{% else %}<img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=500&q=80" alt="{{ prop.title }}">{% endif %}
+        {% endwith %}
       </div>
       <div class="card-body">
-        <div class="card-type">House</div>
-        <div class="card-title">Modern Luxury House</div>
-        <div class="card-loc">DHA Phase 6, Lahore</div>
-        <div class="specs"><span>🛏 5 Beds</span><span>🛁 6 Baths</span><span>📐 1 Marla</span></div>
-        <div class="card-foot"><div class="price">PKR 8.75 Crore</div><div class="view-link">View Details →</div></div>
+        <div class="card-type">{{ prop.get_property_type_display }}</div>
+        <div class="card-title">{{ prop.title }}</div>
+        <div class="card-loc">{{ prop.location }}{% if prop.location and prop.city %}, {% endif %}{{ prop.city }}</div>
+        <div class="specs">
+          {% if prop.bedrooms %}<span>🛏 {{ prop.bedrooms }} Beds</span>{% endif %}
+          {% if prop.bathrooms %}<span>🛁 {{ prop.bathrooms }} Baths</span>{% endif %}
+          <span>📐 {{ prop.size_display }}</span>
+        </div>
+        <div class="card-foot"><div class="price">{{ prop.price_display }}{% if prop.listing_type == 'rent' %} / month{% endif %}</div><div class="view-link">View Details →</div></div>
       </div>
+    </a>
+    {% empty %}
+    <div style="grid-column:1/-1;text-align:center;padding:60px 20px;color:var(--text-gray)">
+      No properties match your search. <a href="{% url 'website_properties' %}" style="color:var(--gold-dark);font-weight:700">Clear filters</a>
     </div>
-
-    <div class="card" style="--i:1">
-      <div class="card-media">
-        <span class="badge new">New</span>
-        <span class="heart">♡</span>
-        <span class="play-dot"><span>▶</span></span>
-        <img src="https://images.unsplash.com/photo-1512917774080-9991f1c4c750?auto=format&fit=crop&w=500&q=80" alt="Luxury Apartment">
-      </div>
-      <div class="card-body">
-        <div class="card-type">Apartment</div>
-        <div class="card-title">Luxury Apartment</div>
-        <div class="card-loc">Bahria Town, Lahore</div>
-        <div class="specs"><span>🛏 3 Beds</span><span>🛁 3 Baths</span><span>📐 2200 Sqft</span></div>
-        <div class="card-foot"><div class="price">PKR 3.25 Crore</div><div class="view-link">View Details →</div></div>
-      </div>
-    </div>
-
-    <div class="card" style="--i:2">
-      <div class="card-media">
-        <span class="badge featured">Featured</span>
-        <span class="heart">♡</span>
-        <img src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?auto=format&fit=crop&w=500&q=80" alt="Premium House">
-      </div>
-      <div class="card-body">
-        <div class="card-type">House</div>
-        <div class="card-title">Premium House</div>
-        <div class="card-loc">Lake City, Lahore</div>
-        <div class="specs"><span>🛏 4 Beds</span><span>🛁 5 Baths</span><span>📐 10 Marla</span></div>
-        <div class="card-foot"><div class="price">PKR 4.50 Crore</div><div class="view-link">View Details →</div></div>
-      </div>
-    </div>
-
-    <div class="card" style="--i:3">
-      <div class="card-media">
-        <span class="heart">♡</span>
-        <img src="https://images.unsplash.com/photo-1500382017468-9049fed747ef?auto=format&fit=crop&w=500&q=80" alt="Residential Plot">
-      </div>
-      <div class="card-body">
-        <div class="card-type">Plot</div>
-        <div class="card-title">Residential Plot</div>
-        <div class="card-loc">DHA Phase 9, Lahore</div>
-        <div class="specs"><span>📐 1 Kanal</span><span>✅ Possession</span><span>🌳 On Ground</span></div>
-        <div class="card-foot"><div class="price">PKR 2.95 Crore</div><div class="view-link">View Details →</div></div>
-      </div>
-    </div>
-
-    <div class="card" style="--i:4">
-      <div class="card-media">
-        <span class="badge new">New</span>
-        <span class="heart">♡</span>
-        <img src="https://images.unsplash.com/photo-1600607687939-ce8a6c25118c?auto=format&fit=crop&w=500&q=80" alt="Elegant House">
-      </div>
-      <div class="card-body">
-        <div class="card-type">House</div>
-        <div class="card-title">Elegant House</div>
-        <div class="card-loc">Bahria Town, Karachi</div>
-        <div class="specs"><span>🛏 5 Beds</span><span>🛁 6 Baths</span><span>📐 1 Kanal</span></div>
-        <div class="card-foot"><div class="price">PKR 7.50 Crore</div><div class="view-link">View Details →</div></div>
-      </div>
-    </div>
-
-    <div class="card" style="--i:5">
-      <div class="card-media">
-        <span class="heart">♡</span>
-        <span class="play-dot"><span>▶</span></span>
-        <img src="https://images.unsplash.com/photo-1600210492486-724fe5c67fb0?auto=format&fit=crop&w=500&q=80" alt="Sea View Apartment">
-      </div>
-      <div class="card-body">
-        <div class="card-type">Apartment</div>
-        <div class="card-title">Sea View Apartment</div>
-        <div class="card-loc">Clifton, Karachi</div>
-        <div class="specs"><span>🛏 3 Beds</span><span>🛁 3 Baths</span><span>📐 1800 Sqft</span></div>
-        <div class="card-foot"><div class="price">PKR 4.10 Crore</div><div class="view-link">View Details →</div></div>
-      </div>
-    </div>
-
+    {% endfor %}
   </div>
 
   <!-- PAGINATION -->
+  {% if page_obj.paginator.num_pages > 1 %}
   <div class="pagination">
-    <div class="page-btn">←</div>
-    <div class="page-btn active">1</div>
-    <div class="page-btn">2</div>
-    <div class="page-btn">3</div>
-    <div class="page-btn">4</div>
-    <div class="page-btn">5</div>
-    <div class="page-dots">…</div>
-    <div class="page-btn">20</div>
-    <div class="page-btn">→</div>
+    {% if page_obj.has_previous %}<a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.previous_page_number }}" class="page-btn">←</a>{% endif %}
+    {% for num in page_obj.paginator.page_range %}
+    <a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ num }}" class="page-btn{% if num == page_obj.number %} active{% endif %}">{{ num }}</a>
+    {% endfor %}
+    {% if page_obj.has_next %}<a href="?{% if querystring %}{{ querystring }}&{% endif %}page={{ page_obj.next_page_number }}" class="page-btn">→</a>{% endif %}
   </div>
+  {% endif %}
 
   <!-- WHY CHOOSE -->
   <div class="why-band reveal">
@@ -759,26 +668,14 @@
     <a href="#">View All Communities →</a>
   </div>
   <div class="comm-grid reveal">
-    <div class="comm-card">
-      <img src="https://images.unsplash.com/photo-1547471080-7cc2caa01a7e?auto=format&fit=crop&w=400&q=80" alt="DHA Lahore">
-      <div class="comm-overlay"><h4>DHA Lahore</h4><p>1,250+ Properties</p></div>
-    </div>
-    <div class="comm-card">
-      <img src="https://images.unsplash.com/photo-1564769625392-651b4df756e6?auto=format&fit=crop&w=400&q=80" alt="Bahria Town">
-      <div class="comm-overlay"><h4>Bahria Town</h4><p>980+ Properties</p></div>
-    </div>
-    <div class="comm-card">
-      <img src="https://images.unsplash.com/photo-1449824913935-59a10b8d2000?auto=format&fit=crop&w=400&q=80" alt="Lake City">
-      <div class="comm-overlay"><h4>Lake City</h4><p>450+ Properties</p></div>
-    </div>
-    <div class="comm-card">
-      <img src="https://images.unsplash.com/photo-1477959858617-67f85cf4f1df?auto=format&fit=crop&w=400&q=80" alt="Gulberg">
-      <div class="comm-overlay"><h4>Gulberg</h4><p>320+ Properties</p></div>
-    </div>
-    <div class="comm-card">
-      <img src="https://images.unsplash.com/photo-1444723121867-7a241cacace9?auto=format&fit=crop&w=400&q=80" alt="Blue World City">
-      <div class="comm-overlay"><h4>Blue World City</h4><p>280+ Properties</p></div>
-    </div>
+    {% for block in blocks %}
+    <a class="comm-card" href="{% url 'website_properties' %}?block={{ block.name|urlencode }}">
+      <img src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?auto=format&fit=crop&w=400&q=80" alt="{{ block.name }}">
+      <div class="comm-overlay"><h4>{{ block.name }}</h4><p>{{ block.property_count }} Propert{{ block.property_count|pluralize:"y,ies" }}</p></div>
+    </a>
+    {% empty %}
+    <div style="grid-column:1/-1;text-align:center;color:var(--text-gray);padding:20px">No communities configured yet.</div>
+    {% endfor %}
   </div>
 </section>
 
@@ -921,43 +818,20 @@
     });
   });
 
-  // Heart toggle
-  document.querySelectorAll('.heart').forEach(h => {
-    h.addEventListener('click', () => {
-      h.textContent = h.textContent.trim() === '♡' ? '♥' : '♡';
-      h.style.color = h.textContent === '♥' ? '#eaa33b' : '#16213a';
-    });
-  });
-  // Search tabs
-  document.querySelectorAll('.tab').forEach(t => {
-    t.addEventListener('click', () => {
-      document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
-      t.classList.add('active');
-    });
-  });
-  // Bedroom pills
-  document.querySelectorAll('.pill').forEach(p => {
-    p.addEventListener('click', () => {
-      document.querySelectorAll('.pill').forEach(x => x.classList.remove('selected'));
-      p.classList.add('selected');
-    });
-  });
-  // Grid/list view toggle
-  document.querySelectorAll('.view-toggle button').forEach(b => {
-    b.addEventListener('click', () => {
-      document.querySelectorAll('.view-toggle button').forEach(x => x.classList.remove('active'));
-      b.classList.add('active');
-    });
-  });
-  // Pagination
-  document.querySelectorAll('.page-btn').forEach(b => {
-    b.addEventListener('click', () => {
-      if (!isNaN(parseInt(b.textContent))) {
-        document.querySelectorAll('.page-btn').forEach(x => x.classList.remove('active'));
-        b.classList.add('active');
-      }
-    });
-  });
+  // Search tabs — Buy/Rent set the hidden listing_type field and submit
+  function setListingType(value, btn){
+    document.getElementById('listingTypeInput').value = value;
+    document.querySelectorAll('#propertiesFilterForm .tab').forEach(x => x.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('propertiesFilterForm').submit();
+  }
+
+  // Bedroom pills — set the hidden bedrooms_min field and submit
+  function setBedroomsMin(value, btn){
+    const current = document.getElementById('bedroomsMinInput').value;
+    document.getElementById('bedroomsMinInput').value = (current === value) ? '' : value;
+    document.getElementById('propertiesFilterForm').submit();
+  }
 </script>
 
 </body>

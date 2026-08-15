@@ -11,6 +11,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Sum, Count
+from django.core.paginator import Paginator
 from django.conf import settings
 from django.urls import reverse
 from django.utils import timezone
@@ -113,8 +114,17 @@ def _upload_images(request_files, prop):
 
 
 def website_homepage(request):
+    featured_properties = list(
+        Property.objects.filter(status=Property.STATUS_ACTIVE).prefetch_related('images').order_by('-created_at')[:6]
+    )
+    present_types = {p.property_type for p in featured_properties}
+    featured_types = [(val, label) for val, label in Property.PROPERTY_TYPE_CHOICES if val in present_types]
+
     return render(request, 'website/homepage.html', {
         'blocks': Block.objects.all(),
+        'featured_properties': featured_properties,
+        'featured_types': featured_types,
+        'agents': User.objects.filter(is_active=True, role__in=[User.ROLE_AGENT, User.ROLE_MANAGER]).order_by('first_name')[:4],
     })
 
 
@@ -127,7 +137,81 @@ def website_services(request):
 
 
 def website_properties(request):
-    return render(request, 'website/properties.html')
+    base_qs = Property.objects.filter(status=Property.STATUS_ACTIVE)
+    qs = base_qs.prefetch_related('images')
+
+    q = request.GET.get('q', '').strip()
+    listing_type = request.GET.get('listing_type', '').strip()
+    types = [t for t in request.GET.getlist('type') if t in dict(Property.PROPERTY_TYPE_CHOICES)]
+    cities = request.GET.getlist('city')
+    block = request.GET.get('block', '').strip()
+    price_min = _decimal_or_none(request.GET.get('price_min'))
+    price_max = _decimal_or_none(request.GET.get('price_max'))
+    bedrooms_min = _int_or_none(request.GET.get('bedrooms_min'))
+    sort = request.GET.get('sort', 'newest')
+
+    if q:
+        qs = qs.filter(Q(title__icontains=q) | Q(city__icontains=q) | Q(location__icontains=q))
+    if listing_type in dict(Property.LISTING_TYPE_CHOICES):
+        qs = qs.filter(listing_type=listing_type)
+    if types:
+        qs = qs.filter(property_type__in=types)
+    if cities:
+        qs = qs.filter(city__in=cities)
+    if block:
+        qs = qs.filter(Q(block__name=block) | Q(location__icontains=block))
+    if price_min is not None:
+        qs = qs.filter(price__gte=price_min)
+    if price_max is not None:
+        qs = qs.filter(price__lte=price_max)
+    if bedrooms_min:
+        qs = qs.filter(bedrooms__gte=bedrooms_min)
+
+    if sort == 'price_asc':
+        qs = qs.order_by('price')
+    elif sort == 'price_desc':
+        qs = qs.order_by('-price')
+    else:
+        sort = 'newest'
+        qs = qs.order_by('-created_at')
+
+    type_counts = dict(base_qs.values_list('property_type').annotate(c=Count('id')).values_list('property_type', 'c'))
+    property_type_facets = [(val, label, type_counts.get(val, 0)) for val, label in Property.PROPERTY_TYPE_CHOICES]
+    city_counts = list(base_qs.values('city').annotate(c=Count('id')).order_by('-c')[:8])
+
+    paginator = Paginator(qs, 9)
+    page_obj = paginator.get_page(request.GET.get('page'))
+
+    querystring = request.GET.copy()
+    querystring.pop('page', None)
+
+    return render(request, 'website/properties.html', {
+        'page_obj': page_obj,
+        'properties': page_obj.object_list,
+        'property_type_facets': property_type_facets,
+        'city_counts': city_counts,
+        'filters': {
+            'q': q, 'listing_type': listing_type, 'types': types, 'cities': cities, 'block': block,
+            'price_min': request.GET.get('price_min', ''), 'price_max': request.GET.get('price_max', ''),
+            'bedrooms_min': request.GET.get('bedrooms_min', ''), 'sort': sort,
+        },
+        'querystring': querystring.urlencode(),
+        'blocks': Block.objects.annotate(property_count=Count('properties', filter=Q(properties__status=Property.STATUS_ACTIVE))),
+    })
+
+
+def website_property_detail(request, pk):
+    prop = get_object_or_404(
+        Property.objects.filter(status=Property.STATUS_ACTIVE).prefetch_related('images').select_related('created_by', 'block'),
+        pk=pk,
+    )
+    similar_properties = Property.objects.filter(
+        status=Property.STATUS_ACTIVE, property_type=prop.property_type,
+    ).exclude(pk=prop.pk).prefetch_related('images')[:3]
+    return render(request, 'website/property_detail.html', {
+        'property': prop,
+        'similar_properties': similar_properties,
+    })
 
 
 def website_contact(request):

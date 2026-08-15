@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import website_homepage, website_about, website_services, website_properties, website_contact, website_listing, submit_property_listing, lead_api_create, lead_api_docs
+from accounts.views import website_homepage, website_about, website_services, website_properties, website_property_detail, website_contact, website_listing, submit_property_listing, lead_api_create, lead_api_docs
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -26,6 +26,7 @@ urlpatterns = [
     path('about/', website_about, name='website_about'),
     path('services/', website_services, name='website_services'),
     path('properties/', website_properties, name='website_properties'),
+    path('properties/<int:pk>/', website_property_detail, name='website_property_detail'),
     path('contact/', website_contact, name='website_contact'),
     path('list-property/', website_listing, name='website_listing'),
     path('list-property/submit/', submit_property_listing, name='submit_property_listing'),
