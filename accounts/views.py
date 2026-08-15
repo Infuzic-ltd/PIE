@@ -125,6 +125,7 @@ def website_homepage(request):
         'featured_properties': featured_properties,
         'featured_types': featured_types,
         'agents': User.objects.filter(is_active=True, role__in=[User.ROLE_AGENT, User.ROLE_MANAGER]).order_by('first_name')[:4],
+        'property_type_choices': Property.PROPERTY_TYPE_CHOICES,
     })
 
 

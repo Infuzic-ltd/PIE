@@ -585,52 +585,50 @@
       <a href="{% url 'website_listing' %}" class="btn btn-outline">List Your Property 🏠</a>
     </div>
 
-    <div class="search-card">
+    <form class="search-card" method="get" action="{% url 'website_properties' %}" id="heroSearchForm">
+      <input type="hidden" name="listing_type" id="heroListingTypeInput" value="">
       <div class="search-tabs">
-        <button class="active" data-tab="buy">Buy</button>
-        <button data-tab="rent">Rent</button>
-        <button data-tab="commercial">Commercial</button>
+        <button type="button" class="active" data-tab="buy" onclick="setHeroTab('buy', this)">Buy</button>
+        <button type="button" data-tab="rent" onclick="setHeroTab('rent', this)">Rent</button>
+        <button type="button" data-tab="commercial" onclick="setHeroTab('commercial', this)">Commercial</button>
       </div>
       <div class="search-fields">
         <div class="field">
           <label>Search by Location</label>
           <div class="input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
-            <input type="text" placeholder="e.g. Block A, Block C, Block M">
+            <input type="text" name="q" placeholder="e.g. Block A, Block C, Block M">
           </div>
         </div>
-        <div class="field">
+        <div class="field" id="heroTypeField">
           <label>Property Type</label>
           <div class="input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>
-            <select>
-              <option>All Types</option>
-              <option>Apartment</option>
-              <option>House</option>
-              <option>Commercial</option>
-              <option>Plot</option>
+            <select name="type" id="heroTypeSelect">
+              <option value="">All Types</option>
+              {% for val, label in property_type_choices %}<option value="{{ val }}">{{ label }}</option>{% endfor %}
             </select>
           </div>
         </div>
         <div class="field">
-          <label>Price Range</label>
+          <label>Price Range (PKR)</label>
           <div class="input-wrap">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
-            <input type="text" placeholder="Min - Max Price">
+            <input type="number" name="price_min" placeholder="Min" style="width:50%">
+            <input type="number" name="price_max" placeholder="Max" style="width:50%">
           </div>
         </div>
-        <button class="search-submit">Search Properties
+        <button type="submit" class="search-submit">Search Properties
           <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="M21 21l-4.35-4.35"/></svg>
         </button>
       </div>
+    </form>
+      {% if blocks %}
       <div class="popular">
         <span>Popular Searches:</span>
-        <span class="tag">Naya Nazimabad</span>
-        <span class="tag">Bahria Town</span>
-        <span class="tag">Silk Gardens</span>
-        <span class="tag">Block A</span>
-        <span class="tag">Block C</span>
+        {% for block in blocks %}<button type="submit" form="heroSearchForm" name="block" value="{{ block.name }}" class="tag" style="cursor:pointer">{{ block.name }}</button>{% endfor %}
       </div>
+      {% endif %}
     </div>
   </div>
 
@@ -978,13 +976,16 @@
     }, 350);
   }, 2600);
 
-  // Search tabs
-  document.querySelectorAll('.search-tabs button').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      document.querySelectorAll('.search-tabs button').forEach(b=>b.classList.remove('active'));
-      btn.classList.add('active');
-    });
-  });
+  // Search tabs — Buy/Rent set listing_type, Commercial sets property type, then submit
+  function setHeroTab(tab, btn){
+    document.querySelectorAll('.search-tabs button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    const listingInput = document.getElementById('heroListingTypeInput');
+    const typeSelect = document.getElementById('heroTypeSelect');
+    if(tab === 'buy'){ listingInput.value = 'sale'; }
+    else if(tab === 'rent'){ listingInput.value = 'rent'; }
+    else if(tab === 'commercial'){ listingInput.value = ''; typeSelect.value = 'commercial'; }
+  }
 
   // Property filters
   const pills = document.querySelectorAll('.filter-pill');
