@@ -578,7 +578,7 @@
   <div class="hero-inner">
     <span class="badge">🛡 YOUR TRUSTED REAL ESTATE PARTNER</span>
     <span class="hero-eyebrow">Find Your Dream Home In</span>
-    <h1><span class="rotator-word" id="rotatorWord">Naya Nazimabad</span></h1>
+    <h1><span class="rotator-word" id="rotatorWord">{% if blocks %}{{ blocks.0.name }}{% else %}Naya Nazimabad{% endif %}</span></h1>
     <p>Your trusted partner for buying, selling, and renting across Karachi's top housing communities — verified plots, bungalows, and houses, backed by local block experts.</p>
     <div class="hero-cta">
       <a href="{% url 'website_properties' %}" class="btn btn-gold">Explore Properties →</a>
@@ -991,7 +991,7 @@
   });
 
   // Rotating hero location word
-  const rotatorWords = ['Naya Nazimabad', 'Bahria Town', 'Silk Gardens'];
+  const rotatorWords = [{% for block in blocks %}"{{ block.name|escapejs }}"{% if not forloop.last %}, {% endif %}{% empty %}"Naya Nazimabad", "Bahria Town", "Silk Gardens"{% endfor %}];
   const rotatorEl = document.getElementById('rotatorWord');
   let rotatorIdx = 0;
   setInterval(()=>{

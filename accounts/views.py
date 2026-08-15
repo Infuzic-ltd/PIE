@@ -113,7 +113,9 @@ def _upload_images(request_files, prop):
 
 
 def website_homepage(request):
-    return render(request, 'website/homepage.html')
+    return render(request, 'website/homepage.html', {
+        'blocks': Block.objects.all(),
+    })
 
 
 def website_about(request):
