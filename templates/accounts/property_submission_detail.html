@@ -94,7 +94,7 @@ a{color:inherit;text-decoration:none}
 {% if request.user.is_crm_admin %}
 <a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
 {% endif %}
-<a href="#"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+<a href="{% url 'site_settings' %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
 </nav>
 <div class="profile"><div class="av-sm">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div><div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_effective_role_name }}</div></div></div>
 <a href="{% url 'logout' %}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px">Sign out</a>
@@ -170,6 +170,29 @@ a{color:inherit;text-decoration:none}
     {% if submission.asking_price %}<div class="info-row"><span class="k">Asking Price</span><span class="v" style="font-weight:700;color:var(--blue)">PKR {{ submission.asking_price|floatformat:0 }}</span></div>{% endif %}
     {% if submission.description %}<div class="info-row" style="align-items:flex-start"><span class="k">Description</span><span class="v">{{ submission.description }}</span></div>{% endif %}
   </div>
+
+  {% if submission.wants_featured %}
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg> Featured Listing Payment</div>
+    <div class="info-row"><span class="k">Fee</span><span class="v" style="font-weight:700">PKR {{ submission.featured_fee|floatformat:0 }}</span></div>
+    <div class="info-row"><span class="k">Status</span><span class="v">
+      {% if submission.payment_status == 'paid' %}<span class="badge" style="background:#dcfce7;color:#166534">✓ Paid</span>
+      {% elif submission.payment_status == 'failed' %}<span class="badge" style="background:#fee2e2;color:#b91c1c">✕ Failed</span>
+      {% else %}<span class="badge" style="background:#fef3c7;color:#92400e">⏳ Pending</span>{% endif %}
+    </span></div>
+    {% if submission.payment_status != 'paid' %}
+    <form method="post" action="{% url 'property_submission_update' submission.pk %}" style="margin-top:12px">
+      {% csrf_token %}
+      <input type="hidden" name="status" value="{{ submission.status }}">
+      <input type="hidden" name="internal_notes" value="{{ submission.internal_notes }}">
+      <input type="hidden" name="assigned_to" value="{{ submission.assigned_to_id|default:'' }}">
+      <input type="hidden" name="mark_payment" value="paid">
+      <button type="submit" class="btn primary" style="font-size:12.5px;padding:7px 14px">Mark as Paid</button>
+    </form>
+    <div class="help" style="font-size:11.5px;color:var(--ink-faint);margin-top:6px">Use this once you've confirmed the payment landed in your Safepay dashboard.</div>
+    {% endif %}
+  </div>
+  {% endif %}
 
   <div class="card">
     <div class="card-title"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="9" cy="11" r="2"/><path d="m4 18 5-4 4 3 3-3 4 4"/></svg> Photos</div>

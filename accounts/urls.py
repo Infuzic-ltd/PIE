@@ -40,6 +40,9 @@ urlpatterns = [
     path('roles/<int:pk>/edit/', views.role_update, name='role_update'),
     path('roles/<int:pk>/delete/', views.role_delete, name='role_delete'),
 
+    # Site Settings (admin only)
+    path('settings/', views.site_settings_view, name='site_settings'),
+
     # Blocks (admin only)
     path('blocks/', views.block_list, name='block_list'),
     path('blocks/add-ajax/', views.block_create_ajax, name='block_create_ajax'),

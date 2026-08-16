@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Payment — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy: #16213a; --gold: #eaa33b; --gold-dark: #d6902a;
+    --bg-light: #f6f7fb; --white: #ffffff; --text-dark: #16213a; --text-gray: #6b7280;
+    --border: #e8eaf0; --green: #16a34a; --red: #ef4444; --orange: #f59e0b;
+    --shadow: 0 10px 30px rgba(16,26,46,.08); --radius-lg: 20px;
+  }
+  *{ margin:0; padding:0; box-sizing:border-box; }
+  body{ font-family:'Inter', sans-serif; color:var(--text-dark); background:var(--bg-light); min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
+  h1,h2{ font-family:'Poppins', sans-serif; }
+  a{ text-decoration:none; }
+  .card{ background:var(--white); border-radius:var(--radius-lg); box-shadow:var(--shadow); max-width:480px; width:100%; padding:44px 38px; text-align:center; }
+  .icon{ width:76px; height:76px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px; font-size:34px; }
+  .icon.success{ background:#dcfce7; color:var(--green); }
+  .icon.pending{ background:#fef3c7; color:var(--orange); }
+  .icon.error{ background:#fee2e2; color:var(--red); }
+  h1{ font-size:22px; font-weight:700; margin-bottom:10px; }
+  p{ font-size:14px; color:var(--text-gray); line-height:1.7; margin-bottom:22px; }
+  .ref{ background:var(--bg-light); border-radius:10px; padding:12px 16px; font-size:13px; font-weight:600; color:var(--gold-dark); margin-bottom:22px; }
+  .btn{ display:inline-flex; align-items:center; justify-content:center; gap:8px; padding:14px 26px; border-radius:10px; font-weight:600; font-size:14.5px; background:var(--gold); color:var(--navy); transition:.2s; }
+  .btn:hover{ background:var(--gold-dark); }
+</style>
+</head>
+<body>
+<div class="card">
+  {% if outcome == 'success' %}
+  <div class="icon pending">⏳</div>
+  <h1>Payment Received — Confirming</h1>
+  <p>Thanks! We've received your payment and are confirming it with our payment partner. Your listing will be marked as Featured shortly — you don't need to do anything else.</p>
+  {% elif outcome == 'already_paid' %}
+  <div class="icon success">✓</div>
+  <h1>Already Paid</h1>
+  <p>This listing has already been marked as paid and featured. No further action is needed.</p>
+  {% elif outcome == 'cancelled' %}
+  <div class="icon error">✕</div>
+  <h1>Payment Cancelled</h1>
+  <p>Your payment was cancelled and no charge was made. Your property is still listed as a normal (free) submission — you can try featuring it again anytime from the reference below, or contact us for help.</p>
+  {% elif outcome == 'not_configured' %}
+  <div class="icon pending">⏳</div>
+  <h1>Featured Payments Coming Soon</h1>
+  <p>Online payment for featured listings isn't set up yet. Your listing has been saved as a normal submission — our team will reach out to arrange featuring it manually.</p>
+  {% else %}
+  <div class="icon error">✕</div>
+  <h1>Something Went Wrong</h1>
+  <p>We couldn't reach our payment partner right now. Your listing has still been saved as a normal submission — please try again shortly, or contact us and we'll sort it out.</p>
+  {% endif %}
+
+  {% if submission %}<div class="ref">Reference: {{ submission.reference_code }}</div>{% endif %}
+
+  <a href="{% url 'website_homepage' %}" class="btn">Back to Home →</a>
+</div>
+</body>
+</html>

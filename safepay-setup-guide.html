@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Safepay Merchant Setup — PIE Real Estate</title>
+<style>
+  :root{
+    --navy:#16213a; --navy-2:#101a2e; --navy-3:#0c1424;
+    --gold:#eaa33b; --gold-dark:#c17f22;
+    --bg:#f3f4f9; --paper:#ffffff;
+    --ink:#16213a; --ink-soft:#5a6678; --ink-mute:#8992a3;
+    --border:#e5e8f0; --border-soft:#eef0f6;
+    --good:#15803d; --good-bg:#e9f7ee;
+    --warn:#b45309; --warn-bg:#fdf2e3;
+    --info:#1d4ed8; --info-bg:#eaf0fe;
+    --shadow: 0 1px 2px rgba(22,33,58,.04), 0 12px 28px -12px rgba(22,33,58,.14);
+    --radius: 16px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#0c1424; --paper:#121b30; --navy:#f4f6fb;
+      --ink:#eef1f8; --ink-soft:#a7b0c4; --ink-mute:#77809a;
+      --border:#22304d; --border-soft:#1b2740;
+      --good:#4ade80; --good-bg:#123322;
+      --warn:#f5a962; --warn-bg:#3a260f;
+      --info:#8ab4ff; --info-bg:#152341;
+      --gold:#f0b154; --gold-dark:#f6c274;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 12px 28px -12px rgba(0,0,0,.5);
+    }
+  }
+
+  *{ box-sizing:border-box; }
+  html{ background:var(--bg); }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.6;
+  }
+  h1,h2,h3{ text-wrap:balance; margin:0; }
+  a{ color:var(--gold-dark); }
+  .wrap{ max-width:740px; margin:0 auto; padding:56px 24px 90px; }
+
+  /* Masthead */
+  .mast{ display:flex; align-items:center; gap:12px; margin-bottom:36px; }
+  .mark{
+    font-family:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
+    font-weight:800; font-size:15px; letter-spacing:3px; color:var(--gold);
+    background:var(--navy); padding:8px 12px; border-radius:8px; line-height:1;
+  }
+  .mast .sub{ font-size:12.5px; color:var(--ink-mute); font-weight:600; letter-spacing:.3px; }
+
+  .title-block{ margin-bottom:44px; }
+  .eyebrow{ font-size:12.5px; font-weight:700; letter-spacing:1.6px; text-transform:uppercase; color:var(--gold-dark); margin-bottom:12px; display:block; }
+  h1{ font-family:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif; font-weight:800; font-size:34px; letter-spacing:-.01em; color:var(--navy); margin-bottom:14px; }
+  .lede{ font-size:16px; color:var(--ink-soft); max-width:56ch; }
+  .lede strong{ color:var(--ink); }
+
+  section{ margin-bottom:40px; }
+  .section-head{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; margin-bottom:18px; flex-wrap:wrap; }
+  h2{ font-family:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif; font-weight:800; font-size:20px; color:var(--navy); }
+  .section-note{ font-size:13px; color:var(--ink-mute); }
+
+  /* Document checklist */
+  .doc-card{ background:var(--paper); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow); padding:22px 26px; }
+  .doc-list{ list-style:none; margin:0; padding:0; display:grid; gap:14px; }
+  .doc-list li{ display:flex; gap:12px; align-items:flex-start; font-size:14.5px; }
+  .doc-list .tick{
+    flex:0 0 20px; width:20px; height:20px; border-radius:6px; margin-top:1px;
+    background:var(--good-bg); color:var(--good); display:flex; align-items:center; justify-content:center;
+    font-size:12px; font-weight:800;
+  }
+  .doc-list .txt strong{ display:block; color:var(--ink); }
+  .doc-list .txt span{ color:var(--ink-soft); font-size:13px; }
+  .doc-foot{ margin-top:16px; padding-top:16px; border-top:1px solid var(--border-soft); font-size:12.5px; color:var(--ink-mute); }
+
+  /* Steps */
+  .steps{ display:grid; gap:14px; }
+  .step{
+    background:var(--paper); border:1px solid var(--border); border-radius:var(--radius); box-shadow:var(--shadow);
+    padding:22px 26px; display:grid; grid-template-columns:44px 1fr; gap:18px;
+  }
+  .step .num{
+    font-family:ui-rounded,"SF Pro Rounded","Segoe UI",system-ui,sans-serif;
+    font-weight:800; font-size:20px; color:var(--gold-dark);
+    width:44px; height:44px; border-radius:12px; background:var(--warn-bg);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .step h3{ font-size:15.5px; font-weight:800; color:var(--ink); margin-bottom:6px; }
+  .step p{ margin:0 0 8px; font-size:14px; color:var(--ink-soft); }
+  .step p:last-child{ margin-bottom:0; }
+  .step .tag{
+    display:inline-flex; align-items:center; gap:6px; font-size:11.5px; font-weight:700;
+    padding:3px 9px; border-radius:20px; margin-bottom:10px; letter-spacing:.2px;
+  }
+  .tag.test{ background:var(--info-bg); color:var(--info); }
+  .tag.live{ background:var(--good-bg); color:var(--good); }
+  .step code{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:12.8px;
+    background:var(--border-soft); padding:2px 7px; border-radius:5px; color:var(--ink);
+  }
+
+  /* Where keys go */
+  .plug{
+    background:linear-gradient(155deg,var(--navy-2),var(--navy-3));
+    border-radius:var(--radius); padding:26px 28px; color:#eef1f8; box-shadow:var(--shadow);
+  }
+  @media (prefers-color-scheme: dark){ .plug{ background:linear-gradient(155deg,#070d18,#04070d); } }
+  .plug h3{ color:#fff; font-size:16px; font-weight:800; margin-bottom:6px; }
+  .plug > p{ color:rgba(238,241,248,.68); font-size:13.5px; margin:0 0 18px; }
+  .field-row{ display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px; }
+  .field-row:last-child{ margin-bottom:0; }
+  .field{
+    background:rgba(255,255,255,.06); border:1px solid rgba(255,255,255,.12); border-radius:10px;
+    padding:12px 14px;
+  }
+  .field .k{ font-size:10.5px; font-weight:700; letter-spacing:.6px; text-transform:uppercase; color:var(--gold); margin-bottom:5px; }
+  .field .v{ font-size:13.5px; color:#fff; font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; }
+  .path{ margin-top:16px; font-size:12.5px; color:rgba(238,241,248,.6); }
+  .path code{ background:rgba(255,255,255,.1); color:#fff; padding:2px 8px; border-radius:5px; }
+
+  /* Callouts */
+  .callout{ display:flex; gap:14px; padding:16px 18px; border-radius:12px; font-size:13.5px; }
+  .callout.warn{ background:var(--warn-bg); color:var(--warn); }
+  .callout .ic{ flex:0 0 auto; font-size:16px; line-height:1.4; }
+  .callout p{ margin:0; color:inherit; opacity:.92; }
+  .callout p + p{ margin-top:6px; }
+  .callout a{ color:inherit; font-weight:700; text-decoration:underline; }
+
+  /* Recap */
+  .recap{ display:grid; grid-template-columns:repeat(3,1fr); gap:12px; align-items:stretch; }
+  .recap .card{ background:var(--paper); border:1px solid var(--border); border-radius:12px; padding:16px 16px; text-align:center; }
+  .recap .card .em{ font-size:20px; margin-bottom:8px; }
+  .recap .card .t{ font-size:12.5px; color:var(--ink-soft); line-height:1.5; }
+  .arrow{ display:flex; align-items:center; justify-content:center; color:var(--ink-mute); font-size:16px; }
+
+  footer{ margin-top:56px; padding-top:22px; border-top:1px solid var(--border); font-size:12px; color:var(--ink-mute); display:flex; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+
+  .reveal{ opacity:0; transform:translateY(10px); animation:in .5s ease forwards; }
+  .reveal:nth-of-type(2){ animation-delay:.05s; }
+  .reveal:nth-of-type(3){ animation-delay:.1s; }
+  @keyframes in{ to{ opacity:1; transform:none; } }
+  @media (prefers-reduced-motion: reduce){ .reveal{ animation:none; opacity:1; transform:none; } }
+
+  @media (max-width:640px){
+    .wrap{ padding:36px 18px 70px; }
+    h1{ font-size:27px; }
+    .step{ grid-template-columns:36px 1fr; padding:18px 18px; gap:14px; }
+    .step .num{ width:36px; height:36px; font-size:16px; border-radius:10px; }
+    .field-row{ grid-template-columns:1fr; }
+    .recap{ grid-template-columns:1fr; }
+    .arrow{ transform:rotate(90deg); padding:2px 0; }
+  }
+
+  @media print{
+    body{ background:#fff; }
+    .step, .doc-card, .recap .card{ box-shadow:none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="mast">
+    <div class="mark">PIE</div>
+    <div class="sub">SETUP GUIDE — FOR WHOEVER HANDLES PIE'S BUSINESS BANKING &amp; PAPERWORK</div>
+  </div>
+
+  <div class="title-block">
+    <span class="eyebrow">Featured Listings · Online Payments</span>
+    <h1>Setting up Safepay for PIE Real Estate</h1>
+    <p class="lede">This turns on card payments for the <strong>"Feature My Listing"</strong> fee on the website. It takes about 15 minutes to start testing, and 1–2 weeks to go live once your documents are ready. Nothing on the site breaks in the meantime — featured requests are simply saved and followed up on manually until this is switched on.</p>
+  </div>
+
+  <section>
+    <div class="section-head">
+      <h2>Have these ready</h2>
+      <span class="section-note">Saves a back-and-forth with Safepay's review team</span>
+    </div>
+    <div class="doc-card">
+      <ul class="doc-list">
+        <li><span class="tick">✓</span><span class="txt"><strong>CNIC (front &amp; back), colour scan</strong><span>For the owner, or anyone holding 10%+ of the business.</span></span></li>
+        <li><span class="tick">✓</span><span class="txt"><strong>Bank account maintenance certificate</strong><span>From the bank PIE gets paid into — confirms the account is real and active. Ask your bank; it usually takes 1–2 business days to issue.</span></span></li>
+        <li><span class="tick">✓</span><span class="txt"><strong>NTN &amp; business registration documents</strong><span>Only if PIE is registered as a company rather than trading as an individual.</span></span></li>
+      </ul>
+      <div class="doc-foot">None of this is needed for step 1 below — that part is free to test today with no paperwork at all.</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>The steps, in order</h2>
+    </div>
+    <div class="steps">
+
+      <div class="step reveal">
+        <div class="num">1</div>
+        <div>
+          <span class="tag test">Test mode · no paperwork</span>
+          <h3>Create a Sandbox account</h3>
+          <p>Go to <a href="https://sandbox.api.getsafepay.com/" target="_blank" rel="noopener">sandbox.api.getsafepay.com</a> and sign up with an email, a password, and PIE's store name. This is a practice account — no bank details, no real money.</p>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="num">2</div>
+        <div>
+          <span class="tag test">Test mode</span>
+          <h3>Copy the Sandbox keys into PIE's CRM</h3>
+          <p>Inside the Sandbox dashboard, open <strong>Developers → API</strong>. Copy the <strong>API Key</strong> and <strong>Secret Key</strong> shown there and paste them into the CRM (see the panel below). Leave the Environment set to <em>Sandbox</em> for now.</p>
+          <p>Submit a test "Feature My Listing" request on the website using Safepay's dummy card numbers to confirm the whole flow works before any real money is involved.</p>
+        </div>
+      </div>
+
+      <div class="step reveal">
+        <div class="num">3</div>
+        <div>
+          <span class="tag live">Going live</span>
+          <h3>Create a Production account</h3>
+          <p>When you're ready to accept real payments, sign up separately at <a href="https://www.getsafepay.com/" target="_blank" rel="noopener">getsafepay.com</a>. This is a distinct account from Sandbox — different login, different keys.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">4</div>
+        <div>
+          <span class="tag live">Going live</span>
+          <h3>Complete the Merchant Onboarding Form</h3>
+          <p>After logging in to the Production account, Safepay prompts you to complete onboarding. Upload the documents from the checklist above. Safepay typically replies within 48 hours, though gathering paperwork can take 1–2 weeks if anything needs chasing.</p>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="num">5</div>
+        <div>
+          <span class="tag live">Going live</span>
+          <h3>Switch PIE's CRM over to Production</h3>
+          <p>Once Safepay confirms approval, go to <strong>Developers → API</strong> in the <em>Production</em> dashboard, copy those keys, and replace the Sandbox ones in the CRM. Change Environment to <em>Production</em> and save — PIE is now charging real customers.</p>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>Where the keys go</h2>
+      <span class="section-note">In the CRM</span>
+    </div>
+    <div class="plug">
+      <h3>Settings page</h3>
+      <p>Log in to the CRM as an admin and open the Settings page from the sidebar. There's a "Safepay Payment Gateway" card with three fields:</p>
+      <div class="field-row">
+        <div class="field"><div class="k">Environment</div><div class="v">Sandbox / Production</div></div>
+        <div class="field"><div class="k">API / Client Key</div><div class="v">pub_… or similar</div></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><div class="k">Secret Key</div><div class="v">sec_…</div></div>
+        <div class="field"><div class="k">Featured Listing Fee</div><div class="v">PKR amount, editable anytime</div></div>
+      </div>
+      <div class="path">Direct link once logged in: <code>/crm/settings/</code></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="callout warn">
+      <div class="ic">⚠</div>
+      <div>
+        <p><strong>One thing to double-check in your dashboard:</strong> some Safepay accounts show a separate "Webhook Secret Key" next to the general Secret Key under Developers.</p>
+        <p>If you see two different secrets, send both to whoever maintains the CRM — one extra field needs to be wired in so payment confirmations verify correctly. If there's only one secret shown, the current setup already covers it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head">
+      <h2>What happens after this is switched on</h2>
+    </div>
+    <div class="recap">
+      <div class="card"><div class="em">💳</div><div class="t">Visitor checks "Feature My Listing" and pays on Safepay's own checkout page</div></div>
+      <div class="arrow">→</div>
+      <div class="card"><div class="em">✅</div><div class="t">Their submission is marked Paid in the CRM automatically</div></div>
+      <div class="arrow">→</div>
+      <div class="card"><div class="em">⭐</div><div class="t">Staff approve it and it goes live on the site with a Featured badge</div></div>
+    </div>
+  </section>
+
+  <footer>
+    <span>PIE Real Estate — Featured Listings payment setup</span>
+    <span>Questions on any step: ask whoever set up this CRM integration.</span>
+  </footer>
+
+</div>
+</body>
+</html>

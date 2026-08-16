@@ -20,7 +20,8 @@ import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings
+from . import payments as safepay_payments
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -225,6 +226,7 @@ def website_listing(request):
         'listing_type_choices': Property.LISTING_TYPE_CHOICES,
         'area_unit_choices': Property.AREA_UNIT_CHOICES,
         'blocks': Block.objects.all(),
+        'featured_listing_fee': SiteSettings.load().featured_listing_fee,
     })
 
 
@@ -261,6 +263,9 @@ def submit_property_listing(request):
     if area_unit not in dict(Property.AREA_UNIT_CHOICES):
         area_unit = Property.UNIT_MARLA
 
+    wants_featured = submission_type == PropertySubmission.TYPE_LISTING and request.POST.get('wants_featured') == 'true'
+    featured_fee = SiteSettings.load().featured_listing_fee if wants_featured else None
+
     submission = PropertySubmission.objects.create(
         submission_type=submission_type,
         property_type=property_type,
@@ -276,6 +281,9 @@ def submit_property_listing(request):
         full_name=full_name,
         phone=phone,
         email=request.POST.get('email', '').strip(),
+        wants_featured=wants_featured,
+        featured_fee=featured_fee,
+        payment_status=PropertySubmission.PAYMENT_PENDING if wants_featured else PropertySubmission.PAYMENT_NOT_APPLICABLE,
     )
 
     for f in request.FILES.getlist('images')[:10]:
@@ -284,7 +292,91 @@ def submit_property_listing(request):
         result = cloudinary.uploader.upload(f, folder='pie-website/submissions', resource_type='image')
         PropertySubmissionImage.objects.create(submission=submission, image_url=result['secure_url'])
 
-    return JsonResponse({'ok': True, 'reference': submission.reference_code()}, status=201)
+    payment_url = reverse('initiate_featured_payment', args=[submission.pk]) if wants_featured else None
+    return JsonResponse({
+        'ok': True, 'reference': submission.reference_code(),
+        'payment_required': wants_featured, 'payment_url': payment_url,
+    }, status=201)
+
+
+def initiate_featured_payment(request, pk):
+    """Redirects the submitter to Safepay's hosted checkout to pay the featured-listing fee."""
+    submission = get_object_or_404(PropertySubmission, pk=pk, wants_featured=True)
+
+    if submission.payment_status == PropertySubmission.PAYMENT_PAID:
+        return render(request, 'website/payment_result.html', {
+            'outcome': 'already_paid', 'submission': submission,
+        })
+
+    gateway = safepay_payments.get_gateway()
+    if not gateway.is_configured:
+        return render(request, 'website/payment_result.html', {
+            'outcome': 'not_configured', 'submission': submission,
+        })
+
+    try:
+        token, checkout_url = gateway.create_checkout_session(
+            amount=submission.featured_fee,
+            order_id=submission.reference_code(),
+            redirect_url=request.build_absolute_uri(reverse('payment_success')),
+            cancel_url=request.build_absolute_uri(reverse('payment_cancelled')),
+        )
+    except safepay_payments.SafepayError:
+        return render(request, 'website/payment_result.html', {
+            'outcome': 'error', 'submission': submission,
+        })
+
+    submission.safepay_tracker_token = token
+    submission.save(update_fields=['safepay_tracker_token', 'updated_at'])
+    return redirect(checkout_url)
+
+
+def payment_success(request):
+    tracker = request.GET.get('tracker', '')
+    submission = PropertySubmission.objects.filter(safepay_tracker_token=tracker).first() if tracker else None
+    return render(request, 'website/payment_result.html', {'outcome': 'success', 'submission': submission})
+
+
+def payment_cancelled(request):
+    tracker = request.GET.get('tracker', '')
+    submission = PropertySubmission.objects.filter(safepay_tracker_token=tracker).first() if tracker else None
+    return render(request, 'website/payment_result.html', {'outcome': 'cancelled', 'submission': submission})
+
+
+@csrf_exempt
+@require_POST
+def safepay_webhook(request):
+    """Server-to-server payment notification from Safepay.
+    Only acts on the payment if the signature verifies — otherwise it's logged and ignored,
+    and staff can always reconcile manually from the submission's CRM detail page."""
+    try:
+        payload = json.loads(request.body or b'{}')
+    except ValueError:
+        return JsonResponse({'ok': False, 'error': 'invalid payload'}, status=400)
+
+    signature = request.META.get('HTTP_X_SIGNATURE', '') or payload.get('sig', '')
+    tracker = payload.get('tracker') or payload.get('token') or (payload.get('data') or {}).get('token', '')
+    raw_status = str(payload.get('state') or payload.get('status') or (payload.get('data') or {}).get('state', '')).lower()
+
+    if not tracker:
+        return JsonResponse({'ok': False, 'error': 'missing tracker'}, status=400)
+
+    gateway = safepay_payments.get_gateway()
+    if not gateway.verify_webhook_signature(request.body, signature):
+        return JsonResponse({'ok': True, 'note': 'signature unverified, ignored'}, status=200)
+
+    submission = PropertySubmission.objects.filter(safepay_tracker_token=tracker).first()
+    if not submission:
+        return JsonResponse({'ok': True, 'note': 'unknown tracker'}, status=200)
+
+    if any(kw in raw_status for kw in ('complet', 'success', 'paid', 'end')):
+        submission.payment_status = PropertySubmission.PAYMENT_PAID
+        submission.save(update_fields=['payment_status', 'updated_at'])
+    elif any(kw in raw_status for kw in ('fail', 'cancel', 'decline')):
+        submission.payment_status = PropertySubmission.PAYMENT_FAILED
+        submission.save(update_fields=['payment_status', 'updated_at'])
+
+    return JsonResponse({'ok': True}, status=200)
 
 
 def lead_api_docs(request):
@@ -640,6 +732,13 @@ def property_submission_update(request, pk):
     submission.internal_notes = request.POST.get('internal_notes', '').strip()
     agent_id = request.POST.get('assigned_to', '').strip()
     submission.assigned_to = User.objects.filter(pk=agent_id).first() if agent_id else None
+
+    mark_payment = request.POST.get('mark_payment', '').strip()
+    if mark_payment == 'paid':
+        submission.payment_status = PropertySubmission.PAYMENT_PAID
+    elif mark_payment == 'failed':
+        submission.payment_status = PropertySubmission.PAYMENT_FAILED
+
     submission.save()
     messages.success(request, 'Submission updated.')
     return redirect('property_submission_detail', pk=pk)
@@ -665,6 +764,8 @@ def property_submission_convert(request, pk):
         'address': submission.location or submission.city,
         'description': submission.description,
     }
+    if submission.wants_featured and submission.payment_status == PropertySubmission.PAYMENT_PAID:
+        initial['badge'] = Property.BADGE_FEATURED
     form = PropertyForm(request.POST or None, initial=initial, user=request.user)
 
     if request.method == 'POST' and form.is_valid():
@@ -817,6 +918,24 @@ def role_delete(request, pk):
         role.delete()
         return redirect('role_list')
     return render(request, 'accounts/role_confirm_delete.html', {'role': role})
+
+
+# ── Site Settings (admin only) ────────────────────────────────────────────────
+
+@admin_required
+def site_settings_view(request):
+    settings_obj = SiteSettings.load()
+    if request.method == 'POST':
+        fee = _decimal_or_none(request.POST.get('featured_listing_fee'))
+        if fee is not None:
+            settings_obj.featured_listing_fee = fee
+        settings_obj.safepay_environment = request.POST.get('safepay_environment', SiteSettings.ENV_SANDBOX)
+        settings_obj.safepay_api_key = request.POST.get('safepay_api_key', '').strip()
+        settings_obj.safepay_secret_key = request.POST.get('safepay_secret_key', '').strip()
+        settings_obj.save()
+        messages.success(request, 'Settings updated.')
+        return redirect('site_settings')
+    return render(request, 'accounts/site_settings.html', {'settings': settings_obj})
 
 
 # ── Web Push ──────────────────────────────────────────────────────────────────

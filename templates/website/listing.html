@@ -538,6 +538,18 @@
           </div>
         </div>
 
+        <div class="field-row" id="featuredUpsellRow" style="margin-top:10px">
+          <div class="field full">
+            <label style="display:flex;align-items:flex-start;gap:12px;cursor:pointer;background:#fffaf1;border:1.5px solid #f0d29a;border-radius:12px;padding:16px 18px">
+              <input type="checkbox" name="wants_featured" id="wantsFeaturedInput" value="true" style="width:18px;height:18px;margin-top:2px;accent-color:var(--gold)">
+              <span>
+                <strong style="display:block;font-size:14px;color:var(--text-dark)">⭐ Feature My Listing — PKR {{ featured_listing_fee|floatformat:0 }} one-time</strong>
+                <span style="display:block;font-size:12.5px;color:var(--text-gray);margin-top:4px">Get priority placement and a "Featured" badge across the website for faster visibility. You'll be redirected to pay securely after submitting — the normal listing itself stays free.</span>
+              </span>
+            </label>
+          </div>
+        </div>
+
         <div class="form-actions">
           <button type="submit" class="btn-primary" id="submitBtn">Submit Property →</button>
         </div>
@@ -688,6 +700,7 @@
   // ── List / Evaluate toggle ───────────────────────────────────────────────
   const submissionTypeInput = document.getElementById('submissionTypeInput');
   const askingPriceRow = document.getElementById('askingPriceRow');
+  const featuredUpsellRow = document.getElementById('featuredUpsellRow');
   function selectOption(card){
     document.querySelectorAll('.option-card').forEach(c => {
       c.classList.remove('selected');
@@ -698,6 +711,8 @@
     const type = card.dataset.type;
     submissionTypeInput.value = type;
     askingPriceRow.style.display = type === 'evaluation' ? 'none' : 'grid';
+    featuredUpsellRow.style.display = type === 'evaluation' ? 'none' : 'grid';
+    if (type === 'evaluation') document.getElementById('wantsFeaturedInput').checked = false;
   }
 
   // ── Image dropzone ────────────────────────────────────────────────────────
@@ -765,6 +780,10 @@
       .then(r => r.json().then(body => ({ status: r.status, body: body })))
       .then(({ status, body }) => {
         if (status === 201 && body.ok) {
+          if (body.payment_required && body.payment_url) {
+            window.location.href = body.payment_url;
+            return;
+          }
           document.getElementById('referenceCode').textContent = body.reference;
           formSection.style.display = 'none';
           successCard.classList.add('show');

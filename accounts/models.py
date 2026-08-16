@@ -1124,8 +1124,25 @@ class PropertySubmission(models.Model):
         STATUS_REJECTED: '#ef4444',
     }
 
+    PAYMENT_NOT_APPLICABLE = 'n/a'
+    PAYMENT_PENDING = 'pending'
+    PAYMENT_PAID = 'paid'
+    PAYMENT_FAILED = 'failed'
+
+    PAYMENT_STATUS_CHOICES = [
+        (PAYMENT_NOT_APPLICABLE, 'Not Applicable'),
+        (PAYMENT_PENDING, 'Payment Pending'),
+        (PAYMENT_PAID, 'Paid'),
+        (PAYMENT_FAILED, 'Payment Failed'),
+    ]
+
     submission_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_LISTING)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
+
+    wants_featured = models.BooleanField(default=False)
+    featured_fee = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
+    payment_status = models.CharField(max_length=20, choices=PAYMENT_STATUS_CHOICES, default=PAYMENT_NOT_APPLICABLE)
+    safepay_tracker_token = models.CharField(max_length=100, blank=True)
 
     property_type = models.CharField(max_length=20, choices=Property.PROPERTY_TYPE_CHOICES)
     purpose = models.CharField(max_length=10, choices=Property.LISTING_TYPE_CHOICES, blank=True)
@@ -1165,6 +1182,13 @@ class PropertySubmission(models.Model):
     def status_color(self):
         return self.STATUS_COLORS.get(self.status, '#6b7280')
 
+    def payment_status_color(self):
+        return {
+            self.PAYMENT_PENDING: '#f59e0b',
+            self.PAYMENT_PAID: '#22c55e',
+            self.PAYMENT_FAILED: '#ef4444',
+        }.get(self.payment_status, '#6b7280')
+
 
 class PropertySubmissionImage(models.Model):
     submission = models.ForeignKey(PropertySubmission, on_delete=models.CASCADE, related_name='images')
@@ -1176,3 +1200,39 @@ class PropertySubmissionImage(models.Model):
 
     def __str__(self):
         return f'Image for {self.submission}'
+
+
+class SiteSettings(models.Model):
+    """Singleton row (always pk=1) holding admin-configurable site-wide settings."""
+    ENV_SANDBOX = 'sandbox'
+    ENV_PRODUCTION = 'production'
+
+    ENV_CHOICES = [
+        (ENV_SANDBOX, 'Sandbox (Testing)'),
+        (ENV_PRODUCTION, 'Production (Live)'),
+    ]
+
+    featured_listing_fee = models.DecimalField(max_digits=10, decimal_places=2, default=5000)
+    safepay_environment = models.CharField(max_length=20, choices=ENV_CHOICES, default=ENV_SANDBOX)
+    safepay_api_key = models.CharField(max_length=200, blank=True, help_text='Safepay Client/Public Key')
+    safepay_secret_key = models.CharField(max_length=200, blank=True, help_text='Safepay Secret Key')
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return 'Site Settings'
+
+    def save(self, *args, **kwargs):
+        self.pk = 1
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        pass
+
+    @classmethod
+    def load(cls):
+        obj, _ = cls.objects.get_or_create(pk=1)
+        return obj
+
+    @property
+    def payments_configured(self):
+        return bool(self.safepay_api_key and self.safepay_secret_key)

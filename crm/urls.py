@@ -18,7 +18,7 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import website_homepage, website_about, website_services, website_properties, website_property_detail, website_contact, website_listing, submit_property_listing, lead_api_create, lead_api_docs
+from accounts.views import website_homepage, website_about, website_services, website_properties, website_property_detail, website_contact, website_listing, submit_property_listing, initiate_featured_payment, payment_success, payment_cancelled, safepay_webhook, lead_api_create, lead_api_docs
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -30,6 +30,10 @@ urlpatterns = [
     path('contact/', website_contact, name='website_contact'),
     path('list-property/', website_listing, name='website_listing'),
     path('list-property/submit/', submit_property_listing, name='submit_property_listing'),
+    path('list-property/<int:pk>/pay/', initiate_featured_payment, name='initiate_featured_payment'),
+    path('payment/success/', payment_success, name='payment_success'),
+    path('payment/cancelled/', payment_cancelled, name='payment_cancelled'),
+    path('payment/webhook/safepay/', safepay_webhook, name='safepay_webhook'),
     path('api/leads/create/', lead_api_create, name='lead_api_create'),
     path('api/leads/docs/', lead_api_docs, name='lead_api_docs'),
     path('crm/', include('accounts.urls')),
