@@ -165,7 +165,7 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
         <tr>
           <td>
             <div class="member-cell">
-              <div class="av">{{ m.first_name|first|upper }}{{ m.last_name|first|upper }}</div>
+              {% if m.photo %}<img src="{{ m.photo }}" alt="{{ m.get_full_name }}" class="av" style="object-fit:cover">{% else %}<div class="av">{{ m.first_name|first|upper }}{{ m.last_name|first|upper }}</div>{% endif %}
               <div><div class="nm">{{ m.get_full_name }}</div><div class="em">{{ m.email }}</div></div>
             </div>
           </td>

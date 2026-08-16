@@ -32,12 +32,34 @@ class User(AbstractUser):
         (ROLE_ADMIN, 'Admin'),
     ]
 
+    BADGE_NONE = ''
+    BADGE_TOP_PERFORMER = 'top_performer'
+    BADGE_RISING_STAR = 'rising_star'
+    BADGE_CLIENT_FAVORITE = 'client_favorite'
+    BADGE_MOST_DEALS = 'most_deals'
+    BADGE_VETERAN = 'veteran'
+    BADGE_TEAM_PLAYER = 'team_player'
+
+    BADGE_CHOICES = [
+        (BADGE_NONE, '— No Badge —'),
+        (BADGE_TOP_PERFORMER, '🏆 Top Performer'),
+        (BADGE_RISING_STAR, '🌟 Rising Star'),
+        (BADGE_CLIENT_FAVORITE, '❤️ Client Favorite'),
+        (BADGE_MOST_DEALS, '🤝 Most Deals Closed'),
+        (BADGE_VETERAN, '🎖️ Veteran Agent'),
+        (BADGE_TEAM_PLAYER, '🙌 Team Player'),
+    ]
+
     email = models.EmailField(unique=True)
     phone = models.CharField(max_length=20, blank=True)
     role = models.CharField(max_length=20, choices=ROLE_CHOICES, default=ROLE_AGENT)
     assigned_role = models.ForeignKey(
         'Role', on_delete=models.SET_NULL, null=True, blank=True, related_name='members'
     )
+    photo = models.URLField(max_length=500, blank=True)
+    financial_person = models.BooleanField(default=False)
+    legal_person = models.BooleanField(default=False)
+    badge = models.CharField(max_length=30, choices=BADGE_CHOICES, blank=True, default=BADGE_NONE)
 
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']

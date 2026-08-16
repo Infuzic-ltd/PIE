@@ -91,7 +91,7 @@ class TeamMemberCreateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'password']
+        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'password', 'badge', 'financial_person', 'legal_person']
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -115,7 +115,7 @@ class TeamMemberUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'is_active']
+        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'is_active', 'badge', 'financial_person', 'legal_person']
 
     def save(self, commit=True):
         user = super().save(commit=False)

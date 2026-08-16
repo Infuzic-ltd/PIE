@@ -743,7 +743,12 @@ def team_list(request):
 def team_member_create(request):
     form = TeamMemberCreateForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        user = form.save()
+        photo = request.FILES.get('photo')
+        if photo:
+            result = cloudinary.uploader.upload(photo, folder='pie-crm/team', resource_type='image')
+            user.photo = result['secure_url']
+            user.save(update_fields=['photo'])
         return redirect('team_list')
     return render(request, 'accounts/team_member_form.html', {'form': form, 'action': 'Add Member'})
 
@@ -753,7 +758,12 @@ def team_member_update(request, pk):
     member = get_object_or_404(User, pk=pk)
     form = TeamMemberUpdateForm(request.POST or None, instance=member)
     if request.method == 'POST' and form.is_valid():
-        form.save()
+        user = form.save()
+        photo = request.FILES.get('photo')
+        if photo:
+            result = cloudinary.uploader.upload(photo, folder='pie-crm/team', resource_type='image')
+            user.photo = result['secure_url']
+            user.save(update_fields=['photo'])
         return redirect('team_list')
     return render(request, 'accounts/team_member_form.html', {
         'form': form, 'member': member, 'action': 'Edit Member',

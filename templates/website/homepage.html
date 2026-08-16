@@ -338,6 +338,10 @@
   .agent-card:hover{ box-shadow:var(--shadow); transform:translateY(-4px); }
   .agent-photo{ height:200px; overflow:hidden; }
   .agent-photo img{ width:100%; height:100%; object-fit:cover; }
+  .agent-badge{
+    position:absolute; top:10px; left:10px; z-index:2; background:var(--gold); color:var(--navy);
+    font-size:11px; font-weight:700; padding:5px 11px; border-radius:20px; box-shadow:0 4px 10px rgba(0,0,0,.18);
+  }
   .agent-card h4{ font-size:15.5px; margin-top:18px; }
   .agent-card .role{ font-size:12px; color:var(--text-gray); margin-bottom:10px; }
   .agent-card .phone{ font-size:12.5px; color:var(--text-gray); margin-bottom:14px; }
@@ -802,9 +806,17 @@
     <div class="agents-grid"{% if agents|length < 4 %} style="grid-template-columns:repeat({{ agents|length|default:1 }}, minmax(0, 280px));justify-content:center"{% endif %}>
       {% for agent in agents %}
       <div class="agent-card">
-        <div class="agent-photo" style="display:flex;align-items:center;justify-content:center;background:var(--bg-light);font-family:'Poppins',sans-serif;font-size:44px;font-weight:700;color:var(--gold-dark)">{{ agent.first_name|first|upper }}{{ agent.last_name|first|upper }}</div>
+        <div class="agent-photo" style="position:relative">
+          {% if agent.badge %}<span class="agent-badge">{{ agent.get_badge_display }}</span>{% endif %}
+          {% if agent.photo %}
+          <img src="{{ agent.photo }}" alt="{{ agent.get_full_name }}">
+          {% else %}
+          <div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;background:var(--bg-light);font-family:'Poppins',sans-serif;font-size:44px;font-weight:700;color:var(--gold-dark)">{{ agent.first_name|first|upper }}{{ agent.last_name|first|upper }}</div>
+          {% endif %}
+        </div>
         <h4>{{ agent.get_full_name }}</h4>
         <div class="role">{{ agent.get_effective_role_name }}</div>
+        {% if agent.photo and agent.phone %}<div class="phone">📞 {{ agent.phone }}</div>{% endif %}
         <div class="agent-social">
           {% if agent.phone %}<a href="tel:{{ agent.phone }}">📞</a><a href="https://wa.me/{{ agent.phone|cut:'+' }}" target="_blank">💬</a>{% endif %}
           <a href="mailto:{{ agent.email }}">✉</a>
