@@ -66,6 +66,7 @@ a{color:inherit;text-decoration:none}
 table{width:100%;border-collapse:collapse}
 thead th{background:#f7f9fc;padding:10px 14px;text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line)}
 tbody tr{border-bottom:1px solid var(--line);transition:background .15s}
+tbody tr.row-link{cursor:pointer}
 tbody tr:last-child{border-bottom:none}
 tbody tr:hover{background:#f9fbff}
 tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
@@ -90,6 +91,34 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
 .scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
 .float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
 .float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+
+/* ── View toggle ─────────────────────────────────────────────────────────── */
+.list-toolbar{display:flex;justify-content:flex-end;padding:14px 20px 0}
+.view-toggle{display:flex;gap:3px;padding:3px;background:#f1f4f9;border-radius:9px;border:1px solid var(--line)}
+.vt-btn{width:32px;height:30px;border:none;border-radius:7px;background:transparent;cursor:pointer;display:grid;place-items:center;color:var(--ink-faint);transition:background .15s,color .15s}
+.vt-btn svg{width:16px;height:16px;stroke:currentColor;fill:none;stroke-width:1.8}
+.vt-btn.active{background:#fff;color:var(--blue);box-shadow:0 1px 3px rgba(16,30,60,.1)}
+
+/* ── Grid cards ─────────────────────────────────────────────────────────── */
+.grid-container{display:none;padding:16px 20px 20px}
+.mem-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:16px}
+.mem-card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px;text-align:center;transition:transform .22s cubic-bezier(.2,.7,.3,1),box-shadow .22s;cursor:pointer}
+.mem-card:hover{transform:translateY(-4px);box-shadow:0 16px 36px rgba(16,30,60,.12)}
+.mem-card .av{width:56px;height:56px;font-size:18px;margin:0 auto 12px;border-radius:50%;background:var(--blue);display:grid;place-items:center;color:#fff;font-weight:700}
+.mem-card .nm{font-weight:700;font-size:14.5px}
+.mem-card .em{font-size:12px;color:var(--ink-soft);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mem-card .mem-badges{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:12px}
+.mem-card .mem-phone{font-size:12.5px;color:var(--ink-soft);margin-top:10px}
+.mem-card .mem-acts{display:flex;justify-content:center;gap:6px;margin-top:14px;padding-top:14px;border-top:1px solid var(--line)}
+.grid-empty{text-align:center;padding:60px 20px;color:var(--ink-soft)}
+.grid-empty svg{width:44px;height:44px;stroke:var(--ink-faint);fill:none;stroke-width:1.4;margin-bottom:14px}
+
+/* ── Active mode switching ────────────────────────────────────────────────── */
+body.view-grid .list-container{display:none}
+body.view-grid .grid-container{display:block}
+body.view-list .list-container{display:block}
+body.view-list .grid-container{display:none}
+
 @media(max-width:880px){
   .sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}
   body.nav-open .sidebar{transform:translateX(0)}
@@ -146,9 +175,20 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
   </div>
 
   <div class="card">
-    <div class="tabs">
+    <div class="tabs" style="justify-content:space-between;align-items:center">
       <span class="tab active">All Members</span>
     </div>
+    <div class="list-toolbar">
+      <div class="view-toggle">
+        <button class="vt-btn" id="listViewBtn" title="List view" onclick="setView('list')">
+          <svg viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4" cy="6" r="1.5"/><circle cx="4" cy="12" r="1.5"/><circle cx="4" cy="18" r="1.5"/></svg>
+        </button>
+        <button class="vt-btn" id="gridViewBtn" title="Grid view" onclick="setView('grid')">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="list-container">
     <table>
       <thead>
         <tr>
@@ -162,7 +202,7 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
       </thead>
       <tbody>
         {% for m in members %}
-        <tr>
+        <tr class="row-link" data-href="{% url 'team_member_update' m.pk %}">
           <td>
             <div class="member-cell">
               {% if m.photo %}<img src="{{ m.photo }}" alt="{{ m.get_full_name }}" class="av" style="object-fit:cover">{% else %}<div class="av">{{ m.first_name|first|upper }}{{ m.last_name|first|upper }}</div>{% endif %}
@@ -209,6 +249,41 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
         {% endfor %}
       </tbody>
     </table>
+    </div><!-- /list-container -->
+
+    <!-- Grid view -->
+    <div class="grid-container">
+      {% if members %}
+      <div class="mem-grid">
+        {% for m in members %}
+        <div class="mem-card row-link" data-href="{% url 'team_member_update' m.pk %}">
+          {% if m.photo %}<img src="{{ m.photo }}" alt="{{ m.get_full_name }}" class="av" style="object-fit:cover">{% else %}<div class="av">{{ m.first_name|first|upper }}{{ m.last_name|first|upper }}</div>{% endif %}
+          <div class="nm">{{ m.get_full_name }}</div>
+          <div class="em">{{ m.email }}</div>
+          <div class="mem-badges">
+            {% if m.role == 'admin' %}<span class="badge admin">Admin</span>
+            {% elif m.role == 'manager' %}<span class="badge manager">Manager</span>
+            {% else %}<span class="badge agent">Agent</span>{% endif %}
+            {% if m.assigned_role %}<span class="badge custom">{{ m.assigned_role.name }}</span>{% endif %}
+            {% if m.is_active %}<span class="badge active">Active</span>{% else %}<span class="badge inactive">Inactive</span>{% endif %}
+          </div>
+          {% if m.phone %}<div class="mem-phone">📞 {{ m.phone }}</div>{% endif %}
+          <div class="mem-acts">
+            <a href="{% url 'team_member_update' m.pk %}" class="act-ic" title="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg></a>
+            {% if m.pk != request.user.pk %}
+            <form method="post" action="{% url 'team_member_delete' m.pk %}" class="crm-confirm-form" data-confirm-message="Remove {{ m.get_full_name }}?" data-confirm-style="danger" data-confirm-label="Remove">{% csrf_token %}<button type="submit" class="act-ic danger" title="Remove"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></form>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+      {% else %}
+      <div class="grid-empty">
+        <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 20a6 6 0 0 1 12 0"/></svg>
+        <p style="font-size:15px;font-weight:700;color:var(--ink)">No team members yet</p>
+      </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 </main>
@@ -222,5 +297,24 @@ function toggleNav(){ document.body.classList.toggle('nav-open'); }
 menuBtn && menuBtn.addEventListener('click', toggleNav);
 menuBtnTop && menuBtnTop.addEventListener('click', toggleNav);
 scrim.addEventListener('click', () => document.body.classList.remove('nav-open'));
+
+// ── Click anywhere on a row/card to edit that member ─────────────────────────
+document.querySelectorAll('.row-link[data-href]').forEach(el=>{
+  el.addEventListener('click', e=>{
+    if(e.target.closest('a,button,form,input,label,select,textarea')) return;
+    window.location = el.dataset.href;
+  });
+});
+
+// ── View toggle ────────────────────────────────────────────────────────────
+const TEAM_VKEY = 'pie_team_view';
+function setView(mode) {
+  localStorage.setItem(TEAM_VKEY, mode);
+  document.body.classList.toggle('view-list', mode === 'list');
+  document.body.classList.toggle('view-grid', mode === 'grid');
+  document.getElementById('listViewBtn').classList.toggle('active', mode === 'list');
+  document.getElementById('gridViewBtn').classList.toggle('active', mode === 'grid');
+}
+setView(localStorage.getItem(TEAM_VKEY) || 'list');
 </script>
 </body></html>
