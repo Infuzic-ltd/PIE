@@ -78,6 +78,9 @@
   .detail-head{ max-width:1280px; margin:0 auto; padding:26px 40px 0; display:flex; justify-content:space-between; align-items:flex-start; gap:24px; flex-wrap:wrap; }
   .badge{ display:inline-flex; align-items:center; font-size:11px; font-weight:700; text-transform:uppercase; padding:5px 11px; border-radius:5px; letter-spacing:.4px; margin-right:8px; }
   .badge-sale{ background:#dbeafe; color:#1d4ed8; } .badge-rent{ background:#ede9fe; color:#7c3aed; }
+  .badge-hot{ background:#ef4444; color:#fff; } .badge-featured{ background:var(--gold); color:var(--navy); }
+  .badge-new{ background:var(--green); color:#fff; } .badge-price_reduced{ background:#2563eb; color:#fff; }
+  .badge-best_value{ background:#8b5cf6; color:#fff; } .badge-exclusive{ background:var(--navy); color:var(--gold); }
   .detail-title h1{ font-size:28px; font-weight:700; margin:10px 0 8px; }
   .detail-loc{ font-size:14px; color:var(--text-gray); }
   .detail-price{ font-size:30px; font-weight:800; color:var(--gold-dark); text-align:right; }
@@ -227,6 +230,7 @@
     <div>
       {% if property.listing_type == 'sale' %}<span class="badge badge-sale">For Sale</span>{% else %}<span class="badge badge-rent">For Rent</span>{% endif %}
       <span class="badge" style="background:var(--bg-light);color:var(--text-gray)">{{ property.get_property_type_display }}</span>
+      {% if property.badge %}<span class="badge badge-{{ property.badge }}">{{ property.get_badge_display }}</span>{% endif %}
     </div>
     <h1>{{ property.title }}</h1>
     <div class="detail-loc">📍 {{ property.location }}{% if property.location and property.city %}, {% endif %}{{ property.city }}{% if property.block %} · {{ property.block.name }}{% endif %}</div>

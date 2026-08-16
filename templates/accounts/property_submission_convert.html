@@ -162,6 +162,10 @@ a{color:inherit}
 
     <div class="fld"><label>Status</label><div class="ctrl"><select name="status"><option value="active" {% if form.status.value == 'active' or not form.status.value %}selected{% endif %}>Active</option><option value="inactive" {% if form.status.value == 'inactive' %}selected{% endif %}>Inactive</option><option value="sold" {% if form.status.value == 'sold' %}selected{% endif %}>Sold / Closed</option></select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
 
+    <div class="fld"><label style="display:flex;align-items:center;gap:8px;cursor:pointer;margin-top:11px"><input type="checkbox" name="show_on_website" value="true" style="width:auto" {% if form.show_on_website.value %}checked{% endif %}> Show On Website</label><div style="font-size:12px;color:var(--ink-faint);margin-top:4px">Uncheck to approve without publishing publicly yet.</div></div>
+
+    <div class="fld"><label>Badge <span style="font-weight:400;color:var(--ink-faint)">(shown on the public website)</span></label><div class="ctrl"><select name="badge">{% for val, label in form.badge.field.choices %}<option value="{{ val }}" {% if form.badge.value == val %}selected{% endif %}>{{ label }}</option>{% endfor %}</select><span class="caret"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></span></div></div>
+
     <div class="fld"><label>Price <span class="req">*</span></label><div class="ctrl prefix"><span class="pfx">PKR</span><input name="price" placeholder="Enter price" value="{{ form.price.value|default:'' }}"></div>{% if form.price.errors %}<div class="field-err">{{ form.price.errors.0 }}</div>{% endif %}</div>
 
     <div class="fld"><label>Area Size <span class="req">*</span></label><div class="ctrl"><input name="area_size" placeholder="e.g. 120" value="{{ form.area_size.value|default:'' }}"></div>{% if form.area_size.errors %}<div class="field-err">{{ form.area_size.errors.0 }}</div>{% endif %}</div>

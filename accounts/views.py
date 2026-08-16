@@ -115,7 +115,7 @@ def _upload_images(request_files, prop):
 
 def website_homepage(request):
     featured_properties = list(
-        Property.objects.filter(status=Property.STATUS_ACTIVE).prefetch_related('images').order_by('-created_at')[:6]
+        Property.objects.filter(status=Property.STATUS_ACTIVE, show_on_website=True).prefetch_related('images').order_by('-created_at')[:6]
     )
     present_types = {p.property_type for p in featured_properties}
     featured_types = [(val, label) for val, label in Property.PROPERTY_TYPE_CHOICES if val in present_types]
@@ -138,7 +138,7 @@ def website_services(request):
 
 
 def website_properties(request):
-    base_qs = Property.objects.filter(status=Property.STATUS_ACTIVE)
+    base_qs = Property.objects.filter(status=Property.STATUS_ACTIVE, show_on_website=True)
     qs = base_qs.prefetch_related('images')
 
     q = request.GET.get('q', '').strip()
@@ -197,17 +197,17 @@ def website_properties(request):
             'bedrooms_min': request.GET.get('bedrooms_min', ''), 'sort': sort,
         },
         'querystring': querystring.urlencode(),
-        'blocks': Block.objects.annotate(property_count=Count('properties', filter=Q(properties__status=Property.STATUS_ACTIVE))),
+        'blocks': Block.objects.annotate(property_count=Count('properties', filter=Q(properties__status=Property.STATUS_ACTIVE, properties__show_on_website=True))),
     })
 
 
 def website_property_detail(request, pk):
     prop = get_object_or_404(
-        Property.objects.filter(status=Property.STATUS_ACTIVE).prefetch_related('images').select_related('created_by', 'block'),
+        Property.objects.filter(status=Property.STATUS_ACTIVE, show_on_website=True).prefetch_related('images').select_related('created_by', 'block'),
         pk=pk,
     )
     similar_properties = Property.objects.filter(
-        status=Property.STATUS_ACTIVE, property_type=prop.property_type,
+        status=Property.STATUS_ACTIVE, show_on_website=True, property_type=prop.property_type,
     ).exclude(pk=prop.pk).prefetch_related('images')[:3]
     return render(request, 'website/property_detail.html', {
         'property': prop,

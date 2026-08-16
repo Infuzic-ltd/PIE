@@ -865,10 +865,30 @@ class Property(models.Model):
 
     BEDROOM_CHOICES = [(i, str(i)) for i in range(1, 10)] + [(10, '10+')]
 
+    BADGE_NONE = ''
+    BADGE_HOT = 'hot'
+    BADGE_FEATURED = 'featured'
+    BADGE_NEW = 'new'
+    BADGE_PRICE_REDUCED = 'price_reduced'
+    BADGE_BEST_VALUE = 'best_value'
+    BADGE_EXCLUSIVE = 'exclusive'
+
+    BADGE_CHOICES = [
+        (BADGE_NONE, '— No Badge —'),
+        (BADGE_HOT, '🔥 Hot'),
+        (BADGE_FEATURED, '⭐ Featured'),
+        (BADGE_NEW, '🆕 New'),
+        (BADGE_PRICE_REDUCED, '💰 Price Reduced'),
+        (BADGE_BEST_VALUE, '💎 Best Value'),
+        (BADGE_EXCLUSIVE, '👑 Exclusive'),
+    ]
+
     title = models.CharField(max_length=255)
     property_type = models.CharField(max_length=20, choices=PROPERTY_TYPE_CHOICES)
     listing_type = models.CharField(max_length=10, choices=LISTING_TYPE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
+    show_on_website = models.BooleanField(default=True)
+    badge = models.CharField(max_length=20, choices=BADGE_CHOICES, blank=True, default=BADGE_NONE)
     price = models.DecimalField(max_digits=14, decimal_places=2)
     area_size = models.DecimalField(max_digits=10, decimal_places=2)
     area_unit = models.CharField(max_length=10, choices=AREA_UNIT_CHOICES, default=UNIT_SQFT)

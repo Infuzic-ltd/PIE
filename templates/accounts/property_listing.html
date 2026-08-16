@@ -389,6 +389,8 @@ body.view-list .grid-container{display:none}
     {% if prop.status == 'active' %}<span class="badge b-active">Active</span>
     {% elif prop.status == 'inactive' %}<span class="badge b-inactive">Inactive</span>
     {% else %}<span class="badge b-sold">Sold / Closed</span>{% endif %}
+    {% if not prop.show_on_website %}<span class="badge" style="background:#f3f4f6;color:#6b7280;margin-left:4px" title="Hidden from the public website">🚫 Hidden</span>{% endif %}
+    {% if prop.badge %}<span class="badge" style="background:#fef3c7;color:#92400e;margin-left:4px">{{ prop.get_badge_display }}</span>{% endif %}
   </td>
   <td class="nowrap">{{ prop.created_at|date:"M d, Y" }}</td>
   <td>
