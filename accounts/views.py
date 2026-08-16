@@ -383,6 +383,10 @@ def lead_api_docs(request):
     return render(request, 'website/lead_api_docs.html')
 
 
+def safepay_setup_guide(request):
+    return render(request, 'website/safepay_setup_guide.html')
+
+
 def login_view(request):
     if request.user.is_authenticated:
         return redirect('dashboard')
