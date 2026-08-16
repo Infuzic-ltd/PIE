@@ -171,6 +171,53 @@ a{color:inherit;text-decoration:none}
     {% if submission.description %}<div class="info-row" style="align-items:flex-start"><span class="k">Description</span><span class="v">{{ submission.description }}</span></div>{% endif %}
   </div>
 
+  {% if submission.submission_type == 'evaluation' %}
+  <div class="card">
+    <div class="card-title"><svg viewBox="0 0 24 24"><path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> Property Evaluation</div>
+
+    {% if submission.evaluation_status %}
+    <div class="info-row"><span class="k">Status</span><span class="v">
+      {% if submission.evaluation_status == 'approved' %}<span class="badge" style="background:#dcfce7;color:#166534">✓ Approved</span>
+      {% else %}<span class="badge" style="background:#fef3c7;color:#92400e">⏳ Pending Approval</span>{% endif %}
+    </span></div>
+    <div class="info-row"><span class="k">Estimated Range</span><span class="v" style="font-weight:700;color:var(--blue)">{{ submission.evaluation_range_display }}</span></div>
+    {% if submission.evaluation_notes %}<div class="info-row" style="align-items:flex-start"><span class="k">Notes</span><span class="v">{{ submission.evaluation_notes }}</span></div>{% endif %}
+    <div class="info-row"><span class="k">Evaluated By</span><span class="v">{{ submission.evaluated_by.get_full_name|default:"—" }}</span></div>
+    {% if submission.evaluation_status == 'approved' %}
+    <div class="info-row"><span class="k">Approved By</span><span class="v">{{ submission.evaluation_approved_by.get_full_name|default:"—" }}{% if submission.evaluation_approved_at %} on {{ submission.evaluation_approved_at|date:"M d, Y" }}{% endif %}</span></div>
+    {% endif %}
+    {% if submission.evaluation_sent_at %}
+    <div class="info-row"><span class="k">Sent to Owner</span><span class="v" style="color:var(--green);font-weight:600">✓ {{ submission.evaluation_sent_at|date:"M d, Y P" }}</span></div>
+    {% endif %}
+    {% endif %}
+
+    <form method="post" action="{% url 'property_submission_set_evaluation' submission.pk %}" style="margin-top:14px;padding-top:14px;{% if submission.evaluation_status %}border-top:1px solid var(--line){% endif %}">
+      {% csrf_token %}
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="fld"><label>Min Value (PKR)</label><input type="number" name="evaluation_min" value="{{ submission.evaluation_min|default:'' }}" required></div>
+        <div class="fld"><label>Max Value (PKR)</label><input type="number" name="evaluation_max" value="{{ submission.evaluation_max|default:'' }}" required></div>
+      </div>
+      <div class="fld"><label>Notes (optional)</label><textarea name="evaluation_notes" rows="3" placeholder="Basis for this valuation, comparable sales, condition notes…">{{ submission.evaluation_notes }}</textarea></div>
+      <button type="submit" class="btn primary" style="width:100%;justify-content:center">{% if submission.evaluation_status %}Save Changes{% else %}Save Evaluation{% endif %}</button>
+    </form>
+
+    {% if submission.evaluation_status == 'pending_approval' and request.user.is_crm_admin %}
+    <form method="post" action="{% url 'property_submission_approve_evaluation' submission.pk %}" style="margin-top:10px">
+      {% csrf_token %}
+      <button type="submit" class="btn primary" style="width:100%;justify-content:center;background:#16a34a;border-color:#16a34a">✓ Approve As-Is</button>
+    </form>
+    {% endif %}
+
+    {% if submission.evaluation_status == 'approved' %}
+    <form method="post" action="{% url 'property_submission_send_evaluation' submission.pk %}" style="margin-top:10px" class="crm-confirm-form" data-confirm-message="Send this evaluation to {{ submission.email|default:submission.full_name }}?" data-confirm-style="primary" data-confirm-label="Send">
+      {% csrf_token %}
+      <button type="submit" class="btn primary" style="width:100%;justify-content:center" {% if not submission.email %}disabled{% endif %}>✉ {% if submission.evaluation_sent_at %}Re-send{% else %}Send{% endif %} to Owner</button>
+    </form>
+    {% if not submission.email %}<div class="help" style="font-size:11.5px;color:#b91c1c;margin-top:6px">No email address on file for this submission — can't send.</div>{% endif %}
+    {% endif %}
+  </div>
+  {% endif %}
+
   {% if submission.wants_featured %}
   <div class="card">
     <div class="card-title"><svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01z"/></svg> Featured Listing Payment</div>

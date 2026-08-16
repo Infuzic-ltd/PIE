@@ -1136,6 +1136,16 @@ class PropertySubmission(models.Model):
         (PAYMENT_FAILED, 'Payment Failed'),
     ]
 
+    EVAL_STATUS_NONE = ''
+    EVAL_STATUS_PENDING = 'pending_approval'
+    EVAL_STATUS_APPROVED = 'approved'
+
+    EVAL_STATUS_CHOICES = [
+        (EVAL_STATUS_NONE, 'No Evaluation Yet'),
+        (EVAL_STATUS_PENDING, 'Pending Admin Approval'),
+        (EVAL_STATUS_APPROVED, 'Approved'),
+    ]
+
     submission_type = models.CharField(max_length=20, choices=TYPE_CHOICES, default=TYPE_LISTING)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_PENDING)
 
@@ -1163,6 +1173,20 @@ class PropertySubmission(models.Model):
         'User', on_delete=models.SET_NULL, null=True, blank=True, related_name='property_submissions'
     )
     internal_notes = models.TextField(blank=True)
+
+    evaluation_min = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    evaluation_max = models.DecimalField(max_digits=14, decimal_places=2, null=True, blank=True)
+    evaluation_notes = models.TextField(blank=True)
+    evaluation_status = models.CharField(max_length=20, choices=EVAL_STATUS_CHOICES, default=EVAL_STATUS_NONE, blank=True)
+    evaluated_by = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True, related_name='evaluations_made'
+    )
+    evaluation_approved_by = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True, related_name='evaluations_approved'
+    )
+    evaluation_approved_at = models.DateTimeField(null=True, blank=True)
+    evaluation_sent_at = models.DateTimeField(null=True, blank=True)
+
     converted_property = models.OneToOneField(
         'Property', on_delete=models.SET_NULL, null=True, blank=True, related_name='source_submission'
     )
@@ -1188,6 +1212,11 @@ class PropertySubmission(models.Model):
             self.PAYMENT_PAID: '#22c55e',
             self.PAYMENT_FAILED: '#ef4444',
         }.get(self.payment_status, '#6b7280')
+
+    def evaluation_range_display(self):
+        if self.evaluation_min is None or self.evaluation_max is None:
+            return ''
+        return f'PKR {self.evaluation_min:,.0f} – PKR {self.evaluation_max:,.0f}'
 
 
 class PropertySubmissionImage(models.Model):
@@ -1216,6 +1245,14 @@ class SiteSettings(models.Model):
     safepay_environment = models.CharField(max_length=20, choices=ENV_CHOICES, default=ENV_SANDBOX)
     safepay_api_key = models.CharField(max_length=200, blank=True, help_text='Safepay Client/Public Key')
     safepay_secret_key = models.CharField(max_length=200, blank=True, help_text='Safepay Secret Key')
+
+    smtp_host = models.CharField(max_length=200, blank=True, help_text='e.g. smtp.gmail.com')
+    smtp_port = models.PositiveIntegerField(default=587)
+    smtp_username = models.CharField(max_length=200, blank=True)
+    smtp_password = models.CharField(max_length=200, blank=True)
+    smtp_use_tls = models.BooleanField(default=True)
+    from_email = models.EmailField(blank=True, help_text='Address emails will appear to be sent from')
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -1236,3 +1273,7 @@ class SiteSettings(models.Model):
     @property
     def payments_configured(self):
         return bool(self.safepay_api_key and self.safepay_secret_key)
+
+    @property
+    def email_configured(self):
+        return bool(self.smtp_host and self.smtp_username and self.smtp_password and self.from_email)

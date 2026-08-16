@@ -22,6 +22,8 @@ from py_vapid import Vapid01
 from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
 from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings
 from . import payments as safepay_payments
+from .emailer import send_html_email, EmailNotConfigured, EmailSendError
+from django.template.loader import render_to_string
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -749,6 +751,102 @@ def property_submission_update(request, pk):
 
 
 @login_required
+@require_POST
+def property_submission_set_evaluation(request, pk):
+    """Propose or edit an evaluation range. Any logged-in user can do this; an admin's
+    save is auto-approved, anyone else's save goes to pending admin approval."""
+    submission = get_object_or_404(PropertySubmission, pk=pk)
+    eval_min = _decimal_or_none(request.POST.get('evaluation_min'))
+    eval_max = _decimal_or_none(request.POST.get('evaluation_max'))
+    if eval_min is None or eval_max is None:
+        messages.error(request, 'Enter both a minimum and maximum evaluation value.')
+        return redirect('property_submission_detail', pk=pk)
+    if eval_min > eval_max:
+        eval_min, eval_max = eval_max, eval_min
+
+    submission.evaluation_min = eval_min
+    submission.evaluation_max = eval_max
+    submission.evaluation_notes = request.POST.get('evaluation_notes', '').strip()
+    submission.evaluated_by = request.user
+
+    if request.user.is_crm_admin:
+        submission.evaluation_status = PropertySubmission.EVAL_STATUS_APPROVED
+        submission.evaluation_approved_by = request.user
+        submission.evaluation_approved_at = timezone.now()
+        messages.success(request, 'Evaluation saved and approved.')
+    else:
+        submission.evaluation_status = PropertySubmission.EVAL_STATUS_PENDING
+        submission.evaluation_approved_by = None
+        submission.evaluation_approved_at = None
+        messages.success(request, 'Evaluation saved — an admin needs to approve it before it can be sent.')
+
+    if submission.status == PropertySubmission.STATUS_PENDING:
+        submission.status = PropertySubmission.STATUS_EVALUATED
+
+    submission.save()
+    return redirect('property_submission_detail', pk=pk)
+
+
+@admin_required
+@require_POST
+def property_submission_approve_evaluation(request, pk):
+    submission = get_object_or_404(PropertySubmission, pk=pk)
+    if submission.evaluation_status == PropertySubmission.EVAL_STATUS_PENDING:
+        submission.evaluation_status = PropertySubmission.EVAL_STATUS_APPROVED
+        submission.evaluation_approved_by = request.user
+        submission.evaluation_approved_at = timezone.now()
+        submission.save()
+        messages.success(request, 'Evaluation approved.')
+    return redirect('property_submission_detail', pk=pk)
+
+
+@login_required
+@require_POST
+def property_submission_send_evaluation(request, pk):
+    submission = get_object_or_404(PropertySubmission, pk=pk)
+    if submission.evaluation_status != PropertySubmission.EVAL_STATUS_APPROVED:
+        messages.error(request, 'This evaluation needs admin approval before it can be sent.')
+        return redirect('property_submission_detail', pk=pk)
+    if not submission.email:
+        messages.error(request, "This submission doesn't have an email address on file — can't send.")
+        return redirect('property_submission_detail', pk=pk)
+
+    html_body = render_to_string('emails/property_evaluation.html', {
+        'full_name': submission.full_name,
+        'property_type': submission.get_property_type_display(),
+        'city': submission.city,
+        'location': submission.location,
+        'bedrooms': submission.bedrooms,
+        'bathrooms': submission.bathrooms,
+        'area_size': submission.area_size,
+        'area_unit': submission.get_area_unit_display(),
+        'evaluation_min': submission.evaluation_min,
+        'evaluation_max': submission.evaluation_max,
+        'evaluation_notes': submission.evaluation_notes,
+        'reference_code': submission.reference_code(),
+        'listing_url': request.build_absolute_uri(reverse('website_listing')),
+    })
+
+    try:
+        send_html_email(
+            submission.email,
+            f'Your Property Evaluation from PIE Real Estate — {submission.reference_code()}',
+            html_body,
+        )
+    except EmailNotConfigured:
+        messages.error(request, 'Email is not set up yet — add SMTP details in Settings first.')
+        return redirect('property_submission_detail', pk=pk)
+    except EmailSendError as exc:
+        messages.error(request, f"Couldn't send the email — {exc}")
+        return redirect('property_submission_detail', pk=pk)
+
+    submission.evaluation_sent_at = timezone.now()
+    submission.save(update_fields=['evaluation_sent_at', 'updated_at'])
+    messages.success(request, f'Evaluation emailed to {submission.email}.')
+    return redirect('property_submission_detail', pk=pk)
+
+
+@login_required
 def property_submission_convert(request, pk):
     submission = get_object_or_404(PropertySubmission.objects.prefetch_related('images'), pk=pk)
     if submission.converted_property_id:
@@ -936,6 +1034,16 @@ def site_settings_view(request):
         settings_obj.safepay_environment = request.POST.get('safepay_environment', SiteSettings.ENV_SANDBOX)
         settings_obj.safepay_api_key = request.POST.get('safepay_api_key', '').strip()
         settings_obj.safepay_secret_key = request.POST.get('safepay_secret_key', '').strip()
+
+        settings_obj.smtp_host = request.POST.get('smtp_host', '').strip()
+        port = _int_or_none(request.POST.get('smtp_port'))
+        if port:
+            settings_obj.smtp_port = port
+        settings_obj.smtp_username = request.POST.get('smtp_username', '').strip()
+        settings_obj.smtp_password = request.POST.get('smtp_password', '').strip()
+        settings_obj.smtp_use_tls = request.POST.get('smtp_use_tls') == 'true'
+        settings_obj.from_email = request.POST.get('from_email', '').strip()
+
         settings_obj.save()
         messages.success(request, 'Settings updated.')
         return redirect('site_settings')

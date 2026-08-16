@@ -26,6 +26,9 @@ urlpatterns = [
     path('property-submissions/', views.property_submission_list, name='property_submission_list'),
     path('property-submissions/<int:pk>/', views.property_submission_detail, name='property_submission_detail'),
     path('property-submissions/<int:pk>/update/', views.property_submission_update, name='property_submission_update'),
+    path('property-submissions/<int:pk>/evaluation/set/', views.property_submission_set_evaluation, name='property_submission_set_evaluation'),
+    path('property-submissions/<int:pk>/evaluation/approve/', views.property_submission_approve_evaluation, name='property_submission_approve_evaluation'),
+    path('property-submissions/<int:pk>/evaluation/send/', views.property_submission_send_evaluation, name='property_submission_send_evaluation'),
     path('property-submissions/<int:pk>/convert/', views.property_submission_convert, name='property_submission_convert'),
 
     # Team management (admin only)
