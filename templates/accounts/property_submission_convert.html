@@ -107,21 +107,7 @@ a{color:inherit}
 }
 @media (max-width:560px){.form-grid{grid-template-columns:1fr}.summary-grid{grid-template-columns:1fr 1fr}}
 </style></head><body>
-<div class="scrim" id="scrim"></div><div class="shell"><button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button><aside class="sidebar" id="sidebar">
-<div class="brand"><div class="logo serif">PIE</div><div class="sub">REAL ESTATE</div></div>
-<nav class="nav">
-<a href="{% url 'dashboard' %}"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
-<a href="{% url 'lead_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
-<a href="{% url 'property_submission_list' %}" class="active"><svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg> Submissions{% if pending_submissions_count %}<span class="nav-badge">{{ pending_submissions_count }}</span>{% endif %}</a>
-<a href="{% url 'property_list' %}"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
-<a href="{% url 'customer_list' %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
-{% if request.user.is_crm_admin %}
-<a href="{% url 'team_list' %}"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
-{% endif %}
-</nav>
-<div class="profile"><div class="avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div><div><div class="nm">{{ request.user.get_full_name }}</div><div class="rl">{{ request.user.get_effective_role_name }}</div></div></div>
-<a href="{% url 'logout' %}" style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;margin-top:8px">Sign out</a>
-</aside><main class="main"><div class="topbar">
+<div class="scrim" id="scrim"></div><div class="shell"><button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>{% include 'accounts/_sidebar.html' %}<main class="main"><div class="topbar">
   <button class="menu-btn" id="menuBtnTop"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
   <h1>Approve &amp; Create Property</h1>
   </div><div class="content">

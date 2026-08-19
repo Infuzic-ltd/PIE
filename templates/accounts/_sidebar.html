@@ -1,0 +1,137 @@
+{% with url_name=request.resolver_match.url_name|default:"" %}
+<style>
+.pie-sidebar{width:248px;flex:0 0 248px;background:linear-gradient(180deg,#0d1b3e,#0a1530);color:#cdd6e6;padding:20px 14px;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;z-index:50;font-family:'Inter',system-ui,sans-serif}
+.pie-brand{text-align:center;padding:14px 0 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:14px}
+.pie-brand .pie-logo{font-family:'Playfair Display',serif;font-size:32px;font-weight:700;letter-spacing:6px;color:#c9a24b;line-height:1}
+.pie-brand .pie-sub{font-size:9px;letter-spacing:5px;color:#8b97b3;margin-top:6px;font-weight:600}
+.pie-nav{display:flex;flex-direction:column;gap:2px;flex:1;overflow-y:auto}
+.pie-nav::-webkit-scrollbar{width:0}
+.pie-nav-item{position:relative}
+.pie-nav-row{display:flex;align-items:stretch;border-radius:10px;transition:background .15s}
+.pie-nav-row:hover{background:rgba(255,255,255,.06)}
+.pie-nav-item.pie-active > .pie-nav-row{background:#2563eb;box-shadow:0 6px 16px rgba(37,99,235,.4)}
+.pie-nav-item.pie-active > .pie-nav-row:hover{background:#2563eb}
+.pie-nav-link{flex:1;display:flex;align-items:center;gap:13px;padding:10px 13px;color:#aab6cf;text-decoration:none;font-size:14px;font-weight:500;min-width:0}
+.pie-nav-item.pie-active .pie-nav-link{color:#fff}
+.pie-nav-link svg{width:18px;height:18px;flex:0 0 18px;stroke:currentColor;fill:none;stroke-width:1.8}
+.pie-nav-badge{margin-left:auto;background:#ef4444;color:#fff;font-size:10.5px;font-weight:700;padding:1px 7px;border-radius:10px;flex:0 0 auto}
+.pie-nav-caret{flex:0 0 34px;display:flex;align-items:center;justify-content:center;background:none;border:none;color:#aab6cf;cursor:pointer;padding:0}
+.pie-nav-item.pie-active .pie-nav-caret{color:#fff}
+.pie-nav-caret svg{width:13px;height:13px;stroke:currentColor;fill:none;stroke-width:2.2;transition:transform .18s}
+.pie-nav-item.pie-open .pie-nav-caret svg{transform:rotate(180deg)}
+.pie-subnav{max-height:0;overflow:hidden;transition:max-height .2s ease;display:flex;flex-direction:column;gap:1px;margin-left:30px;padding-left:12px;border-left:1px solid rgba(255,255,255,.1)}
+.pie-nav-item.pie-open .pie-subnav,.pie-nav-item:hover .pie-subnav{max-height:260px}
+.pie-subnav a{font-size:13px;padding:8px 12px;color:#93a1c2;text-decoration:none;border-radius:8px}
+.pie-subnav a:hover{background:rgba(255,255,255,.05);color:#fff}
+.pie-subnav a.pie-active{background:rgba(37,99,235,.16);color:#fff}
+.pie-profile{display:flex;align-items:center;gap:11px;padding:11px;border-radius:12px;background:rgba(255,255,255,.05);margin-top:12px}
+.pie-avatar{width:36px;height:36px;border-radius:50%;background:#3b82f6;display:grid;place-items:center;color:#fff;font-size:14px;font-weight:700;flex:0 0 36px}
+.pie-profile .pie-nm{font-size:13px;font-weight:600;color:#fff}
+.pie-profile .pie-rl{font-size:11px;color:#8b97b3;text-transform:capitalize}
+.pie-logout{display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border-radius:8px;color:#8b97b3;text-decoration:none;font-size:12.5px;font-weight:500;transition:background .15s,color .15s}
+.pie-logout svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8;flex:0 0 15px}
+.pie-logout:hover{background:rgba(239,68,68,.12);color:#ef4444}
+@media (max-width:880px){.pie-sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .pie-sidebar{transform:translateX(0)}}
+</style>
+
+<aside class="pie-sidebar" id="sidebar">
+  <div class="pie-brand">
+    <div class="pie-logo">PIE</div>
+    <div class="pie-sub">REAL ESTATE</div>
+  </div>
+
+  <nav class="pie-nav">
+
+    <div class="pie-nav-item {% if url_name == 'dashboard' %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'dashboard' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
+      </div>
+    </div>
+
+    <div class="pie-nav-item {% if 'lead' in url_name %}pie-active pie-open{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'lead_list' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> Leads</a>
+        <button type="button" class="pie-nav-caret" aria-label="Toggle Leads submenu"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="pie-subnav">
+        <a href="{% url 'lead_list' %}" class="{% if url_name == 'lead_list' %}pie-active{% endif %}">All Leads</a>
+        <a href="{% url 'lead_create' %}" class="{% if url_name == 'lead_create' %}pie-active{% endif %}">Add Lead</a>
+      </div>
+    </div>
+
+    <div class="pie-nav-item {% if 'submission' in url_name %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'property_submission_list' %}" class="pie-nav-link">
+          <svg viewBox="0 0 24 24"><path d="M22 12h-6l-2 3h-4l-2-3H2"/><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z"/></svg>
+          Submissions
+          {% if pending_submissions_count %}<span class="pie-nav-badge">{{ pending_submissions_count }}</span>{% endif %}
+        </a>
+      </div>
+    </div>
+
+    <div class="pie-nav-item {% if 'property' in url_name and 'submission' not in url_name %}pie-active pie-open{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'property_list' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+        <button type="button" class="pie-nav-caret" aria-label="Toggle Properties submenu"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="pie-subnav">
+        <a href="{% url 'property_list' %}" class="{% if url_name == 'property_list' %}pie-active{% endif %}">All Properties</a>
+        <a href="{% url 'property_create' %}" class="{% if url_name == 'property_create' %}pie-active{% endif %}">Add New Property</a>
+      </div>
+    </div>
+
+    <div class="pie-nav-item {% if 'customer' in url_name %}pie-active pie-open{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'customer_list' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="3.6"/><path d="M5 20a7 7 0 0 1 14 0"/></svg> Customers</a>
+        <button type="button" class="pie-nav-caret" aria-label="Toggle Customers submenu"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="pie-subnav">
+        <a href="{% url 'customer_list' %}" class="{% if url_name == 'customer_list' %}pie-active{% endif %}">All Customers</a>
+        <a href="{% url 'customer_create' %}" class="{% if url_name == 'customer_create' %}pie-active{% endif %}">Add Customer</a>
+      </div>
+    </div>
+
+    {% if request.user.is_crm_admin %}
+    <div class="pie-nav-item {% if 'team' in url_name or 'role' in url_name or 'block' in url_name or 'agent_performance' in url_name or url_name == 'set_agent_target' %}pie-active pie-open{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'team_list' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="3"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M17 7.5a2.5 2.5 0 0 1 0 5"/><path d="M21 20a4.5 4.5 0 0 0-4-4.5"/></svg> Team</a>
+        <button type="button" class="pie-nav-caret" aria-label="Toggle Team submenu"><svg viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></svg></button>
+      </div>
+      <div class="pie-subnav">
+        <a href="{% url 'team_list' %}" class="{% if url_name == 'team_list' %}pie-active{% endif %}">All Members</a>
+        <a href="{% url 'team_member_create' %}" class="{% if url_name == 'team_member_create' %}pie-active{% endif %}">Add Member</a>
+        <a href="{% url 'role_list' %}" class="{% if 'role' in url_name %}pie-active{% endif %}">Manage Roles</a>
+        <a href="{% url 'block_list' %}" class="{% if 'block' in url_name %}pie-active{% endif %}">Manage Blocks</a>
+        <a href="{% url 'agent_performance' %}" class="{% if 'agent_performance' in url_name or url_name == 'set_agent_target' %}pie-active{% endif %}">Agent Performance</a>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="pie-nav-item {% if 'site_settings' in url_name %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'site_settings' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>
+      </div>
+    </div>
+
+  </nav>
+
+  <div class="pie-profile">
+    <div class="pie-avatar">{{ request.user.first_name|first|upper }}{{ request.user.last_name|first|upper }}</div>
+    <div>
+      <div class="pie-nm">{{ request.user.get_full_name }}</div>
+      <div class="pie-rl">{{ request.user.get_effective_role_name }}</div>
+    </div>
+  </div>
+  <a href="{% url 'logout' %}" class="pie-logout"><svg viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg> Sign out</a>
+</aside>
+
+<script>
+document.querySelectorAll('.pie-nav-caret').forEach(function(btn){
+  btn.addEventListener('click', function(e){
+    e.preventDefault();
+    e.stopPropagation();
+    btn.closest('.pie-nav-item').classList.toggle('pie-open');
+  });
+});
+</script>
+{% endwith %}
