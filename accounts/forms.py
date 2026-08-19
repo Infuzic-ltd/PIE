@@ -70,6 +70,13 @@ class PropertyForm(forms.ModelForm):
                 self.fields['customer'].queryset = Customer.objects.all()
             else:
                 self.fields['customer'].queryset = Customer.objects.filter(created_by=user)
+            # Only an admin, or the property's own agent, may change affiliate visibility —
+            # a new (not-yet-saved) property is implicitly "owned" by whoever is creating it.
+            can_toggle_affiliate_visibility = (
+                user.is_crm_admin or not self.instance.pk or self.instance.created_by_id == user.id
+            )
+            if not can_toggle_affiliate_visibility:
+                self.fields['show_to_affiliates'].disabled = True
         self.fields['customer'].required = False
         self.fields['customer'].empty_label = '— No customer linked —'
         self.fields['block'].required = False
@@ -79,6 +86,55 @@ class PropertyForm(forms.ModelForm):
 
     def clean_amenities(self):
         return self.cleaned_data.get('amenities', [])
+
+
+class AffiliateInviteForm(forms.ModelForm):
+    password = forms.CharField(
+        widget=forms.PasswordInput, min_length=8, label='Temporary Password',
+        help_text='Share this with the affiliate yourself — they can change it after logging in.',
+    )
+
+    class Meta:
+        model = User
+        fields = ['first_name', 'last_name', 'email', 'phone', 'password']
+
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.username = self.cleaned_data['email']
+        user.set_password(self.cleaned_data['password'])
+        user.role = User.ROLE_AFFILIATE
+        user.affiliate_status = User.AFFILIATE_STATUS_PENDING
+        if commit:
+            user.save()
+        return user
+
+
+class ChangePasswordForm(forms.Form):
+    current_password = forms.CharField(widget=forms.PasswordInput, label='Current Password')
+    new_password = forms.CharField(widget=forms.PasswordInput, min_length=8, label='New Password')
+    confirm_password = forms.CharField(widget=forms.PasswordInput, label='Confirm New Password')
+
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
+    def clean_current_password(self):
+        password = self.cleaned_data['current_password']
+        if not self.user.check_password(password):
+            raise forms.ValidationError('Current password is incorrect.')
+        return password
+
+    def clean(self):
+        cleaned = super().clean()
+        new = cleaned.get('new_password')
+        confirm = cleaned.get('confirm_password')
+        if new and confirm and new != confirm:
+            self.add_error('confirm_password', 'Passwords do not match.')
+        return cleaned
+
+    def save(self):
+        self.user.set_password(self.cleaned_data['new_password'])
+        self.user.save(update_fields=['password'])
 
 
 class TeamMemberCreateForm(forms.ModelForm):
@@ -92,6 +148,11 @@ class TeamMemberCreateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'password', 'badge', 'financial_person', 'legal_person']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Affiliates are onboarded only through the dedicated invite flow, never here.
+        self.fields['role'].choices = [c for c in self.fields['role'].choices if c[0] != User.ROLE_AFFILIATE]
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -116,6 +177,10 @@ class TeamMemberUpdateForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'is_active', 'badge', 'financial_person', 'legal_person']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['role'].choices = [c for c in self.fields['role'].choices if c[0] != User.ROLE_AFFILIATE]
 
     def save(self, commit=True):
         user = super().save(commit=False)
@@ -231,7 +296,7 @@ class LeadForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['assigned_to'].queryset = User.objects.filter(is_active=True)
+        self.fields['assigned_to'].queryset = User.objects.filter(is_active=True).exclude(role=User.ROLE_AFFILIATE)
         self.fields['assigned_to'].empty_label = '— Unassigned —'
         self.fields['assigned_to'].required = False
         self.fields['follow_up_date'].required = False

@@ -1,0 +1,91 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Home — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--green:#22c55e;--purple:#8b5cf6;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700;flex:1}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;align-items:center;justify-content:center;flex:0 0 40px}
+.menu-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+.content{padding:24px 26px 40px;flex:1}
+.welcome{font-size:14px;color:var(--ink-soft);margin-bottom:22px}
+.kpi-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:16px;margin-bottom:22px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow);display:flex;align-items:center;gap:16px}
+.kpi .icon{width:46px;height:46px;border-radius:12px;display:grid;place-items:center;color:#fff;flex:0 0 46px}
+.kpi .icon svg{width:22px;height:22px;stroke:currentColor;fill:none;stroke-width:1.9}
+.kpi .lbl{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--ink-faint);text-transform:uppercase}
+.kpi .val{font-size:26px;font-weight:800;margin-top:2px}
+.bg-blue{background:var(--blue)}.bg-purple{background:var(--purple)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:20px}
+.card-h{font-size:13.5px;font-weight:700;margin-bottom:14px}
+.lead-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.lead-row:last-child{border-bottom:none}
+.lead-row .av{width:34px;height:34px;border-radius:50%;background:var(--blue);color:#fff;display:grid;place-items:center;font-size:12px;font-weight:700;flex:0 0 34px}
+.lead-row .nm{font-size:13.5px;font-weight:600}
+.lead-row .st{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+.empty{color:var(--ink-faint);font-size:13px;text-align:center;padding:20px 0}
+.viewall{display:block;text-align:right;margin-top:14px;font-size:13px;font-weight:600;color:var(--blue)}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:18px 16px 40px}}
+@media(max-width:560px){.kpi-grid{grid-template-columns:1fr}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+{% include 'accounts/_sidebar.html' %}
+
+<main class="main">
+<div class="topbar">
+  <button class="menu-btn" id="menuBtnTop"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <h1>Welcome, {{ request.user.first_name }}</h1>
+</div>
+<div class="content">
+  <p class="welcome">{% if sponsor %}You're working alongside {{ sponsor.get_full_name }}.{% else %}Here's what you have access to right now.{% endif %}</p>
+
+  <div class="kpi-grid">
+    <a href="{% url 'property_list' %}" class="kpi">
+      <div class="icon bg-blue"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></div>
+      <div><div class="lbl">Properties Visible</div><div class="val">{{ property_count }}</div></div>
+    </a>
+    <a href="{% url 'lead_list' %}" class="kpi">
+      <div class="icon bg-purple"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg></div>
+      <div><div class="lbl">Leads You're On</div><div class="val">{{ lead_count }}</div></div>
+    </a>
+  </div>
+
+  <div class="card">
+    <div class="card-h">Recently Updated Leads</div>
+    {% for lead in recent_leads %}
+    <a href="{% url 'lead_detail' lead.pk %}" class="lead-row">
+      <div class="av">{{ lead.initials }}</div>
+      <div><div class="nm">{{ lead.full_name }}</div><div class="st">{{ lead.get_status_display }}</div></div>
+    </a>
+    {% empty %}
+    <div class="empty">You haven't been added to any leads yet.</div>
+    {% endfor %}
+    {% if recent_leads %}<a href="{% url 'lead_list' %}" class="viewall">View All Leads →</a>{% endif %}
+  </div>
+</div>
+</main>
+</div>
+<script>
+const menuBtn = document.getElementById('menuBtn');
+const menuBtnTop = document.getElementById('menuBtnTop');
+const scrim = document.getElementById('scrim');
+function toggleNav(){ document.body.classList.toggle('nav-open'); }
+menuBtn && menuBtn.addEventListener('click', toggleNav);
+menuBtnTop && menuBtnTop.addEventListener('click', toggleNav);
+scrim.addEventListener('click', () => document.body.classList.remove('nav-open'));
+</script>
+</body></html>

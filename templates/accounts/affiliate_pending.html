@@ -1,0 +1,33 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Pending Approval — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--orange:#f59e0b;--red:#ef4444;--radius:16px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.08)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.box{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:40px 34px;max-width:420px;width:100%;text-align:center}
+.logo{font-family:'Playfair Display',serif;font-size:28px;font-weight:700;letter-spacing:5px;color:var(--gold);margin-bottom:22px}
+.icon{width:56px;height:56px;border-radius:50%;background:#fef3c7;color:var(--orange);display:grid;place-items:center;margin:0 auto 18px}
+.icon.rejected{background:#fef2f2;color:var(--red)}
+h1{font-size:19px;font-weight:800;margin-bottom:10px}
+p{font-size:13.5px;color:var(--ink-soft);line-height:1.7;margin-bottom:22px}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:10px 20px;border-radius:10px;font-size:13.5px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;text-decoration:none}
+.btn:hover{background:#f7f9fc}
+</style>
+</head><body>
+<div class="box">
+  <div class="logo">PIE</div>
+  {% if request.user.affiliate_status == 'rejected' %}
+  <div class="icon rejected"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg></div>
+  <h1>Account Not Approved</h1>
+  <p>Your affiliate account was not approved. If you believe this is a mistake, contact the agent who invited you — {{ request.user.invited_by.get_full_name|default:"your sponsoring agent" }}.</p>
+  {% else %}
+  <div class="icon"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg></div>
+  <h1>Awaiting Admin Approval</h1>
+  <p>Thanks for signing up! Your account is pending review by an admin before you can access properties and leads. This usually doesn't take long — check back soon.</p>
+  {% endif %}
+  <a href="{% url 'logout' %}" class="btn">Sign out</a>
+</div>
+</body></html>

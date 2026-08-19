@@ -6,7 +6,7 @@ from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 from functools import wraps
 from django.shortcuts import render, redirect, get_object_or_404
-from django.contrib.auth import login, logout
+from django.contrib.auth import login, logout, update_session_auth_hash
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
@@ -21,7 +21,10 @@ from django.utils.dateparse import parse_datetime, parse_date
 import cloudinary.uploader
 from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
-from .forms import SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm, RoleForm, LeadForm, LeadDocumentForm
+from .forms import (
+    SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm,
+    RoleForm, LeadForm, LeadDocumentForm, AffiliateInviteForm, ChangePasswordForm,
+)
 from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings
 from . import payments as safepay_payments
 from .emailer import send_html_email, EmailNotConfigured, EmailSendError
@@ -86,11 +89,12 @@ def _send_push(subscription, title, body, url='/'):
 
 
 def notify_all(title, body, url='/'):
+    staff = User.objects.filter(is_active=True).exclude(role=User.ROLE_AFFILIATE)
     Notification.objects.bulk_create([
         Notification(recipient=u, title=title, body=body, url=url)
-        for u in User.objects.filter(is_active=True)
+        for u in staff
     ])
-    for sub in PushSubscription.objects.select_related('user').all():
+    for sub in PushSubscription.objects.filter(user__in=staff).select_related('user'):
         _send_push(sub, title, body, url)  # errors are swallowed per-subscription
 
 
@@ -391,13 +395,19 @@ def safepay_setup_guide(request):
     return render(request, 'website/safepay_setup_guide.html')
 
 
+def _post_login_redirect(user):
+    if user.role == User.ROLE_AFFILIATE:
+        return 'affiliate_pending' if not user.affiliate_approved else 'affiliate_home'
+    return 'dashboard'
+
+
 def login_view(request):
     if request.user.is_authenticated:
-        return redirect('dashboard')
+        return redirect(_post_login_redirect(request.user))
     form = LoginForm(request.POST or None)
     if request.method == 'POST' and form.is_valid():
         login(request, form.get_user())
-        return redirect(request.GET.get('next', 'dashboard'))
+        return redirect(request.GET.get('next') or _post_login_redirect(form.get_user()))
     return render(request, 'accounts/login.html', {'form': form})
 
 
@@ -825,7 +835,8 @@ def set_agent_target(request):
 
 @login_required
 def property_list(request):
-    qs = Property.objects.prefetch_related('images').all()
+    base = Property.objects.filter(show_to_affiliates=True) if request.user.is_affiliate else Property.objects.all()
+    qs = base.prefetch_related('images')
 
     q = request.GET.get('q', '').strip()
     status = request.GET.get('status', '')
@@ -844,10 +855,10 @@ def property_list(request):
     if location:
         qs = qs.filter(location__icontains=location)
 
-    total = Property.objects.count()
-    active = Property.objects.filter(status=Property.STATUS_ACTIVE).count()
-    sold = Property.objects.filter(status=Property.STATUS_SOLD).count()
-    inactive = Property.objects.filter(status=Property.STATUS_INACTIVE).count()
+    total = base.count()
+    active = base.filter(status=Property.STATUS_ACTIVE).count()
+    sold = base.filter(status=Property.STATUS_SOLD).count()
+    inactive = base.filter(status=Property.STATUS_INACTIVE).count()
 
     return render(request, 'accounts/property_listing.html', {
         'properties': qs,
@@ -886,6 +897,8 @@ def property_view(request, pk):
         Property.objects.prefetch_related('images', 'documents', 'activities__created_by').select_related('customer', 'created_by', 'block'),
         pk=pk,
     )
+    if request.user.is_affiliate and not prop.show_to_affiliates:
+        return render(request, 'accounts/403.html', status=403)
     can_see_customer = request.user.is_crm_admin or request.user == prop.created_by
     return render(request, 'accounts/property_view.html', {
         'property': prop,
@@ -1042,7 +1055,7 @@ def property_submission_detail(request, pk):
     )
     return render(request, 'accounts/property_submission_detail.html', {
         'submission': submission,
-        'agents': User.objects.filter(is_active=True),
+        'agents': User.objects.filter(is_active=True).exclude(role=User.ROLE_AFFILIATE),
     })
 
 
@@ -1256,7 +1269,7 @@ def push_unsubscribe(request):
 
 @admin_required
 def team_list(request):
-    members = User.objects.select_related('assigned_role').order_by('first_name', 'last_name')
+    members = User.objects.exclude(role=User.ROLE_AFFILIATE).select_related('assigned_role').order_by('first_name', 'last_name')
     return render(request, 'accounts/teams.html', {'members': members})
 
 
@@ -1298,6 +1311,99 @@ def team_member_delete(request, pk):
         member.delete()
         return redirect('team_list')
     return render(request, 'accounts/team_confirm_delete.html', {'member': member})
+
+
+# ── Affiliates ─────────────────────────────────────────────────────────────────
+# Affiliates work for an individual agent, not the company — they're a distinct User
+# role gated by AffiliateAccessMiddleware rather than the normal permission system.
+
+@login_required
+def affiliate_list(request):
+    if request.user.is_crm_admin:
+        affiliates = User.objects.filter(role=User.ROLE_AFFILIATE).select_related('invited_by').order_by('-date_joined')
+    elif request.user.role == User.ROLE_AGENT or request.user.role == User.ROLE_MANAGER:
+        affiliates = User.objects.filter(role=User.ROLE_AFFILIATE, invited_by=request.user).order_by('-date_joined')
+    else:
+        return render(request, 'accounts/403.html', status=403)
+    return render(request, 'accounts/affiliates.html', {
+        'affiliates': affiliates,
+        'pending_count': affiliates.filter(affiliate_status=User.AFFILIATE_STATUS_PENDING).count(),
+        'approved_count': affiliates.filter(affiliate_status=User.AFFILIATE_STATUS_APPROVED).count(),
+    })
+
+
+@login_required
+def affiliate_invite(request):
+    if request.user.role not in (User.ROLE_AGENT, User.ROLE_MANAGER) and not request.user.is_crm_admin:
+        return render(request, 'accounts/403.html', status=403)
+    form = AffiliateInviteForm(request.POST or None)
+    if request.method == 'POST' and form.is_valid():
+        affiliate = form.save(commit=False)
+        affiliate.invited_by = request.user
+        affiliate.save()
+        messages.success(
+            request,
+            f'{affiliate.get_full_name()} has been invited and is awaiting admin approval. '
+            f'Share their email and the password you set with them directly.',
+        )
+        return redirect('affiliate_list')
+    return render(request, 'accounts/affiliate_invite_form.html', {'form': form})
+
+
+@admin_required
+@require_POST
+def affiliate_set_status(request, pk):
+    affiliate = get_object_or_404(User, pk=pk, role=User.ROLE_AFFILIATE)
+    new_status = request.POST.get('status')
+    if new_status == User.AFFILIATE_STATUS_APPROVED:
+        affiliate.affiliate_status = User.AFFILIATE_STATUS_APPROVED
+        affiliate.is_active = True
+        affiliate.save(update_fields=['affiliate_status', 'is_active'])
+        notify_user(
+            affiliate, 'Account Approved',
+            'Your affiliate account has been approved — you can now log in.', '/crm/login/',
+        )
+        messages.success(request, f'{affiliate.get_full_name()} approved.')
+    elif new_status == User.AFFILIATE_STATUS_REJECTED:
+        affiliate.affiliate_status = User.AFFILIATE_STATUS_REJECTED
+        affiliate.is_active = False
+        affiliate.save(update_fields=['affiliate_status', 'is_active'])
+        messages.success(request, f'{affiliate.get_full_name()} rejected.')
+    return redirect('affiliate_list')
+
+
+@login_required
+def affiliate_pending(request):
+    if not request.user.is_affiliate:
+        return redirect(_post_login_redirect(request.user))
+    return render(request, 'accounts/affiliate_pending.html')
+
+
+@login_required
+def affiliate_home(request):
+    if not request.user.is_affiliate:
+        return redirect('dashboard')
+    if not request.user.affiliate_approved:
+        return redirect('affiliate_pending')
+    properties = Property.objects.filter(show_to_affiliates=True)
+    leads = Lead.objects.filter(collaborators=request.user).distinct()
+    return render(request, 'accounts/affiliate_home.html', {
+        'property_count': properties.count(),
+        'lead_count': leads.count(),
+        'recent_leads': leads.order_by('-updated_at')[:5],
+        'sponsor': request.user.invited_by,
+    })
+
+
+@login_required
+def change_password_view(request):
+    form = ChangePasswordForm(request.POST or None, user=request.user)
+    if request.method == 'POST' and form.is_valid():
+        form.save()
+        update_session_auth_hash(request, request.user)
+        messages.success(request, 'Password updated.')
+        return redirect(_post_login_redirect(request.user))
+    return render(request, 'accounts/change_password.html', {'form': form})
 
 
 # ── Role management ───────────────────────────────────────────────────────────
@@ -1710,7 +1816,7 @@ def lead_list(request):
         'deal_closed': base_qs.filter(status=Lead.STATUS_DEAL_CLOSED).count(),
     }
 
-    agents = User.objects.filter(is_active=True) if request.user.is_crm_admin else None
+    agents = User.objects.filter(is_active=True).exclude(role=User.ROLE_AFFILIATE) if request.user.is_crm_admin else None
 
     return render(request, 'accounts/leads.html', {
         'leads': qs,
@@ -1785,10 +1891,24 @@ def lead_detail(request, pk):
         existing_agent_ids.add(lead.assigned_to_id)
     if lead.created_by_id:
         existing_agent_ids.add(lead.created_by_id)
-    eligible_agents = (
-        User.objects.filter(is_active=True).exclude(pk__in=existing_agent_ids).order_by('first_name', 'last_name')
-        if can_manage_collaborators else User.objects.none()
-    )
+    if can_manage_collaborators:
+        # Any active staff member, plus approved affiliates — admins can pull in any
+        # affiliate, but a regular agent can only add an affiliate who was invited by
+        # whoever this lead is assigned to (i.e. their own affiliate, or a teammate's).
+        non_affiliate_q = ~Q(role=User.ROLE_AFFILIATE)
+        if request.user.is_crm_admin:
+            affiliate_q = Q(role=User.ROLE_AFFILIATE, affiliate_status=User.AFFILIATE_STATUS_APPROVED)
+        else:
+            affiliate_q = Q(
+                role=User.ROLE_AFFILIATE, affiliate_status=User.AFFILIATE_STATUS_APPROVED,
+                invited_by_id=lead.assigned_to_id,
+            )
+        eligible_agents = (
+            User.objects.filter(is_active=True).exclude(pk__in=existing_agent_ids)
+            .filter(non_affiliate_q | affiliate_q).order_by('first_name', 'last_name')
+        )
+    else:
+        eligible_agents = User.objects.none()
 
     whatsapp_url = _build_whatsapp_share_url(request, lead, recommendations)
     payments = lead.payments.select_related('recorded_by').all()
@@ -2061,7 +2181,11 @@ def lead_add_collaborator(request, pk):
     can_manage = request.user.is_crm_admin or request.user == lead.created_by or request.user == lead.assigned_to
     if can_manage:
         agent = User.objects.filter(pk=request.POST.get('agent_id'), is_active=True).first()
-        if agent and agent != lead.assigned_to:
+        is_eligible = agent and (
+            agent.role != User.ROLE_AFFILIATE
+            or (agent.affiliate_approved and (request.user.is_crm_admin or agent.invited_by_id == lead.assigned_to_id))
+        )
+        if agent and agent != lead.assigned_to and is_eligible:
             lead.collaborators.add(agent)
             LeadActivity.objects.create(
                 lead=lead,

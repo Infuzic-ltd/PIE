@@ -25,11 +25,26 @@ class User(AbstractUser):
     ROLE_AGENT = 'agent'
     ROLE_MANAGER = 'manager'
     ROLE_ADMIN = 'admin'
+    ROLE_AFFILIATE = 'affiliate'
 
     ROLE_CHOICES = [
         (ROLE_AGENT, 'Agent'),
         (ROLE_MANAGER, 'Sales Manager'),
         (ROLE_ADMIN, 'Admin'),
+        (ROLE_AFFILIATE, 'Affiliate'),
+    ]
+
+    # Affiliates are external workers brought on by an individual agent — not CRM staff.
+    # They sit outside the normal permission system entirely and are gated by
+    # AffiliateAccessMiddleware instead of PERMISSION_DEFAULTS.
+    AFFILIATE_STATUS_PENDING = 'pending'
+    AFFILIATE_STATUS_APPROVED = 'approved'
+    AFFILIATE_STATUS_REJECTED = 'rejected'
+
+    AFFILIATE_STATUS_CHOICES = [
+        (AFFILIATE_STATUS_PENDING, 'Pending Approval'),
+        (AFFILIATE_STATUS_APPROVED, 'Approved'),
+        (AFFILIATE_STATUS_REJECTED, 'Rejected'),
     ]
 
     BADGE_NONE = ''
@@ -61,6 +76,15 @@ class User(AbstractUser):
     legal_person = models.BooleanField(default=False)
     badge = models.CharField(max_length=30, choices=BADGE_CHOICES, blank=True, default=BADGE_NONE)
 
+    invited_by = models.ForeignKey(
+        'self', on_delete=models.SET_NULL, null=True, blank=True, related_name='invited_affiliates',
+        help_text='The agent who invited this affiliate — only set when role is Affiliate.',
+    )
+    affiliate_status = models.CharField(
+        max_length=20, choices=AFFILIATE_STATUS_CHOICES, blank=True, default='',
+        help_text='Approval workflow state — only meaningful when role is Affiliate.',
+    )
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
 
@@ -73,6 +97,14 @@ class User(AbstractUser):
     @property
     def is_crm_admin(self):
         return self.role == self.ROLE_ADMIN
+
+    @property
+    def is_affiliate(self):
+        return self.role == self.ROLE_AFFILIATE
+
+    @property
+    def affiliate_approved(self):
+        return self.affiliate_status == self.AFFILIATE_STATUS_APPROVED
 
     def has_crm_permission(self, perm):
         if self.role == self.ROLE_ADMIN:
@@ -888,6 +920,10 @@ class Property(models.Model):
     listing_type = models.CharField(max_length=10, choices=LISTING_TYPE_CHOICES)
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_ACTIVE)
     show_on_website = models.BooleanField(default=True)
+    show_to_affiliates = models.BooleanField(
+        default=True,
+        help_text='Whether affiliates can see this property. Only an admin or the property\'s own agent can change this.',
+    )
     badge = models.CharField(max_length=20, choices=BADGE_CHOICES, blank=True, default=BADGE_NONE)
     price = models.DecimalField(max_digits=14, decimal_places=2)
     area_size = models.DecimalField(max_digits=10, decimal_places=2)

@@ -39,6 +39,14 @@ urlpatterns = [
     path('team/<int:pk>/edit/', views.team_member_update, name='team_member_update'),
     path('team/<int:pk>/delete/', views.team_member_delete, name='team_member_delete'),
 
+    # Affiliates
+    path('affiliates/', views.affiliate_list, name='affiliate_list'),
+    path('affiliates/invite/', views.affiliate_invite, name='affiliate_invite'),
+    path('affiliates/<int:pk>/set-status/', views.affiliate_set_status, name='affiliate_set_status'),
+    path('affiliate/pending/', views.affiliate_pending, name='affiliate_pending'),
+    path('affiliate/home/', views.affiliate_home, name='affiliate_home'),
+    path('account/change-password/', views.change_password_view, name='change_password'),
+
     # Role management (admin only)
     path('roles/', views.role_list, name='role_list'),
     path('roles/create/', views.role_create, name='role_create'),

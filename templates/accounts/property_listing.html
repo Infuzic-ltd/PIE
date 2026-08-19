@@ -286,7 +286,7 @@ body.view-list .grid-container{display:none}
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="8" height="8" rx="1.5"/><rect x="13" y="3" width="8" height="8" rx="1.5"/><rect x="3" y="13" width="8" height="8" rx="1.5"/><rect x="13" y="13" width="8" height="8" rx="1.5"/></svg>
       </button>
     </div>
-    <a class="btn primary" href="{% url 'property_create' %}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add New Property</a>
+    {% if not request.user.is_affiliate %}<a class="btn primary" href="{% url 'property_create' %}"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Add New Property</a>{% endif %}
   </div>
 </div>
 
@@ -365,6 +365,7 @@ body.view-list .grid-container{display:none}
   <td>
     <div class="act-icons">
       <a href="{% url 'property_view' prop.pk %}" class="act-ic" title="View"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></a>
+      {% if not request.user.is_affiliate %}
       <a href="{% url 'property_update' prop.pk %}" class="act-ic" title="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg></a>
       {% if prop.status == 'active' %}
       <form method="post" action="{% url 'property_set_status' prop.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="status" value="inactive"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="act-ic ic-deactivate" title="Mark Inactive"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button></form>
@@ -374,11 +375,12 @@ body.view-list .grid-container{display:none}
       <form method="post" action="{% url 'property_set_status' prop.pk %}" style="display:inline">{% csrf_token %}<input type="hidden" name="status" value="active"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="act-ic ic-activate" title="Reactivate" style="color:#4338ca"><svg viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg></button></form>
       {% endif %}
       <form method="post" action="{% url 'property_delete' prop.pk %}" style="display:inline" class="crm-confirm-form" data-confirm-message="Delete this property? This cannot be undone." data-confirm-style="danger" data-confirm-label="Delete">{% csrf_token %}<button type="submit" class="act-ic" title="Delete" style="color:#ef4444"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></form>
+      {% endif %}
     </div>
   </td>
 </tr>
 {% empty %}
-<tr><td colspan="10" style="text-align:center;padding:32px;color:#8a94a6">No properties found. <a href="{% url 'property_create' %}" style="color:#2563eb;font-weight:600">Add your first property →</a></td></tr>
+<tr><td colspan="10" style="text-align:center;padding:32px;color:#8a94a6">No properties found.{% if not request.user.is_affiliate %} <a href="{% url 'property_create' %}" style="color:#2563eb;font-weight:600">Add your first property →</a>{% endif %}</td></tr>
 {% endfor %}
     </tbody>
   </table></div>
@@ -406,7 +408,7 @@ body.view-list .grid-container{display:none}
         </div>
         <div class="pg-actions-overlay">
           <a href="{% url 'property_view' prop.pk %}" class="pg-act" title="View"><svg viewBox="0 0 24 24"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg></a>
-          <a href="{% url 'property_update' prop.pk %}" class="pg-act" title="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg></a>
+          {% if not request.user.is_affiliate %}<a href="{% url 'property_update' prop.pk %}" class="pg-act" title="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg></a>{% endif %}
         </div>
       </div>
       <div class="pg-body">
@@ -421,6 +423,7 @@ body.view-list .grid-container{display:none}
       </div>
       <div class="pg-footer">
         <div class="pg-date">{{ prop.created_at|date:"M d, Y" }}</div>
+        {% if not request.user.is_affiliate %}
         <div class="pg-footer-acts">
           {% if prop.status == 'active' %}
           <form method="post" action="{% url 'property_set_status' prop.pk %}">{% csrf_token %}<input type="hidden" name="status" value="inactive"><input type="hidden" name="next" value="{% url 'property_list' %}"><button type="submit" class="fa-btn ic-deactivate" title="Mark Inactive"><svg viewBox="0 0 24 24"><rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/></svg></button></form>
@@ -431,6 +434,7 @@ body.view-list .grid-container{display:none}
           {% endif %}
           <form method="post" action="{% url 'property_delete' prop.pk %}" class="crm-confirm-form" data-confirm-message="Delete this property? This cannot be undone." data-confirm-style="danger" data-confirm-label="Delete">{% csrf_token %}<button type="submit" class="fa-btn danger" title="Delete"><svg viewBox="0 0 24 24"><path d="M3 6h18M8 6V4h8v2M19 6l-1 14H6L5 6"/></svg></button></form>
         </div>
+        {% endif %}
       </div>
     </div>
     {% endwith %}

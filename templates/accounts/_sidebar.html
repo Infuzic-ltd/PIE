@@ -41,6 +41,33 @@
   </div>
 
   <nav class="pie-nav">
+    {% if request.user.is_affiliate %}
+
+    <div class="pie-nav-item {% if url_name == 'affiliate_home' %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'affiliate_home' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Home</a>
+      </div>
+    </div>
+
+    <div class="pie-nav-item {% if 'property' in url_name %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'property_list' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg> Properties</a>
+      </div>
+    </div>
+
+    <div class="pie-nav-item {% if 'lead' in url_name %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'lead_list' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.2"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><path d="M17 8.5a3 3 0 1 1 0 6"/><path d="M19 20a5 5 0 0 0-3-4.6"/></svg> My Leads</a>
+      </div>
+    </div>
+
+    <div class="pie-nav-item {% if url_name == 'change_password' %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'change_password' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Change Password</a>
+      </div>
+    </div>
+
+    {% else %}
 
     <div class="pie-nav-item {% if url_name == 'dashboard' %}pie-active{% endif %}">
       <div class="pie-nav-row">
@@ -91,6 +118,16 @@
       </div>
     </div>
 
+    <div class="pie-nav-item {% if 'affiliate' in url_name %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'affiliate_list' %}" class="pie-nav-link">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          Affiliates
+          {% if pending_affiliates_count %}<span class="pie-nav-badge">{{ pending_affiliates_count }}</span>{% endif %}
+        </a>
+      </div>
+    </div>
+
     {% if request.user.is_crm_admin %}
     <div class="pie-nav-item {% if 'team' in url_name or 'role' in url_name or 'block' in url_name or 'agent_performance' in url_name or url_name == 'set_agent_target' %}pie-active pie-open{% endif %}">
       <div class="pie-nav-row">
@@ -113,6 +150,7 @@
       </div>
     </div>
 
+    {% endif %}
   </nav>
 
   <div class="pie-profile">

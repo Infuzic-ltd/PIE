@@ -1,0 +1,150 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Affiliates — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
+<script src="{% static 'accounts/js/crm-modal.js' %}"></script>
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--blue-light:#3b82f6;--green:#22c55e;--orange:#f59e0b;--purple:#8b5cf6;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700;flex:1}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;align-items:center;justify-content:center;flex:0 0 40px}
+.menu-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+.content{padding:24px 26px 40px;flex:1}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s;white-space:nowrap;font-family:inherit}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,30,60,.1)}
+.btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+.btn.primary:hover{background:#1d4ed8}
+.btn.sm{padding:6px 11px;font-size:12px}
+.kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border:1px solid var(--line);border-radius:var(--radius);padding:16px;box-shadow:var(--shadow)}
+.kpi .lbl{font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--ink-faint);text-transform:uppercase}
+.kpi .val{font-size:26px;font-weight:800;margin-top:4px}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden}
+table{width:100%;border-collapse:collapse}
+thead th{background:#f7f9fc;padding:10px 14px;text-align:left;font-size:11.5px;font-weight:700;letter-spacing:.4px;text-transform:uppercase;color:var(--ink-faint);border-bottom:1px solid var(--line)}
+tbody tr{border-bottom:1px solid var(--line);transition:background .15s}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:#f9fbff}
+tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
+.member-cell{display:flex;align-items:center;gap:11px}
+.member-cell .av{width:34px;height:34px;border-radius:50%;background:var(--purple);display:grid;place-items:center;color:#fff;font-size:13px;font-weight:700;flex:0 0 34px}
+.member-cell .nm{font-weight:600;font-size:13.5px}
+.member-cell .em{font-size:12px;color:var(--ink-soft)}
+.badge{display:inline-flex;align-items:center;padding:3px 9px;border-radius:6px;font-size:11.5px;font-weight:600}
+.badge.pending{background:#fef3c7;color:#b45309}
+.badge.approved{background:#dcfce7;color:#16a34a}
+.badge.rejected{background:#fef2f2;color:#dc2626}
+.actions{display:flex;gap:6px}
+.act-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--line);background:#fff;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+.act-btn.approve{border-color:#bbf7d0;color:#16a34a}
+.act-btn.approve:hover{background:#f0fdf4}
+.act-btn.reject{border-color:#fecaca;color:#dc2626}
+.act-btn.reject:hover{background:#fef2f2}
+.empty{text-align:center;padding:48px 20px;color:var(--ink-soft)}
+.empty svg{width:40px;height:40px;stroke:var(--ink-faint);fill:none;stroke-width:1.4;margin-bottom:12px}
+.msg-list{margin-bottom:16px}
+.msg{padding:11px 16px;border-radius:10px;font-size:13px;font-weight:500;margin-bottom:8px;background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.kpi-row{grid-template-columns:1fr 1fr}.content{padding:18px 16px 40px}}
+@media(max-width:560px){.kpi-row{grid-template-columns:1fr}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+{% include 'accounts/_sidebar.html' %}
+
+<main class="main">
+<div class="topbar">
+  <button class="menu-btn" id="menuBtnTop"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <h1>{% if request.user.is_crm_admin %}Affiliates{% else %}My Affiliates{% endif %}</h1>
+  <a href="{% url 'affiliate_invite' %}" class="btn primary"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 5v14M5 12h14"/></svg> Invite Affiliate</a>
+</div>
+
+<div class="content">
+{% if messages %}
+<div class="msg-list">{% for message in messages %}<div class="msg">{{ message }}</div>{% endfor %}</div>
+{% endif %}
+
+<div class="kpi-row">
+  <div class="kpi"><div class="lbl">Total Affiliates</div><div class="val">{{ affiliates.count }}</div></div>
+  <div class="kpi"><div class="lbl">Pending Approval</div><div class="val" style="color:var(--orange)">{{ pending_count }}</div></div>
+  <div class="kpi"><div class="lbl">Approved</div><div class="val" style="color:var(--green)">{{ approved_count }}</div></div>
+</div>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th>Affiliate</th>
+        <th>Phone</th>
+        {% if request.user.is_crm_admin %}<th>Invited By</th>{% endif %}
+        <th>Status</th>
+        <th>Joined</th>
+        {% if request.user.is_crm_admin %}<th>Actions</th>{% endif %}
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in affiliates %}
+      <tr>
+        <td>
+          <div class="member-cell">
+            <div class="av">{{ a.first_name|first|upper }}{{ a.last_name|first|upper }}</div>
+            <div><div class="nm">{{ a.get_full_name }}</div><div class="em">{{ a.email }}</div></div>
+          </div>
+        </td>
+        <td>{{ a.phone|default:"—" }}</td>
+        {% if request.user.is_crm_admin %}<td>{{ a.invited_by.get_full_name|default:"—" }}</td>{% endif %}
+        <td>
+          {% if a.affiliate_status == 'approved' %}<span class="badge approved">Approved</span>
+          {% elif a.affiliate_status == 'rejected' %}<span class="badge rejected">Rejected</span>
+          {% else %}<span class="badge pending">Pending Approval</span>{% endif %}
+        </td>
+        <td class="nowrap">{{ a.date_joined|date:"M d, Y" }}</td>
+        {% if request.user.is_crm_admin %}
+        <td>
+          <div class="actions">
+            {% if a.affiliate_status != 'approved' %}
+            <form method="post" action="{% url 'affiliate_set_status' a.pk %}">{% csrf_token %}<input type="hidden" name="status" value="approved"><button type="submit" class="act-btn approve">Approve</button></form>
+            {% endif %}
+            {% if a.affiliate_status != 'rejected' %}
+            <form method="post" action="{% url 'affiliate_set_status' a.pk %}" class="crm-confirm-form" data-confirm-message="Reject {{ a.get_full_name|escapejs }}? They will no longer be able to log in." data-confirm-style="danger" data-confirm-label="Reject">{% csrf_token %}<input type="hidden" name="status" value="rejected"><button type="submit" class="act-btn reject">Reject</button></form>
+            {% endif %}
+          </div>
+        </td>
+        {% endif %}
+      </tr>
+      {% empty %}
+      <tr><td colspan="6">
+        <div class="empty">
+          <svg viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+          <p>No affiliates yet. <a href="{% url 'affiliate_invite' %}" style="color:var(--blue);font-weight:600">Invite your first one →</a></p>
+        </div>
+      </td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+</div>
+</main>
+</div>
+
+<script>
+const menuBtn = document.getElementById('menuBtn');
+const menuBtnTop = document.getElementById('menuBtnTop');
+const scrim = document.getElementById('scrim');
+function toggleNav(){ document.body.classList.toggle('nav-open'); }
+menuBtn && menuBtn.addEventListener('click', toggleNav);
+menuBtnTop && menuBtnTop.addEventListener('click', toggleNav);
+scrim.addEventListener('click', () => document.body.classList.remove('nav-open'));
+</script>
+</body></html>
