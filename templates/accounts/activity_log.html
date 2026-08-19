@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Activity Log — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--blue-light:#3b82f6;--green:#22c55e;--orange:#f59e0b;--purple:#8b5cf6;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700;flex:1}
+.menu-btn{display:none;width:40px;height:40px;border-radius:10px;border:1px solid var(--line);background:#fff;cursor:pointer;align-items:center;justify-content:center;flex:0 0 40px}
+.menu-btn svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:2}
+.content{padding:24px 26px 40px;flex:1;max-width:920px}
+.crumb{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--ink-soft);margin-bottom:16px}
+.crumb a{color:var(--blue)}
+.crumb svg{width:14px;height:14px;stroke:currentColor;fill:none;stroke-width:2}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s;white-space:nowrap;font-family:inherit}
+.btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(16,30,60,.1)}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.acts{display:flex;flex-direction:column;padding:8px}
+.act{display:flex;align-items:center;gap:14px;padding:13px 12px;border-bottom:1px solid var(--line);border-radius:10px;transition:background .15s}
+.act:last-child{border-bottom:none}
+.act:hover{background:#f6f9fd}
+.act .ai{width:38px;height:38px;border-radius:10px;background:#f1f5fb;display:grid;place-items:center;color:var(--blue);flex:0 0 38px;font-size:17px}
+.act .at{font-size:13.5px;flex:1;min-width:0}
+.act .ag{font-size:11.5px;color:var(--ink-faint);white-space:nowrap;text-align:right}
+.act .aw{font-size:11.5px;color:var(--ink-soft);font-weight:500;margin-top:2px}
+.empty{text-align:center;padding:52px 20px;color:var(--ink-soft)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-top:1px solid var(--line)}
+.pg-info{font-size:12.5px;color:var(--ink-soft)}
+.pg-btns{display:flex;gap:6px}
+.pg-btn{min-width:32px;height:32px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:500;cursor:pointer;display:grid;place-items:center;color:var(--ink-soft);text-decoration:none;padding:0 8px}
+.pg-btn:hover{background:#f1f5fb}
+.pg-btn.disabled{opacity:.4;pointer-events:none}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:18px 16px 40px}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+
+{% include 'accounts/_sidebar.html' %}
+
+<main class="main">
+<div class="topbar">
+  <button class="float-menu" id="menuBtnTop" style="position:static;width:36px;height:36px;border-radius:9px;background:var(--navy)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <h1>Activity Log</h1>
+  <a href="{% url 'dashboard' %}" class="btn"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg> Back to Dashboard</a>
+</div>
+<div class="content">
+<div class="crumb"><a href="{% url 'dashboard' %}">Dashboard</a> <svg viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></svg> Activity Log</div>
+
+<div class="card">
+  <div class="acts">
+    {% for act in page_obj %}
+    <a href="{{ act.url }}" class="act">
+      <div class="ai">{{ act.icon }}</div>
+      <div style="flex:1;min-width:0">
+        <div class="at">{{ act.text }}</div>
+        {% if act.who %}<div class="aw">{{ act.who.get_full_name }}</div>{% endif %}
+      </div>
+      <div class="ag">{{ act.when|date:"M d, Y" }}<br>{{ act.when|time:"P" }}</div>
+    </a>
+    {% empty %}
+    <div class="empty">No activity recorded yet.</div>
+    {% endfor %}
+  </div>
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination">
+    <div class="pg-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} — {{ page_obj.paginator.count }} total</div>
+    <div class="pg-btns">
+      <a href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}#{% endif %}" class="pg-btn {% if not page_obj.has_previous %}disabled{% endif %}">‹ Prev</a>
+      <a href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}#{% endif %}" class="pg-btn {% if not page_obj.has_next %}disabled{% endif %}">Next ›</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+</div></main></div>
+<script>
+var mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim');
+function tog(){document.body.classList.toggle('nav-open')}
+if(mb)mb.addEventListener('click',tog);if(mbt)mbt.addEventListener('click',tog);if(sc)sc.addEventListener('click',tog);
+</script>
+</body></html>

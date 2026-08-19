@@ -8,6 +8,8 @@ urlpatterns = [
     path('signup/', views.signup_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
     path('dashboard/', views.dashboard_view, name='dashboard'),
+    path('dashboard/export/', views.dashboard_export_csv, name='dashboard_export_csv'),
+    path('activity-log/', views.activity_log, name='activity_log'),
     path('agents/performance/', views.agent_performance_list, name='agent_performance'),
     path('agents/performance/set-target/', views.set_agent_target, name='set_agent_target'),
 

@@ -1,5 +1,7 @@
+import csv
 import json
 import re
+from datetime import timedelta
 from decimal import Decimal, InvalidOperation
 from urllib.parse import quote
 from functools import wraps
@@ -7,7 +9,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-from django.http import JsonResponse, HttpResponseForbidden
+from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db.models import Q, Sum, Count
@@ -447,15 +449,331 @@ def _agent_performance(year, month):
     return rows
 
 
+DASHBOARD_RANGE_CHOICES = [
+    ('this_month', 'This Month'),
+    ('last_month', 'Last Month'),
+    ('last_7', 'Last 7 Days'),
+    ('last_30', 'Last 30 Days'),
+    ('this_year', 'This Year'),
+]
+
+
+def _resolve_dashboard_range(range_key, today):
+    if range_key == 'last_month':
+        first_this = today.replace(day=1)
+        end = first_this - timedelta(days=1)
+        start = end.replace(day=1)
+    elif range_key == 'this_year':
+        start = today.replace(month=1, day=1)
+        end = today
+    elif range_key == 'last_7':
+        start = today - timedelta(days=6)
+        end = today
+    elif range_key == 'last_30':
+        start = today - timedelta(days=29)
+        end = today
+    else:
+        range_key = 'this_month'
+        start = today.replace(day=1)
+        end = today
+    return range_key, start, end
+
+
+def _previous_period(start, end):
+    length = (end - start).days + 1
+    prev_end = start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=length - 1)
+    return prev_start, prev_end
+
+
+def _pct_delta(current, previous):
+    current = float(current or 0)
+    previous = float(previous or 0)
+    if previous == 0:
+        if current == 0:
+            return {'dir': 'flat', 'text': 'No change'}
+        return {'dir': 'up', 'text': 'New this period'}
+    change = (current - previous) / previous * 100
+    if abs(change) < 0.05:
+        return {'dir': 'flat', 'text': 'No change'}
+    return {'dir': 'up' if change > 0 else 'down', 'text': f'{abs(change):.1f}%'}
+
+
+def _dashboard_data(request):
+    """Single source of truth for the dashboard page and its CSV export — computes every
+    KPI/chart/table from real Lead/Property/PropertySubmission data, scoped by the
+    logged-in user's normal lead visibility (admins see everything, agents see their own),
+    the selected date range, and — for admins only — an optional single-agent filter."""
+    today = timezone.localdate()
+    range_key, start, end = _resolve_dashboard_range(request.GET.get('range', 'this_month'), today)
+    prev_start, prev_end = _previous_period(start, end)
+    range_label = f"{start.strftime('%b %d, %Y')} – {end.strftime('%b %d, %Y')}"
+
+    lead_base = _lead_qs(request)
+    filter_agent = None
+    agent_param = request.GET.get('agent', '')
+    if request.user.is_crm_admin and agent_param:
+        filter_agent = User.objects.filter(pk=agent_param, role=User.ROLE_AGENT).first()
+        if filter_agent:
+            lead_base = lead_base.filter(assigned_to=filter_agent)
+
+    if request.user.is_crm_admin:
+        prop_base = Property.objects.filter(created_by=filter_agent) if filter_agent else Property.objects.all()
+        submission_base = PropertySubmission.objects.filter(assigned_to=filter_agent) if filter_agent else PropertySubmission.objects.all()
+    else:
+        prop_base = Property.objects.filter(created_by=request.user)
+        submission_base = PropertySubmission.objects.filter(assigned_to=request.user)
+
+    def in_period(qs, field, s, e):
+        return qs.filter(**{f'{field}__date__gte': s, f'{field}__date__lte': e})
+
+    # ── KPIs ───────────────────────────────────────────────────────────────
+    new_leads = in_period(lead_base, 'created_at', start, end).count()
+    new_leads_prev = in_period(lead_base, 'created_at', prev_start, prev_end).count()
+
+    closed_qs = lead_base.filter(status=Lead.STATUS_DEAL_CLOSED)
+    revenue_current = in_period(closed_qs, 'updated_at', start, end).aggregate(s=Sum('deal_amount'))['s'] or 0
+    revenue_prev = in_period(closed_qs, 'updated_at', prev_start, prev_end).aggregate(s=Sum('deal_amount'))['s'] or 0
+
+    negotiation_idx = Lead.STATUS_ORDER.index(Lead.STATUS_NEGOTIATION)
+    active_stage_statuses = Lead.STATUS_ORDER[negotiation_idx:-1]
+    active_deals = lead_base.filter(status__in=active_stage_statuses).count()
+
+    now = timezone.now()
+    upcoming_follow_ups = lead_base.filter(
+        follow_up_date__gte=now, follow_up_date__lte=now + timedelta(days=7)
+    ).count()
+
+    deals_closed_current = in_period(closed_qs, 'updated_at', start, end).count()
+    deals_closed_prev = in_period(closed_qs, 'updated_at', prev_start, prev_end).count()
+
+    kpis = {
+        'new_leads': new_leads,
+        'new_leads_delta': _pct_delta(new_leads, new_leads_prev),
+        'revenue': revenue_current,
+        'revenue_display': _pkr_millions(revenue_current),
+        'revenue_delta': _pct_delta(revenue_current, revenue_prev),
+        'active_deals': active_deals,
+        'upcoming_follow_ups': upcoming_follow_ups,
+        'deals_closed': deals_closed_current,
+        'deals_closed_delta': _pct_delta(deals_closed_current, deals_closed_prev),
+    }
+
+    # ── Leads conversion funnel — cumulative "reached this stage or later" counts ──
+    funnel_checkpoints = [
+        ('Leads Received', 0),
+        ('Contacted', 2),
+        ('Visit Scheduled', 5),
+        ('Negotiation', 6),
+        ('Documentation', 8),
+        ('Deal Closed', 11),
+    ]
+    funnel = []
+    max_count = None
+    for label, idx in funnel_checkpoints:
+        count = lead_base.filter(status__in=Lead.STATUS_ORDER[idx:]).count()
+        if max_count is None:
+            max_count = count or 1
+        funnel.append({'label': label, 'count': count, 'pct': int(count * 100 / max_count) if max_count else 0})
+
+    # ── Pipeline snapshot — how many leads sit in each key stage right now ──
+    pipeline = {
+        'negotiation': lead_base.filter(status=Lead.STATUS_NEGOTIATION).count(),
+        'documentation': lead_base.filter(status=Lead.STATUS_DOCUMENTATION).count(),
+        'payment_tracking': lead_base.filter(status=Lead.STATUS_PAYMENT_TRACKING).count(),
+        'deal_closed': deals_closed_current,
+    }
+
+    # ── Lead quality (hot/warm/cold) — active pipeline snapshot ──
+    active_leads_qs = lead_base.exclude(status__in=[Lead.STATUS_DEAL_CLOSED, Lead.STATUS_DEAL_LOST])
+    score_counts = dict(active_leads_qs.values_list('lead_score').annotate(c=Count('id')).values_list('lead_score', 'c'))
+    lead_quality = [
+        {'label': 'Hot', 'count': score_counts.get(Lead.SCORE_HOT, 0), 'color': Lead.SCORE_COLORS[Lead.SCORE_HOT]},
+        {'label': 'Warm', 'count': score_counts.get(Lead.SCORE_WARM, 0), 'color': Lead.SCORE_COLORS[Lead.SCORE_WARM]},
+        {'label': 'Cold', 'count': score_counts.get(Lead.SCORE_COLD, 0), 'color': Lead.SCORE_COLORS[Lead.SCORE_COLD]},
+    ]
+    lead_quality_total = sum(r['count'] for r in lead_quality) or 1
+    for row in lead_quality:
+        row['pct'] = int(row['count'] * 100 / lead_quality_total)
+
+    # ── Property submissions snapshot ──
+    submissions_snapshot = {
+        'pending': submission_base.filter(status=PropertySubmission.STATUS_PENDING).count(),
+        'awaiting_approval': submission_base.filter(evaluation_status=PropertySubmission.EVAL_STATUS_PENDING).count(),
+        'listed_in_period': in_period(
+            submission_base.filter(status=PropertySubmission.STATUS_LISTED), 'updated_at', start, end
+        ).count(),
+    }
+
+    # ── Property sales by area (donut) — sold properties in the selected period ──
+    sold_qs = prop_base.filter(status=Property.STATUS_SOLD, sold_at__date__gte=start, sold_at__date__lte=end)
+    city_rows = list(sold_qs.values('city').annotate(total=Sum('price')).order_by('-total'))
+    total_sold_revenue = sum(float(r['total'] or 0) for r in city_rows)
+    donut_colors = ['#3b82f6', '#14b8a6', '#22c55e', '#f59e0b', '#c4b5fd']
+    donut_rows = []
+    top_rows, other_rows = city_rows[:4], city_rows[4:]
+    for i, row in enumerate(top_rows):
+        amt = float(row['total'] or 0)
+        donut_rows.append({
+            'label': row['city'] or 'Unspecified', 'amount': amt, 'amount_display': _pkr_millions(amt),
+            'pct': int(amt * 100 / total_sold_revenue) if total_sold_revenue else 0,
+            'color': donut_colors[i % len(donut_colors)],
+        })
+    if other_rows:
+        amt = sum(float(r['total'] or 0) for r in other_rows)
+        donut_rows.append({
+            'label': 'Others', 'amount': amt, 'amount_display': _pkr_millions(amt),
+            'pct': int(amt * 100 / total_sold_revenue) if total_sold_revenue else 0,
+            'color': donut_colors[len(top_rows) % len(donut_colors)],
+        })
+
+    # ── Revenue overview — monthly deal_amount for closed deals, this year vs last ──
+    this_year = today.year
+    month_labels, this_year_data, last_year_data = [], [], []
+    for m in range(1, 13):
+        month_labels.append(AgentTarget.MONTH_NAMES[m][:3])
+        cur = closed_qs.filter(updated_at__year=this_year, updated_at__month=m).aggregate(s=Sum('deal_amount'))['s'] or 0
+        prev = closed_qs.filter(updated_at__year=this_year - 1, updated_at__month=m).aggregate(s=Sum('deal_amount'))['s'] or 0
+        this_year_data.append(round(float(cur) / 1_000_000, 2))
+        last_year_data.append(round(float(prev) / 1_000_000, 2))
+
+    # ── Recent activities — merged Lead + Property activity feed ──
+    lead_activities = LeadActivity.objects.filter(lead__in=lead_base).select_related('created_by', 'lead').order_by('-created_at')[:10]
+    property_activities = PropertyActivity.objects.filter(property__in=prop_base).select_related('created_by', 'property').order_by('-created_at')[:10]
+    merged = [
+        {
+            'icon': LeadActivity.TYPE_ICONS.get(a.activity_type, '💬'),
+            'text': f'{a.lead.full_name}: {a.description}',
+            'when': a.created_at,
+            'url': f'/crm/leads/{a.lead_id}/',
+        }
+        for a in lead_activities
+    ] + [
+        {
+            'icon': PropertyActivity.TYPE_ICONS.get(a.activity_type, '🏠'),
+            'text': f'{a.property.title}: {a.description}',
+            'when': a.created_at,
+            'url': f'/crm/properties/{a.property_id}/',
+        }
+        for a in property_activities
+    ]
+    merged.sort(key=lambda x: x['when'], reverse=True)
+
+    return {
+        'range_key': range_key,
+        'range_label': range_label,
+        'range_choices': DASHBOARD_RANGE_CHOICES,
+        'filter_agent': filter_agent,
+        'agents_for_filter': (
+            User.objects.filter(role=User.ROLE_AGENT, is_active=True).order_by('first_name', 'last_name')
+            if request.user.is_crm_admin else None
+        ),
+        'kpis': kpis,
+        'funnel': funnel,
+        'pipeline': pipeline,
+        'lead_quality': lead_quality,
+        'submissions_snapshot': submissions_snapshot,
+        'donut_rows': donut_rows,
+        'total_sold_revenue_display': _pkr_millions(total_sold_revenue),
+        'this_year': this_year,
+        'recent_activities': merged[:8],
+        'chart_data': {
+            'donut': {
+                'labels': [r['label'] for r in donut_rows],
+                'values': [round(r['amount'] / 1_000_000, 2) for r in donut_rows],
+                'colors': [r['color'] for r in donut_rows],
+            },
+            'revenue': {
+                'labels': month_labels,
+                'thisYear': this_year_data,
+                'lastYear': last_year_data,
+            },
+        },
+    }
+
+
 @login_required
 def dashboard_view(request):
     today = timezone.localdate()
     performance = _agent_performance(today.year, today.month)
-    return render(request, 'accounts/dashboard.html', {
+    context = {
         'user': request.user,
         'vapid_public_key': settings.VAPID_PUBLIC_KEY,
         'agent_performance': performance[:5],
-    })
+    }
+    context.update(_dashboard_data(request))
+    return render(request, 'accounts/dashboard.html', context)
+
+
+@login_required
+def dashboard_export_csv(request):
+    data = _dashboard_data(request)
+    response = HttpResponse(content_type='text/csv')
+    filename = f"pie-dashboard-{data['range_key']}-{timezone.localdate().isoformat()}.csv"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    writer = csv.writer(response)
+    writer.writerow(['PIE Real Estate — Executive Dashboard Export'])
+    writer.writerow(['Period', data['range_label']])
+    if data['filter_agent']:
+        writer.writerow(['Agent', data['filter_agent'].get_full_name()])
+    writer.writerow([])
+    writer.writerow(['KPI', 'Value'])
+    writer.writerow(['New Leads', data['kpis']['new_leads']])
+    writer.writerow(['Revenue (Deals Closed)', f"PKR {data['kpis']['revenue']:,.0f}"])
+    writer.writerow(['Active Deals', data['kpis']['active_deals']])
+    writer.writerow(['Upcoming Follow-ups (7 days)', data['kpis']['upcoming_follow_ups']])
+    writer.writerow(['Deals Closed', data['kpis']['deals_closed']])
+    writer.writerow([])
+    writer.writerow(['Funnel Stage', 'Leads Reached'])
+    for row in data['funnel']:
+        writer.writerow([row['label'], row['count']])
+    writer.writerow([])
+    writer.writerow(['Pipeline Stage', 'Current Count'])
+    writer.writerow(['Negotiation', data['pipeline']['negotiation']])
+    writer.writerow(['Documentation', data['pipeline']['documentation']])
+    writer.writerow(['Payment Tracking', data['pipeline']['payment_tracking']])
+    writer.writerow(['Deal Closed', data['pipeline']['deal_closed']])
+    writer.writerow([])
+    writer.writerow(['Lead Quality', 'Count'])
+    for row in data['lead_quality']:
+        writer.writerow([row['label'], row['count']])
+    writer.writerow([])
+    writer.writerow(['City', 'Sold Revenue (PKR)'])
+    for row in data['donut_rows']:
+        writer.writerow([row['label'], f"{row['amount']:,.0f}"])
+    return response
+
+
+@login_required
+def activity_log(request):
+    lead_base = _lead_qs(request)
+    prop_base = Property.objects.all() if request.user.is_crm_admin else Property.objects.filter(created_by=request.user)
+
+    lead_activities = LeadActivity.objects.filter(lead__in=lead_base).select_related('created_by', 'lead')
+    property_activities = PropertyActivity.objects.filter(property__in=prop_base).select_related('created_by', 'property')
+    merged = [
+        {
+            'icon': LeadActivity.TYPE_ICONS.get(a.activity_type, '💬'),
+            'text': f'{a.lead.full_name}: {a.description}',
+            'when': a.created_at,
+            'url': f'/crm/leads/{a.lead_id}/',
+            'who': a.created_by,
+        }
+        for a in lead_activities
+    ] + [
+        {
+            'icon': PropertyActivity.TYPE_ICONS.get(a.activity_type, '🏠'),
+            'text': f'{a.property.title}: {a.description}',
+            'when': a.created_at,
+            'url': f'/crm/properties/{a.property_id}/',
+            'who': a.created_by,
+        }
+        for a in property_activities
+    ]
+    merged.sort(key=lambda x: x['when'], reverse=True)
+    paginator = Paginator(merged, 30)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    return render(request, 'accounts/activity_log.html', {'page_obj': page_obj})
 
 
 @login_required
