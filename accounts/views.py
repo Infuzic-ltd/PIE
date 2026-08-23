@@ -1017,7 +1017,7 @@ def property_document_delete(request, pk):
 
 # ── Property Submissions (website "List My Property" / "Property Evaluation") ──
 
-@login_required
+@permission_required('submissions_view')
 def property_submission_list(request):
     qs = PropertySubmission.objects.select_related('assigned_to', 'converted_property').all()
 
@@ -1047,7 +1047,7 @@ def property_submission_list(request):
     })
 
 
-@login_required
+@permission_required('submissions_view')
 def property_submission_detail(request, pk):
     submission = get_object_or_404(
         PropertySubmission.objects.select_related('assigned_to', 'converted_property').prefetch_related('images'),
@@ -1059,7 +1059,7 @@ def property_submission_detail(request, pk):
     })
 
 
-@login_required
+@permission_required('submissions_manage')
 @require_POST
 def property_submission_update(request, pk):
     submission = get_object_or_404(PropertySubmission, pk=pk)
@@ -1131,7 +1131,7 @@ def property_submission_approve_evaluation(request, pk):
     return redirect('property_submission_detail', pk=pk)
 
 
-@login_required
+@permission_required('submissions_manage')
 @require_POST
 def property_submission_send_evaluation(request, pk):
     submission = get_object_or_404(PropertySubmission, pk=pk)
@@ -1177,7 +1177,7 @@ def property_submission_send_evaluation(request, pk):
     return redirect('property_submission_detail', pk=pk)
 
 
-@login_required
+@permission_required('submissions_manage')
 def property_submission_convert(request, pk):
     submission = get_object_or_404(PropertySubmission.objects.prefetch_related('images'), pk=pk)
     if submission.converted_property_id:
@@ -1317,7 +1317,7 @@ def team_member_delete(request, pk):
 # Affiliates work for an individual agent, not the company — they're a distinct User
 # role gated by AffiliateAccessMiddleware rather than the normal permission system.
 
-@login_required
+@permission_required('affiliates_view')
 def affiliate_list(request):
     if request.user.is_crm_admin:
         affiliates = User.objects.filter(role=User.ROLE_AFFILIATE).select_related('invited_by').order_by('-date_joined')
@@ -1332,7 +1332,7 @@ def affiliate_list(request):
     })
 
 
-@login_required
+@permission_required('affiliates_manage')
 def affiliate_invite(request):
     if request.user.role not in (User.ROLE_AGENT, User.ROLE_MANAGER) and not request.user.is_crm_admin:
         return render(request, 'accounts/403.html', status=403)
@@ -1542,7 +1542,7 @@ def notifications_feed(request):
 
 # ── Customers ─────────────────────────────────────────────────────────────────
 
-@login_required
+@permission_required('customers_view')
 def customer_list(request):
     if request.user.is_crm_admin:
         customers = Customer.objects.select_related('created_by').all()
@@ -1551,7 +1551,7 @@ def customer_list(request):
     return render(request, 'accounts/customers.html', {'customers': customers})
 
 
-@login_required
+@permission_required('customers_view')
 def customer_detail(request, pk):
     if request.user.is_crm_admin:
         customer = get_object_or_404(
@@ -1620,7 +1620,7 @@ def _parse_vehicles_json(request):
     return vehicles
 
 
-@login_required
+@permission_required('customers_manage')
 def customer_create(request):
     form = CustomerForm(request.POST or None, user=request.user)
     if request.method == 'POST' and form.is_valid():
@@ -1637,7 +1637,7 @@ def customer_create(request):
     return render(request, 'accounts/customer_form.html', {'form': form, 'action': 'Add Customer'})
 
 
-@login_required
+@permission_required('customers_manage')
 def customer_update(request, pk):
     if request.user.is_crm_admin:
         customer = get_object_or_404(Customer, pk=pk)
@@ -1654,7 +1654,7 @@ def customer_update(request, pk):
     return render(request, 'accounts/customer_form.html', {'form': form, 'customer': customer, 'action': 'Edit Customer'})
 
 
-@login_required
+@permission_required('customers_manage')
 def customer_delete(request, pk):
     if request.user.is_crm_admin:
         customer = get_object_or_404(Customer, pk=pk)

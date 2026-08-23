@@ -2,22 +2,32 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 
 PERMISSION_LIST = [
-    ('dashboard',         'View Dashboard'),
-    ('properties_view',   'View Properties'),
-    ('properties_add',    'Add Properties'),
-    ('properties_edit',   'Edit Properties'),
-    ('properties_delete', 'Delete Properties'),
-    ('leads_view',        'View Leads'),
-    ('leads_manage',      'Manage Leads'),
-    ('reports_view',      'View Reports'),
-    ('team_view',         'View Team'),
+    ('dashboard',          'View Dashboard'),
+    ('properties_view',    'View Properties'),
+    ('properties_add',     'Add Properties'),
+    ('properties_edit',    'Edit Properties'),
+    ('properties_delete',  'Delete Properties'),
+    ('leads_view',         'View Leads'),
+    ('leads_manage',       'Manage Leads'),
+    ('customers_view',     'View Customers'),
+    ('customers_manage',   'Manage Customers'),
+    ('submissions_view',   'View Property Submissions'),
+    ('submissions_manage', 'Manage Property Submissions'),
+    ('affiliates_view',    'View Affiliates'),
+    ('affiliates_manage',  'Manage Affiliates'),
+    ('reports_view',       'View Reports'),
+    ('team_view',          'View Team'),
 ]
 
 PERMISSION_DEFAULTS = {
     'admin':   [p[0] for p in PERMISSION_LIST],
     'manager': ['dashboard', 'properties_view', 'properties_add', 'properties_edit',
-                'properties_delete', 'leads_view', 'leads_manage', 'reports_view', 'team_view'],
-    'agent':   ['dashboard', 'properties_view', 'properties_add', 'leads_view'],
+                'properties_delete', 'leads_view', 'leads_manage', 'customers_view',
+                'customers_manage', 'submissions_view', 'submissions_manage',
+                'affiliates_view', 'affiliates_manage', 'reports_view', 'team_view'],
+    'agent':   ['dashboard', 'properties_view', 'properties_add', 'leads_view',
+                'customers_view', 'customers_manage', 'submissions_view',
+                'submissions_manage', 'affiliates_view', 'affiliates_manage'],
 }
 
 
@@ -109,8 +119,9 @@ class User(AbstractUser):
     def has_crm_permission(self, perm):
         if self.role == self.ROLE_ADMIN:
             return True
-        if self.assigned_role_id:
-            return perm in (self.assigned_role.permissions or [])
+        role = self.assigned_role or Role.objects.filter(system_role=self.role).first()
+        if role:
+            return perm in (role.permissions or [])
         return perm in PERMISSION_DEFAULTS.get(self.role, [])
 
     def get_effective_role_name(self):
@@ -976,10 +987,20 @@ class Property(models.Model):
 
 
 class Role(models.Model):
+    # Set only on the two built-in rows that back the "Agent" / "Sales Manager" base
+    # roles' default permissions (see User.has_crm_permission). Custom roles created by
+    # an admin leave this null — RoleForm never exposes the field, so it can't be set
+    # through the UI.
+    SYSTEM_ROLE_CHOICES = [
+        ('agent', 'Agent'),
+        ('manager', 'Manager'),
+    ]
+
     name = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True)
     permissions = models.JSONField(default=list)
     is_system = models.BooleanField(default=False)
+    system_role = models.CharField(max_length=20, choices=SYSTEM_ROLE_CHOICES, blank=True, null=True, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -994,6 +1015,11 @@ class Role(models.Model):
     def permission_labels(self):
         label_map = dict(PERMISSION_LIST)
         return [label_map[p] for p in (self.permissions or []) if p in label_map]
+
+    def member_count(self):
+        if self.system_role:
+            return User.objects.filter(role=self.system_role, assigned_role__isnull=True).count()
+        return self.members.count()
 
 
 class PushSubscription(models.Model):

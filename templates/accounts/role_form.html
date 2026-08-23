@@ -86,7 +86,8 @@ input:focus,textarea:focus{outline:none;border-color:var(--blue);box-shadow:0 0 
       <div class="card-title">Role Details</div>
       <div class="form-group">
         <label>Role Name</label>
-        <input type="text" name="name" value="{{ form.name.value|default:'' }}" placeholder="e.g. Senior Agent, Branch Manager">
+        <input type="text" name="name" value="{{ form.name.value|default:'' }}" placeholder="e.g. Senior Agent, Branch Manager" {% if form.instance.is_system %}readonly{% endif %}>
+        {% if form.instance.is_system %}<div class="help">This is a base role — its name is fixed, but you can still edit its permissions below.</div>{% endif %}
         {% for e in form.name.errors %}<div class="field-err">{{ e }}</div>{% endfor %}
       </div>
       <div class="form-group">

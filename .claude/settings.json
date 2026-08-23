@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(grep -v -E '\\\\.\\(png|jpg|svg|ico\\)$')",
+      "Bash(python3 manage.py shell -c ' *)",
+      "Bash(python3 manage.py makemigrations accounts --name role_system_role)"
+    ]
+  }
+}

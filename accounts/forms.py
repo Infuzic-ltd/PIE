@@ -140,7 +140,7 @@ class ChangePasswordForm(forms.Form):
 class TeamMemberCreateForm(forms.ModelForm):
     password = forms.CharField(widget=forms.PasswordInput, min_length=8, label='Password')
     assigned_role = forms.ModelChoiceField(
-        queryset=Role.objects.all(), required=False,
+        queryset=Role.objects.filter(system_role__isnull=True), required=False,
         empty_label='— Use default role permissions —',
         label='Custom Role (optional)',
     )
@@ -169,7 +169,7 @@ class TeamMemberUpdateForm(forms.ModelForm):
         label='New Password', help_text='Leave blank to keep current password.',
     )
     assigned_role = forms.ModelChoiceField(
-        queryset=Role.objects.all(), required=False,
+        queryset=Role.objects.filter(system_role__isnull=True), required=False,
         empty_label='— Use default role permissions —',
         label='Custom Role (optional)',
     )
@@ -208,6 +208,10 @@ class RoleForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk and self.instance.permissions:
             self.initial['permissions'] = self.instance.permissions
+        if self.instance.is_system:
+            # Name is tied to the hardcoded base role (User.ROLE_CHOICES) elsewhere in
+            # the app — renaming it here would desync from those labels.
+            self.fields['name'].disabled = True
 
     def clean_permissions(self):
         return self.cleaned_data.get('permissions', [])
