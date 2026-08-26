@@ -196,7 +196,7 @@
     <a href="{% url 'website_contact' %}">Contact</a>
   </div>
   <div class="nav-right">
-    <div class="phone-pill">📞 +92 300 1234567</div>
+    <div class="phone-pill">📞 +92 311 1222141</div>
     <a href="{% url 'website_contact' %}" class="btn btn-gold btn-sm">Book a Call</a>
   </div>
   <button class="menu-toggle">☰</button>
@@ -280,7 +280,7 @@
       <div class="agent-name">{% if property.created_by %}{{ property.created_by.get_full_name }}{% else %}PIE Real Estate{% endif %}</div>
       <div class="agent-role">{% if property.created_by %}{{ property.created_by.get_effective_role_name }}{% else %}Listing Agent{% endif %}</div>
       <div class="agent-actions">
-        {% with agent_phone=property.created_by.phone|default:"+923001234567" %}
+        {% with agent_phone=property.created_by.phone|default:"+923111222141" %}
         <a href="tel:{{ agent_phone }}" class="btn btn-outline-dark" style="width:100%">📞 Call {% if property.created_by %}Agent{% else %}Us{% endif %}</a>
         <a href="https://wa.me/{{ agent_phone|cut:'+' }}?text=Hi%2C%20I%27m%20interested%20in%20{{ property.title|urlencode }}" target="_blank" class="btn btn-wa" style="width:100%">💬 WhatsApp</a>
         {% endwith %}
@@ -350,7 +350,7 @@
     <div>
       <h5>Contact Us</h5>
       <ul class="footer-contact">
-        <li>📞 +92 300 1234567</li>
+        <li>📞 +92 311 1222141</li>
         <li>✉ info@pierealestate.com</li>
         <li>📍 Sales Office, Naya Nazimabad, Karachi</li>
       </ul>
