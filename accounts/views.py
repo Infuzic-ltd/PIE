@@ -1,4 +1,3 @@
-import csv
 import json
 import re
 from datetime import timedelta
@@ -28,6 +27,7 @@ from .forms import (
 from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings
 from . import payments as safepay_payments
 from .emailer import send_html_email, EmailNotConfigured, EmailSendError
+from .reports import build_dashboard_pdf
 from django.template.loader import render_to_string
 
 
@@ -716,41 +716,12 @@ def dashboard_view(request):
 
 
 @login_required
-def dashboard_export_csv(request):
+def dashboard_export_pdf(request):
     data = _dashboard_data(request)
-    response = HttpResponse(content_type='text/csv')
-    filename = f"pie-dashboard-{data['range_key']}-{timezone.localdate().isoformat()}.csv"
+    pdf_bytes = build_dashboard_pdf(data)
+    filename = f"pie-dashboard-{data['range_key']}-{timezone.localdate().isoformat()}.pdf"
+    response = HttpResponse(pdf_bytes, content_type='application/pdf')
     response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    writer = csv.writer(response)
-    writer.writerow(['PIE Real Estate — Executive Dashboard Export'])
-    writer.writerow(['Period', data['range_label']])
-    if data['filter_agent']:
-        writer.writerow(['Agent', data['filter_agent'].get_full_name()])
-    writer.writerow([])
-    writer.writerow(['KPI', 'Value'])
-    writer.writerow(['New Leads', data['kpis']['new_leads']])
-    writer.writerow(['Revenue (Deals Closed)', f"PKR {data['kpis']['revenue']:,.0f}"])
-    writer.writerow(['Active Deals', data['kpis']['active_deals']])
-    writer.writerow(['Upcoming Follow-ups (7 days)', data['kpis']['upcoming_follow_ups']])
-    writer.writerow(['Deals Closed', data['kpis']['deals_closed']])
-    writer.writerow([])
-    writer.writerow(['Funnel Stage', 'Leads Reached'])
-    for row in data['funnel']:
-        writer.writerow([row['label'], row['count']])
-    writer.writerow([])
-    writer.writerow(['Pipeline Stage', 'Current Count'])
-    writer.writerow(['Negotiation', data['pipeline']['negotiation']])
-    writer.writerow(['Documentation', data['pipeline']['documentation']])
-    writer.writerow(['Payment Tracking', data['pipeline']['payment_tracking']])
-    writer.writerow(['Deal Closed', data['pipeline']['deal_closed']])
-    writer.writerow([])
-    writer.writerow(['Lead Quality', 'Count'])
-    for row in data['lead_quality']:
-        writer.writerow([row['label'], row['count']])
-    writer.writerow([])
-    writer.writerow(['City', 'Sold Revenue (PKR)'])
-    for row in data['donut_rows']:
-        writer.writerow([row['label'], f"{row['amount']:,.0f}"])
     return response
 
 

@@ -195,7 +195,7 @@
           </select>
           {% endif %}
         </form>
-        <a class="btn primary" href="{% url 'dashboard_export_csv' %}?range={{ range_key }}{% if filter_agent %}&agent={{ filter_agent.pk }}{% endif %}"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4"/><path d="M5 20h14"/></svg> Export Report</a>
+        <a class="btn primary" href="{% url 'dashboard_export_pdf' %}?range={{ range_key }}{% if filter_agent %}&agent={{ filter_agent.pk }}{% endif %}"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4"/><path d="M5 20h14"/></svg> Export Report</a>
         <button class="btn" id="notifBtn" onclick="handleNotifBtn()">
           <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
           <span id="notifLabel">Enable Notifications</span>
