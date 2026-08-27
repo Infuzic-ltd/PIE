@@ -708,7 +708,6 @@ def dashboard_view(request):
     performance = _agent_performance(today.year, today.month)
     context = {
         'user': request.user,
-        'vapid_public_key': settings.VAPID_PUBLIC_KEY,
         'agent_performance': performance[:5],
     }
     context.update(_dashboard_data(request))

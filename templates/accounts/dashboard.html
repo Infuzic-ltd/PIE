@@ -51,7 +51,7 @@
   .topbar h1{font-size:21px;font-weight:800;display:flex;align-items:center;gap:11px}
   .topbar .ico-badge{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#fde68a,#f59e0b);display:grid;place-items:center;color:#7c4a03;}
   .topbar .subtitle{font-size:13px;color:var(--ink-soft);margin-top:5px;margin-left:45px}
-  .top-actions{display:flex;gap:10px;flex-wrap:wrap}
+  .top-actions{display:flex;gap:10px;flex-wrap:wrap;margin-left:auto;justify-content:flex-end}
   .btn{display:inline-flex;align-items:center;gap:8px;padding:9px 15px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;transition:transform .12s,box-shadow .12s,background .12s;white-space:nowrap;}
   .btn svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
   .btn:hover{transform:translateY(-1px);box-shadow:var(--shadow-sm)}
@@ -196,10 +196,6 @@
           {% endif %}
         </form>
         <a class="btn primary" href="{% url 'dashboard_export_pdf' %}?range={{ range_key }}{% if filter_agent %}&agent={{ filter_agent.pk }}{% endif %}"><svg viewBox="0 0 24 24"><path d="M12 4v11m0 0 4-4m-4 4-4-4"/><path d="M5 20h14"/></svg> Export Report</a>
-        <button class="btn" id="notifBtn" onclick="handleNotifBtn()">
-          <svg viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>
-          <span id="notifLabel">Enable Notifications</span>
-        </button>
       </div>
     </header>
     <p style="font-size:13px;color:var(--ink-soft);margin:-14px 0 18px 0">Showing <strong>{{ range_label }}</strong>{% if filter_agent %} for <strong>{{ filter_agent.get_full_name }}</strong>{% endif %}</p>
@@ -359,99 +355,6 @@
 {{ chart_data|json_script:"chartData" }}
 
 <script>
-  // ── Web Push ───────────────────────────────────────────────────────────────
-  const VAPID_PUBLIC_KEY = '{{ vapid_public_key|escapejs }}';
-  const SW_URL = '{% url "service_worker" %}';
-  const SUBSCRIBE_URL = '{% url "push_subscribe" %}';
-  const UNSUBSCRIBE_URL = '{% url "push_unsubscribe" %}';
-  const TEST_URL = '{% url "push_test" %}';
-  const CSRF_TOKEN = '{{ csrf_token }}';
-
-  function urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-    const raw = atob(base64);
-    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
-  }
-
-  let swReg = null;
-
-  async function initSW() {
-    if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
-    try {
-      swReg = await navigator.serviceWorker.register(SW_URL);
-      return swReg;
-    } catch (e) { console.error('SW register failed', e); return null; }
-  }
-
-  async function getCurrentSubscription() {
-    if (!swReg) await initSW();
-    if (!swReg) return null;
-    return swReg.pushManager.getSubscription();
-  }
-
-  async function updateNotifBtn() {
-    const sub = await getCurrentSubscription();
-    const btn = document.getElementById('notifBtn');
-    const lbl = document.getElementById('notifLabel');
-    if (!btn) return;
-    if (Notification.permission === 'denied') {
-      lbl.textContent = 'Notifications Blocked';
-      btn.title = 'Unblock in browser settings';
-      return;
-    }
-    if (sub) {
-      lbl.textContent = 'Send Test Notification';
-      btn.style.background = '#22c55e';
-      btn.style.borderColor = '#22c55e';
-      btn.style.color = '#fff';
-    } else {
-      lbl.textContent = 'Enable Notifications';
-      btn.style = '';
-    }
-  }
-
-  async function subscribe() {
-    if (!swReg) { crmAlert('Service worker not ready. Please refresh and try again.', {style:'danger'}); return; }
-    const permission = await Notification.requestPermission();
-    if (permission !== 'granted') { crmAlert('Notification permission denied.', {style:'danger'}); return; }
-    try {
-      const sub = await swReg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY),
-      });
-      const subJson = sub.toJSON();
-      await fetch(SUBSCRIBE_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF_TOKEN },
-        body: JSON.stringify(subJson),
-      });
-      updateNotifBtn();
-    } catch (e) { console.error('Subscribe failed', e); crmAlert('Could not subscribe: ' + e.message, {style:'danger'}); }
-  }
-
-  async function handleNotifBtn() {
-    const sub = await getCurrentSubscription();
-    if (sub) {
-      // Already subscribed → send test
-      const res = await fetch(TEST_URL, {
-        method: 'POST',
-        headers: { 'X-CSRFToken': CSRF_TOKEN },
-      });
-      const data = await res.json();
-      if (data.status === 'sent') crmAlert('Test notification sent! Check your device.');
-      else crmAlert('Error: ' + (data.error || 'unknown'), {style:'danger'});
-    } else {
-      await subscribe();
-    }
-  }
-
-  // Init on load
-  window.addEventListener('load', async () => {
-    await initSW();
-    if ('Notification' in window) updateNotifBtn();
-  });
-
   // ── Dashboard UI ───────────────────────────────────────────────────────────
   const body = document.body, menuBtn = document.getElementById('menuBtn'), scrim = document.getElementById('scrim');
   menuBtn.addEventListener('click', () => body.classList.toggle('nav-open'));
