@@ -104,17 +104,18 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
 
   <div class="masthead">
     <div class="eyebrow">WhatsApp Business API &mdash; Template Submission Plan</div>
-    <h1>PIE Real Estate needs 5 message templates</h1>
-    <p class="lede">Four cover the inventory-change alert (grouped by shape, not by event, so one wording pattern reuses across similar changes) and one covers the lead property recommendation. This is a greenfield build &mdash; the CRM has no WhatsApp Business API integration today, only a client-side <span class="mono">wa.me</span> share link, so nothing here reuses an existing template convention.</p>
+    <h1>PIE Real Estate needs 10 message templates</h1>
+    <p class="lede">Four cover the inventory-change alert, one covers the lead property recommendation, and five new ones extend WhatsApp across the rest of the CRM&rsquo;s existing pipeline &mdash; lead reminders, internal FYI alerts, financial figures, client-facing milestones, and affiliate onboarding. Every group is grouped by shape, not by event, so one wording pattern reuses across several distinct triggers. Document-expiry and affiliate-commission notifications are deliberately excluded &mdash; both need a new field added to the data model first (see Implementation notes).</p>
     <div class="decisions">
       <span class="chip">Scope &rarr; <b>grouped by shape</b></span>
-      <span class="chip">Lead template category &rarr; <b>Utility</b></span>
+      <span class="chip">Lead-facing templates &rarr; <b>Utility</b></span>
       <span class="chip">Language &rarr; <b>English only</b></span>
+      <span class="chip">Tier 3 (needs new fields) &rarr; <b>skipped</b></span>
     </div>
   </div>
 
   <h2>At a glance</h2>
-  <p class="lede">All five submit under Meta&rsquo;s current three-category system (Utility / Marketing / Authentication). Every template here is Utility &mdash; the agent/affiliate alerts because they report on an operational change to inventory the recipient already manages, and the lead template because it is scoped to reply to an inbound inquiry (see the compliance note in its card below).</p>
+  <p class="lede">All ten submit under Meta&rsquo;s current three-category system (Utility / Marketing / Authentication) and every one here is Utility. The inventory and internal templates report on an operational change the recipient already manages; the two client-facing templates are scoped to a reply to that specific lead&rsquo;s own inquiry or an update on their own active deal (see the compliance notes in those cards).</p>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Template</th><th>Audience</th><th>Covers</th><th>Category</th></tr></thead>
@@ -123,7 +124,12 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
         <tr><td class="name mono">property_status_change</td><td>Agents &amp; Affiliates</td><td>Sold &middot; On Hold &middot; Availability Changed &middot; Withdrawn / Reactivated</td><td>Utility</td></tr>
         <tr><td class="name mono">property_price_change</td><td>Agents &amp; Affiliates</td><td>Price / Rate Changed</td><td>Utility</td></tr>
         <tr><td class="name mono">property_listing_modified</td><td>Agents &amp; Affiliates</td><td>Documents Updated &middot; Property Details Modified</td><td>Utility</td></tr>
+        <tr><td class="name mono">lead_reminder_alert</td><td>Agents &amp; Collaborators</td><td>Visit Scheduled &middot; Visit Reminder &middot; Follow-Up Reminder</td><td>Utility</td></tr>
+        <tr><td class="name mono">internal_fyi_alert</td><td>Agents &amp; Admins</td><td>New Lead Assigned &middot; Submission Needs Evaluation &middot; Deal Lost</td><td>Utility</td></tr>
+        <tr><td class="name mono">internal_figures_alert</td><td>Agents &amp; Admins</td><td>Payment Recorded &middot; Deal Terms Locked &middot; Agent Target Pace</td><td>Utility</td></tr>
         <tr><td class="name mono">property_recommendation</td><td>Leads</td><td>Matching properties in reply to an inquiry</td><td>Utility</td></tr>
+        <tr><td class="name mono">client_milestone_alert</td><td>Leads &amp; Customers</td><td>Booking Confirmed &middot; Documentation &middot; Possession Complete &middot; Deal Closed</td><td>Utility</td></tr>
+        <tr><td class="name mono">affiliate_approved_alert</td><td>Affiliates</td><td>Affiliate Account Approved</td><td>Utility</td></tr>
       </tbody>
     </table>
   </div>
@@ -338,7 +344,160 @@ Open the CRM for full listing details.</div>
     </div>
   </div>
 
-  <h2>Lead recommendation</h2>
+  <h2>Lead &amp; pipeline alerts &mdash; internal</h2>
+  <p class="lede">Three shapes cover nine distinct trigger points across the lead pipeline. None of these have a WhatsApp equivalent today &mdash; two of the underlying events (payments, deal terms) don&rsquo;t even fire an in-app notification yet, so this is new hook code, not just a new channel on an existing one.</p>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">lead_reminder_alert</div>
+        <div class="tpl-covers">Covers: Visit Scheduled &middot; Visit Reminder (upcoming) &middot; Follow-Up Reminder (due/overdue)</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Reminder: {{1}}</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
+        <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Lead
+https://your-pie-domain.com/crm/leads/{{1}}/</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">{{1}}
+
+Contact: {{2}}
+Date &amp; time: {{3}}
+
+Open the CRM for full details.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Header {{1}}</td><td>Lead name</td><td class="mono">Ali Raza</td></tr>
+          <tr><td class="mono">Body {{1}}</td><td>Context line (which of the three events this is)</td><td class="mono">A site visit has been scheduled for this lead.</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Lead&rsquo;s contact number</td><td class="mono">0321-9876543</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Relevant date &amp; time</td><td class="mono">30 Aug 2026, 11:00 AM</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Lead ID (URL suffix)</td><td class="mono">218</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">Reminder: Ali Raza</div>
+        <div>A site visit has been scheduled for this lead.
+
+Contact: 0321-9876543
+Date &amp; time: 30 Aug 2026, 11:00 AM
+
+Open the CRM for full details.</div>
+        <div class="wa-footer">PIE Real Estate CRM</div>
+        <div class="wa-btn">&#128279; View Lead</div>
+      </div>
+    </div>
+    <div class="note">Body {{1}} is the only thing that changes between the three triggers &mdash; the app sends a different context line, same template: Visit Scheduled &rarr; &ldquo;A site visit has been scheduled for this lead.&rdquo; &middot; Visit Reminder &rarr; &ldquo;Reminder: this lead&rsquo;s site visit is coming up soon.&rdquo; &middot; Follow-Up Reminder &rarr; &ldquo;Follow-up is due for this lead.&rdquo;</div>
+  </div>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">internal_fyi_alert</div>
+        <div class="tpl-covers">Covers: New Lead Assigned &middot; Property Submission Needs Evaluation &middot; Deal Lost</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">CRM Alert: {{1}}</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">{{1}}
+
+Date &amp; time: {{2}}
+
+Open the CRM for full details.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Header {{1}}</td><td>Short event label</td><td class="mono">New Lead Assigned</td></tr>
+          <tr><td class="mono">Body {{1}}</td><td>Freeform detail line</td><td class="mono">Ali Raza (0321-9876543) has been assigned to you. Source: Website Inquiry.</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Date &amp; time of the event</td><td class="mono">28 Aug 2026, 10:05 AM</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">CRM Alert: New Lead Assigned</div>
+        <div>Ali Raza (0321-9876543) has been assigned to you. Source: Website Inquiry.
+
+Date &amp; time: 28 Aug 2026, 10:05 AM
+
+Open the CRM for full details.</div>
+        <div class="wa-footer">PIE Real Estate CRM</div>
+      </div>
+    </div>
+    <div class="note">No button here &mdash; this template spans Leads and Property Submissions, which live at different CRM URLs, and a WhatsApp button&rsquo;s base URL is fixed at template-creation time, so one button can&rsquo;t correctly route both. Example header/body pairs per trigger: New Lead Assigned &rarr; &ldquo;New Lead Assigned&rdquo; / &ldquo;Ali Raza (0321-9876543) has been assigned to you. Source: Website Inquiry.&rdquo; &middot; Submission Needs Evaluation &rarr; &ldquo;Submission Received&rdquo; / &ldquo;Submission #482 from Bilal Khan is awaiting evaluation.&rdquo; &middot; Deal Lost &rarr; &ldquo;Deal Lost&rdquo; / &ldquo;Deal lost for lead Ali Raza. Reason: Budget mismatch. Agent: Ahmed Raza.&rdquo;</div>
+  </div>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">internal_figures_alert</div>
+        <div class="tpl-covers">Covers: Payment Recorded &middot; Deal Terms Locked &middot; Agent Target Pace</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">CRM Update: {{1}}</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">{{1}}
+
+{{2}}
+
+As of: {{3}}
+
+Open the CRM for full details.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Header {{1}}</td><td>Short event label</td><td class="mono">Payment Received</td></tr>
+          <tr><td class="mono">Body {{1}}</td><td>Context line</td><td class="mono">A payment has been recorded against a lead&rsquo;s deal.</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>The figures themselves</td><td class="mono">PKR 500,000 received &mdash; 40% of commission collected, PKR 750,000 remaining.</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Timestamp</td><td class="mono">28 Aug 2026, 4:45 PM</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">CRM Update: Payment Received</div>
+        <div>A payment has been recorded against a lead&rsquo;s deal.
+
+PKR 500,000 received &mdash; 40% of commission collected, PKR 750,000 remaining.
+
+As of: 28 Aug 2026, 4:45 PM
+
+Open the CRM for full details.</div>
+        <div class="wa-footer">PIE Real Estate CRM</div>
+      </div>
+    </div>
+    <div class="note">Same no-button reasoning as <span class="mono">internal_fyi_alert</span> &mdash; Agent Target Pace has no single entity page to link to. Example pairs per trigger: Deal Terms Locked &rarr; &ldquo;Deal Terms Locked&rdquo; / &ldquo;Deal amount: PKR 1.2 Cr &mdash; Commission: PKR 24 Lakh.&rdquo; &middot; Agent Target Pace &rarr; &ldquo;Monthly Target Pace&rdquo; / &ldquo;40% of target reached &mdash; 2 of 5 deals, PKR 800K of PKR 2M revenue.&rdquo; The pace variant is the only one of the ten templates not fired by a single event &mdash; it needs a new scheduled job (e.g. a weekly cron) rather than a hook on an existing view.</div>
+  </div>
+
+  <h2>Client-facing updates &mdash; leads &amp; customers</h2>
   <p class="lede">Reuses the copy pattern already used by the app&rsquo;s existing <span class="mono">wa.me</span> share button (which builds a numbered, ranked list as one block of text) instead of inventing a new shape &mdash; so the sending code can build the same string it already builds today and drop it straight into <span class="mono">{{2}}</span>.</p>
 
   <div class="tpl">
@@ -389,11 +548,98 @@ Reply here or call Ahmed Raza &mdash; 0300-1234567 to schedule a viewing.</div>
     <div class="note">Utility is only the compliant category while this is sent as a reply to a lead&rsquo;s own inbound inquiry, and only to leads who&rsquo;ve opted in to WhatsApp messages. If it starts going out proactively &mdash; e.g. an automated &ldquo;new listings this week&rdquo; blast to leads who haven&rsquo;t asked &mdash; that content is Marketing under Meta&rsquo;s policy and needs its own template in that category; sending promotional content under a Utility template risks template suspension.</div>
   </div>
 
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">client_milestone_alert</div>
+        <div class="tpl-covers">Covers: Booking Confirmed &middot; Documentation In Progress &middot; Possession Complete &middot; Deal Closed</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, static)</div><div class="field-value mono">PIE Real Estate Update</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hi {{1}}, {{2}}
+
+If you have any questions, reply here or call {{3}}.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Body {{1}}</td><td>Customer&rsquo;s first name</td><td class="mono">Ayesha</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>The milestone message</td><td class="mono">your booking for the 3-Bed Apartment in DHA Phase 6 has been confirmed!</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Assigned agent&rsquo;s name &amp; number</td><td class="mono">Ahmed Raza &mdash; 0300-1234567</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">PIE Real Estate Update</div>
+        <div>Hi Ayesha, your booking for the 3-Bed Apartment in DHA Phase 6 has been confirmed!
+
+If you have any questions, reply here or call Ahmed Raza &mdash; 0300-1234567.</div>
+        <div class="wa-footer">PIE Real Estate</div>
+      </div>
+    </div>
+    <div class="note">No button &mdash; the recipient is an external lead/customer with no CRM login, so there&rsquo;s nowhere to send them. Example {{2}} wording per pipeline stage: Booking Confirmed &rarr; &ldquo;your booking for [property] has been confirmed!&rdquo; &middot; Documentation &rarr; &ldquo;we&rsquo;ve moved your file into documentation &mdash; our team will be in touch about next steps.&rdquo; &middot; Possession Complete &rarr; &ldquo;possession of your property is now complete. Congratulations!&rdquo; &middot; Deal Closed &rarr; &ldquo;your deal has been successfully closed. Thank you for choosing PIE Real Estate!&rdquo; Same compliance boundary as <span class="mono">property_recommendation</span>: only send to a lead who&rsquo;s opted in, and only about their own active deal &mdash; never repurpose this shape for a marketing push.</div>
+  </div>
+
+  <h2>Affiliate onboarding</h2>
+  <p class="lede">A one-off welcome message, distinct enough in tone and audience that folding it into another shape would just make that template harder to reuse cleanly.</p>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">affiliate_approved_alert</div>
+        <div class="tpl-covers">Covers: Affiliate Account Approved</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, static)</div><div class="field-value mono">Welcome to PIE Real Estate</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate</div></div>
+        <div class="field"><div class="field-label">Button (URL, static)</div><div class="field-value mono">Log In
+https://your-pie-domain.com/crm/login/</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hi {{1}}, your affiliate account has been approved. You can now log in and start referring leads and browsing available properties.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Body {{1}}</td><td>Affiliate&rsquo;s first name</td><td class="mono">Bilal</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">Welcome to PIE Real Estate</div>
+        <div>Hi Bilal, your affiliate account has been approved. You can now log in and start referring leads and browsing available properties.</div>
+        <div class="wa-footer">PIE Real Estate</div>
+        <div class="wa-btn">&#128279; Log In</div>
+      </div>
+    </div>
+    <div class="note">This button is a static URL, not dynamic &mdash; every affiliate gets the same login link, so no per-recipient suffix is needed.</div>
+  </div>
+
   <h2>Implementation notes</h2>
   <p class="lede">Not part of the Meta submission, but worth flagging before build:</p>
   <div class="note">The Property model&rsquo;s <span class="mono">STATUS_CHOICES</span> currently only has Active / Inactive / Sold &mdash; &ldquo;On Hold&rdquo; and &ldquo;Withdrawn&rdquo; aren&rsquo;t stored states yet. The templates above take status as free text, so no resubmission is needed once those states are added, but the status-change logic itself still needs to be built.</div>
   <div class="note">Price history isn&rsquo;t currently tracked (only narrative activity-log text) &mdash; capturing the previous price at the moment of change will need a small model change to populate <span class="mono">property_price_change</span> accurately.</div>
-  <div class="note">Swap <span class="mono">your-pie-domain.com</span> in every button URL for the CRM&rsquo;s real production domain before submitting. Each WhatsApp template is also sent one recipient at a time via the Cloud API &mdash; fanning a single event out to every relevant agent/affiliate is orchestration this document doesn&rsquo;t cover.</div>
+  <div class="note"><span class="mono">Lead.follow_up_date</span> and <span class="mono">Lead.visit_scheduled_at</span> are stored today but nothing reads them back &mdash; the reminder and visit-reminder triggers in <span class="mono">lead_reminder_alert</span> need a new scheduled job (daily for follow-ups, hourly or T-1-day for visits), not just a hook on an existing view. Agent Target Pace needs a similar new weekly job.</div>
+  <div class="note"><span class="mono">LeadPayment</span> creation (<span class="mono">lead_add_payment</span>) and locking deal financials (<span class="mono">lead_set_deal_financials</span>) currently call zero notification code at all &mdash; wiring WhatsApp here means adding the first-ever notification hook to both views, in-app included.</div>
+  <div class="note">Swap <span class="mono">your-pie-domain.com</span> in every button URL for the CRM&rsquo;s real production domain before submitting. Each WhatsApp template is also sent one recipient at a time via the Cloud API &mdash; fanning a single event out to every relevant agent/affiliate/lead is orchestration this document doesn&rsquo;t cover.</div>
+  <div class="note">Skipped on purpose: document-expiry reminders (<span class="mono">PropertyDocument</span> has no expiry/valid-until field today) and affiliate commission-earned alerts (no commission field exists anywhere on the affiliate relationship). Add the underlying field to the data model first, then template these.</div>
 
   <footer>Prepared for WhatsApp Business Manager template submission &middot; PIE Real Estate CRM</footer>
 
