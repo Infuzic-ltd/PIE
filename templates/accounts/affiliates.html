@@ -90,7 +90,7 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
         {% if request.user.is_crm_admin %}<th>Invited By</th>{% endif %}
         <th>Status</th>
         <th>Joined</th>
-        {% if request.user.is_crm_admin %}<th>Actions</th>{% endif %}
+        <th>Actions</th>
       </tr>
     </thead>
     <tbody>
@@ -110,18 +110,24 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
           {% else %}<span class="badge pending">Pending Approval</span>{% endif %}
         </td>
         <td class="nowrap">{{ a.date_joined|date:"M d, Y" }}</td>
-        {% if request.user.is_crm_admin %}
         <td>
           <div class="actions">
+            {% if request.user.is_crm_admin %}
             {% if a.affiliate_status != 'approved' %}
             <form method="post" action="{% url 'affiliate_set_status' a.pk %}">{% csrf_token %}<input type="hidden" name="status" value="approved"><button type="submit" class="act-btn approve">Approve</button></form>
             {% endif %}
             {% if a.affiliate_status != 'rejected' %}
             <form method="post" action="{% url 'affiliate_set_status' a.pk %}" class="crm-confirm-form" data-confirm-message="Reject {{ a.get_full_name|escapejs }}? They will no longer be able to log in." data-confirm-style="danger" data-confirm-label="Reject">{% csrf_token %}<input type="hidden" name="status" value="rejected"><button type="submit" class="act-btn reject">Reject</button></form>
             {% endif %}
+            {% elif a.affiliate_status != 'rejected' %}
+            {% if a.affiliate_status == 'pending' %}
+            <form method="post" action="{% url 'affiliate_remove' a.pk %}" class="crm-confirm-form" data-confirm-message="Cancel the invitation for {{ a.get_full_name|escapejs }}? They won't be able to access the CRM." data-confirm-style="danger" data-confirm-label="Cancel Invitation">{% csrf_token %}<button type="submit" class="act-btn reject">Cancel Invitation</button></form>
+            {% else %}
+            <form method="post" action="{% url 'affiliate_remove' a.pk %}" class="crm-confirm-form" data-confirm-message="Remove {{ a.get_full_name|escapejs }} as your affiliate? They will no longer be able to log in." data-confirm-style="danger" data-confirm-label="Remove">{% csrf_token %}<button type="submit" class="act-btn reject">Remove</button></form>
+            {% endif %}
+            {% endif %}
           </div>
         </td>
-        {% endif %}
       </tr>
       {% empty %}
       <tr><td colspan="6">

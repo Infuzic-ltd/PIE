@@ -43,6 +43,7 @@ urlpatterns = [
     path('affiliates/', views.affiliate_list, name='affiliate_list'),
     path('affiliates/invite/', views.affiliate_invite, name='affiliate_invite'),
     path('affiliates/<int:pk>/set-status/', views.affiliate_set_status, name='affiliate_set_status'),
+    path('affiliates/<int:pk>/remove/', views.affiliate_remove, name='affiliate_remove'),
     path('affiliate/pending/', views.affiliate_pending, name='affiliate_pending'),
     path('affiliate/home/', views.affiliate_home, name='affiliate_home'),
     path('account/change-password/', views.change_password_view, name='change_password'),

@@ -40,3 +40,4 @@ urlpatterns = [
     path('whatsapp-templates/docs/', whatsapp_templates_docs, name='whatsapp_templates_docs'),
     path('crm/', include('accounts.urls')),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+ 

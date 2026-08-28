@@ -1349,6 +1349,19 @@ def affiliate_set_status(request, pk):
 
 
 @login_required
+@require_POST
+def affiliate_remove(request, pk):
+    affiliate = get_object_or_404(User, pk=pk, role=User.ROLE_AFFILIATE)
+    if not (request.user.is_crm_admin or affiliate.invited_by_id == request.user.id):
+        return render(request, 'accounts/403.html', status=403)
+    affiliate.affiliate_status = User.AFFILIATE_STATUS_REJECTED
+    affiliate.is_active = False
+    affiliate.save(update_fields=['affiliate_status', 'is_active'])
+    messages.success(request, f'{affiliate.get_full_name()} has been removed.')
+    return redirect('affiliate_list')
+
+
+@login_required
 def affiliate_pending(request):
     if not request.user.is_affiliate:
         return redirect(_post_login_redirect(request.user))
