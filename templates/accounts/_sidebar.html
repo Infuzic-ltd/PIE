@@ -69,11 +69,13 @@
 
     {% else %}
 
+    {% if can_view_dashboard %}
     <div class="pie-nav-item {% if url_name == 'dashboard' %}pie-active{% endif %}">
       <div class="pie-nav-row">
         <a href="{% url 'dashboard' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><path d="M3 9.5 12 3l9 6.5V21H3z"/><path d="M9 21v-7h6v7"/></svg> Dashboard</a>
       </div>
     </div>
+    {% endif %}
 
     <div class="pie-nav-item {% if 'lead' in url_name %}pie-active pie-open{% endif %}">
       <div class="pie-nav-row">

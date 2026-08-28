@@ -398,7 +398,9 @@ def safepay_setup_guide(request):
 def _post_login_redirect(user):
     if user.role == User.ROLE_AFFILIATE:
         return 'affiliate_pending' if not user.affiliate_approved else 'affiliate_home'
-    return 'dashboard'
+    if user.has_crm_permission('dashboard'):
+        return 'dashboard'
+    return 'property_list'
 
 
 def login_view(request):

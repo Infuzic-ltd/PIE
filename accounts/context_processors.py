@@ -20,4 +20,5 @@ def notifications(request):
         'unread_notifications_count': request.user.notifications.filter(is_read=False).count(),
         'pending_submissions_count': PropertySubmission.objects.filter(status=PropertySubmission.STATUS_PENDING).count(),
         'pending_affiliates_count': pending_affiliates_count,
+        'can_view_dashboard': request.user.has_crm_permission('dashboard'),
     }
