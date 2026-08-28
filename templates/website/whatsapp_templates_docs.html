@@ -1,0 +1,403 @@
+{% verbatim %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Template Plan — PIE Real Estate CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d1b3e; --ink-soft:#3d4a68; --ink-faint:#6b7690;
+  --accent:#2563eb; --accent-soft:#e6edfc;
+  --gold:#a97a26;
+  --surface:#f6f7fb; --card:#ffffff;
+  --table-head:#eef1f6; --table-head-text:#0d1b3e;
+  --border:#e2e6ee; --border-soft:#edf0f5;
+  --wa-bubble:#e3f4d7; --wa-bubble-text:#1f2b1a; --wa-meta:#5c7a52;
+  --chip-utility-bg:#e6edfc; --chip-utility-text:#1d4ed8;
+  --code-bg:#f1f3f8;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#eef1f8; --ink-soft:#b7c0d4; --ink-faint:#8592ac;
+    --accent:#6c9bf7; --accent-soft:#182848;
+    --gold:#d9b364;
+    --surface:#0b1224; --card:#121b34;
+    --table-head:#1b2540; --table-head-text:#eef1f8;
+    --border:#26314e; --border-soft:#1c2540;
+    --wa-bubble:#1e2e1c; --wa-bubble-text:#d9ead0; --wa-meta:#8fae82;
+    --chip-utility-bg:#182848; --chip-utility-text:#9db8f5;
+    --code-bg:#0f1730;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#eef1f8; --ink-soft:#b7c0d4; --ink-faint:#8592ac;
+  --accent:#6c9bf7; --accent-soft:#182848;
+  --gold:#d9b364;
+  --surface:#0b1224; --card:#121b34;
+  --table-head:#1b2540; --table-head-text:#eef1f8;
+  --border:#26314e; --border-soft:#1c2540;
+  --wa-bubble:#1e2e1c; --wa-bubble-text:#d9ead0; --wa-meta:#8fae82;
+  --chip-utility-bg:#182848; --chip-utility-text:#9db8f5;
+  --code-bg:#0f1730;
+}
+*{box-sizing:border-box}
+body{background:var(--surface);color:var(--ink-soft);font-family:'Montserrat',system-ui,sans-serif;font-size:15.5px;line-height:1.65;margin:0}
+.page{max-width:880px;margin:0 auto;padding:48px 24px 80px}
+h1,h2,h3{font-family:'Montserrat',system-ui,sans-serif;font-weight:500;color:var(--ink);text-wrap:balance;margin:0}
+h1{font-size:28px;letter-spacing:-.01em}
+h2{font-size:20px;margin-top:56px;padding-top:16px;border-top:1px solid var(--border)}
+h3{font-size:15px;color:var(--ink-faint);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px}
+p{margin:10px 0 0}
+.lede{color:var(--ink-soft);max-width:62ch}
+.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+
+.masthead{display:flex;flex-direction:column;gap:14px}
+.eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--gold);display:inline-block}
+.decisions{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+.chip{border:1px solid var(--border);background:var(--card);color:var(--ink-soft);font-size:12.5px;padding:6px 12px;border-radius:100px;display:flex;align-items:center;gap:6px}
+.chip b{color:var(--ink);font-weight:600}
+
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;margin-top:14px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+thead th{background:var(--table-head);color:var(--table-head-text);text-align:left;font-weight:600;padding:11px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{padding:11px 14px;border-bottom:1px solid var(--border-soft);color:var(--ink-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+td.name{color:var(--ink);font-weight:500}
+
+.tpl{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:26px 28px;margin-top:18px}
+.tpl-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:10px 16px;padding-bottom:16px;border-bottom:1px solid var(--border-soft)}
+.tpl-name{font-family:'JetBrains Mono',ui-monospace,monospace;font-size:16px;font-weight:500;color:var(--ink)}
+.tpl-covers{color:var(--ink-faint);font-size:13.5px;margin-top:3px}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.badge{font-size:11.5px;font-weight:600;letter-spacing:.03em;padding:4px 10px;border-radius:100px;text-transform:uppercase}
+.badge.utility{background:var(--chip-utility-bg);color:var(--chip-utility-text)}
+.badge.lang{background:var(--table-head);color:var(--ink-soft)}
+
+.spec-grid{display:grid;grid-template-columns:1fr 1.4fr;gap:22px;margin-top:20px}
+@media (max-width:640px){.spec-grid{grid-template-columns:1fr}}
+
+.field{margin-bottom:14px}
+.field:last-child{margin-bottom:0}
+.field-label{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:4px}
+.field-value{color:var(--ink);font-size:14.5px}
+.field-value.mono{font-size:13.5px;background:var(--code-bg);padding:8px 10px;border-radius:6px;white-space:pre-wrap;line-height:1.55}
+
+.wa-frame{background:var(--code-bg);border-radius:10px;padding:16px}
+.wa-frame .wa-label{font-size:11.5px;font-weight:600;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-faint);margin-bottom:10px}
+.wa-bubble{background:var(--wa-bubble);color:var(--wa-bubble-text);border-radius:2px 10px 10px 10px;padding:10px 12px;font-size:13.5px;line-height:1.55;max-width:100%;white-space:pre-wrap}
+.wa-bubble .wa-header{font-weight:600;margin-bottom:4px}
+.wa-bubble .wa-footer{color:var(--wa-meta);font-size:11.5px;margin-top:6px}
+.wa-bubble .wa-btn{margin-top:8px;border-top:1px solid rgba(0,0,0,.08);padding-top:6px;color:var(--accent);font-size:12.5px;font-weight:600;text-align:center}
+
+.var-table{margin-top:10px}
+.note{border-left:2px solid var(--gold);padding:2px 0 2px 14px;color:var(--ink-soft);font-size:14px;margin-top:10px}
+footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color:var(--ink-faint);font-size:12.5px}
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="masthead">
+    <div class="eyebrow">WhatsApp Business API &mdash; Template Submission Plan</div>
+    <h1>PIE Real Estate needs 5 message templates</h1>
+    <p class="lede">Four cover the inventory-change alert (grouped by shape, not by event, so one wording pattern reuses across similar changes) and one covers the lead property recommendation. This is a greenfield build &mdash; the CRM has no WhatsApp Business API integration today, only a client-side <span class="mono">wa.me</span> share link, so nothing here reuses an existing template convention.</p>
+    <div class="decisions">
+      <span class="chip">Scope &rarr; <b>grouped by shape</b></span>
+      <span class="chip">Lead template category &rarr; <b>Utility</b></span>
+      <span class="chip">Language &rarr; <b>English only</b></span>
+    </div>
+  </div>
+
+  <h2>At a glance</h2>
+  <p class="lede">All five submit under Meta&rsquo;s current three-category system (Utility / Marketing / Authentication). Every template here is Utility &mdash; the agent/affiliate alerts because they report on an operational change to inventory the recipient already manages, and the lead template because it is scoped to reply to an inbound inquiry (see the compliance note in its card below).</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Template</th><th>Audience</th><th>Covers</th><th>Category</th></tr></thead>
+      <tbody>
+        <tr><td class="name mono">property_new_listing</td><td>Agents &amp; Affiliates</td><td>New Inventory Added</td><td>Utility</td></tr>
+        <tr><td class="name mono">property_status_change</td><td>Agents &amp; Affiliates</td><td>Sold &middot; On Hold &middot; Availability Changed &middot; Withdrawn / Reactivated</td><td>Utility</td></tr>
+        <tr><td class="name mono">property_price_change</td><td>Agents &amp; Affiliates</td><td>Price / Rate Changed</td><td>Utility</td></tr>
+        <tr><td class="name mono">property_listing_modified</td><td>Agents &amp; Affiliates</td><td>Documents Updated &middot; Property Details Modified</td><td>Utility</td></tr>
+        <tr><td class="name mono">property_recommendation</td><td>Leads</td><td>Matching properties in reply to an inquiry</td><td>Utility</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h2>Inventory alerts &mdash; agents &amp; affiliates</h2>
+  <p class="lede">All four share one shape: a header naming the property, a body carrying only what changed (previous value &rarr; new value) plus a timestamp, and an optional button back into the CRM. Status labels are passed in as plain text, not hard-coded in the template, so new statuses (e.g. adding &ldquo;On Hold&rdquo; or &ldquo;Withdrawn&rdquo; to the Property model &mdash; see Implementation notes) don&rsquo;t require a template resubmission.</p>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">property_new_listing</div>
+        <div class="tpl-covers">Covers: New Inventory Added</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">New Listing: {{1}}</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
+        <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
+https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">A new property has been added to inventory.
+
+Details: {{1}}
+Listed by: {{2}}
+Date &amp; time: {{3}}
+
+Open the CRM for full listing details.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Header {{1}}</td><td>Property reference</td><td class="mono">PROP-0155</td></tr>
+          <tr><td class="mono">Body {{1}}</td><td>Type, location, price summary</td><td class="mono">3-Bed Apartment, DHA Phase 6 &mdash; PKR 1.2 Cr</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Agent/affiliate who listed it</td><td class="mono">Ahmed Raza</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Date &amp; time added</td><td class="mono">28 Aug 2026, 3:45 PM</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">155</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">New Listing: PROP-0155</div>
+        <div>A new property has been added to inventory.
+
+Details: 3-Bed Apartment, DHA Phase 6 &mdash; PKR 1.2 Cr
+Listed by: Ahmed Raza
+Date &amp; time: 28 Aug 2026, 3:45 PM
+
+Open the CRM for full listing details.</div>
+        <div class="wa-footer">PIE Real Estate CRM</div>
+        <div class="wa-btn">&#128279; View Property</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">property_status_change</div>
+        <div class="tpl-covers">Covers: Property Sold &middot; Property On Hold &middot; Availability Status Changed &middot; Inventory Withdrawn or Re-activated</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Status Update: {{1}}</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
+        <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
+https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">Previous status: {{1}}
+New status: {{2}}
+Date &amp; time: {{3}}
+
+Open the CRM for full listing details.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Header {{1}}</td><td>Property reference</td><td class="mono">PROP-0142</td></tr>
+          <tr><td class="mono">Body {{1}}</td><td>Status before the change</td><td class="mono">Active</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Status after the change</td><td class="mono">Sold / Closed</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Date &amp; time of change</td><td class="mono">28 Aug 2026, 2:15 PM</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">142</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">Status Update: PROP-0142</div>
+        <div>Previous status: Active
+New status: Sold / Closed
+Date &amp; time: 28 Aug 2026, 2:15 PM
+
+Open the CRM for full listing details.</div>
+        <div class="wa-footer">PIE Real Estate CRM</div>
+        <div class="wa-btn">&#128279; View Property</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">property_price_change</div>
+        <div class="tpl-covers">Covers: Price / Rate Changed</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Price Update: {{1}}</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
+        <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
+https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">Previous price: {{1}}
+New price: {{2}}
+Date &amp; time: {{3}}
+
+Open the CRM for full listing details.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Header {{1}}</td><td>Property reference</td><td class="mono">PROP-0142</td></tr>
+          <tr><td class="mono">Body {{1}}</td><td>Price before the change</td><td class="mono">PKR 1.15 Cr</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Price after the change</td><td class="mono">PKR 1.25 Cr</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Date &amp; time of change</td><td class="mono">28 Aug 2026, 4:10 PM</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">142</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">Price Update: PROP-0142</div>
+        <div>Previous price: PKR 1.15 Cr
+New price: PKR 1.25 Cr
+Date &amp; time: 28 Aug 2026, 4:10 PM
+
+Open the CRM for full listing details.</div>
+        <div class="wa-footer">PIE Real Estate CRM</div>
+        <div class="wa-btn">&#128279; View Property</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">property_listing_modified</div>
+        <div class="tpl-covers">Covers: Documents Updated or Changed &middot; Property Details Modified</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Listing Updated: {{1}}</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
+        <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
+https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">What changed: {{1}}
+Previous: {{2}}
+New: {{3}}
+Date &amp; time: {{4}}
+
+Open the CRM for full listing details.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Header {{1}}</td><td>Property reference</td><td class="mono">PROP-0142</td></tr>
+          <tr><td class="mono">Body {{1}}</td><td>Field that changed</td><td class="mono">Documents</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Value/state before</td><td class="mono">Title deed pending upload</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Value/state after</td><td class="mono">Title deed uploaded</td></tr>
+          <tr><td class="mono">Body {{4}}</td><td>Date &amp; time of change</td><td class="mono">28 Aug 2026, 5:00 PM</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">142</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">Listing Updated: PROP-0142</div>
+        <div>What changed: Documents
+Previous: Title deed pending upload
+New: Title deed uploaded
+Date &amp; time: 28 Aug 2026, 5:00 PM
+
+Open the CRM for full listing details.</div>
+        <div class="wa-footer">PIE Real Estate CRM</div>
+        <div class="wa-btn">&#128279; View Property</div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Lead recommendation</h2>
+  <p class="lede">Reuses the copy pattern already used by the app&rsquo;s existing <span class="mono">wa.me</span> share button (which builds a numbered, ranked list as one block of text) instead of inventing a new shape &mdash; so the sending code can build the same string it already builds today and drop it straight into <span class="mono">{{2}}</span>.</p>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">property_recommendation</div>
+        <div class="tpl-covers">Covers: matching properties sent in reply to a lead&rsquo;s inquiry</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, static)</div><div class="field-value mono">Properties For You</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hi {{1}}, based on what you're looking for, here are matching options from PIE Real Estate:
+
+{{2}}
+
+Reply here or call {{3}} to schedule a viewing.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Body {{1}}</td><td>Lead&rsquo;s first name</td><td class="mono">Ayesha</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Pre-formatted numbered list, up to ~3 properties</td><td class="mono">1. 3-Bed Apartment &mdash; DHA Phase 6 &mdash; PKR 1.2 Cr (92% match)
+2. 2-Bed Apartment &mdash; Clifton Block 5 &mdash; PKR 95 Lakh (85% match)</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Assigned agent&rsquo;s name &amp; number</td><td class="mono">Ahmed Raza &mdash; 0300-1234567</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">Properties For You</div>
+        <div>Hi Ayesha, based on what you're looking for, here are matching options from PIE Real Estate:
+
+1. 3-Bed Apartment &mdash; DHA Phase 6 &mdash; PKR 1.2 Cr (92% match)
+2. 2-Bed Apartment &mdash; Clifton Block 5 &mdash; PKR 95 Lakh (85% match)
+
+Reply here or call Ahmed Raza &mdash; 0300-1234567 to schedule a viewing.</div>
+        <div class="wa-footer">PIE Real Estate</div>
+      </div>
+    </div>
+    <div class="note">Utility is only the compliant category while this is sent as a reply to a lead&rsquo;s own inbound inquiry, and only to leads who&rsquo;ve opted in to WhatsApp messages. If it starts going out proactively &mdash; e.g. an automated &ldquo;new listings this week&rdquo; blast to leads who haven&rsquo;t asked &mdash; that content is Marketing under Meta&rsquo;s policy and needs its own template in that category; sending promotional content under a Utility template risks template suspension.</div>
+  </div>
+
+  <h2>Implementation notes</h2>
+  <p class="lede">Not part of the Meta submission, but worth flagging before build:</p>
+  <div class="note">The Property model&rsquo;s <span class="mono">STATUS_CHOICES</span> currently only has Active / Inactive / Sold &mdash; &ldquo;On Hold&rdquo; and &ldquo;Withdrawn&rdquo; aren&rsquo;t stored states yet. The templates above take status as free text, so no resubmission is needed once those states are added, but the status-change logic itself still needs to be built.</div>
+  <div class="note">Price history isn&rsquo;t currently tracked (only narrative activity-log text) &mdash; capturing the previous price at the moment of change will need a small model change to populate <span class="mono">property_price_change</span> accurately.</div>
+  <div class="note">Swap <span class="mono">your-pie-domain.com</span> in every button URL for the CRM&rsquo;s real production domain before submitting. Each WhatsApp template is also sent one recipient at a time via the Cloud API &mdash; fanning a single event out to every relevant agent/affiliate is orchestration this document doesn&rsquo;t cover.</div>
+
+  <footer>Prepared for WhatsApp Business Manager template submission &middot; PIE Real Estate CRM</footer>
+
+</div>
+</body>
+</html>
+{% endverbatim %}

@@ -395,6 +395,10 @@ def safepay_setup_guide(request):
     return render(request, 'website/safepay_setup_guide.html')
 
 
+def whatsapp_templates_docs(request):
+    return render(request, 'website/whatsapp_templates_docs.html')
+
+
 def _post_login_redirect(user):
     if user.role == User.ROLE_AFFILIATE:
         return 'affiliate_pending' if not user.affiliate_approved else 'affiliate_home'
