@@ -702,7 +702,7 @@ def _dashboard_data(request):
     }
 
 
-@login_required
+@permission_required('dashboard')
 def dashboard_view(request):
     today = timezone.localdate()
     performance = _agent_performance(today.year, today.month)
@@ -714,7 +714,7 @@ def dashboard_view(request):
     return render(request, 'accounts/dashboard.html', context)
 
 
-@login_required
+@permission_required('dashboard')
 def dashboard_export_pdf(request):
     data = _dashboard_data(request)
     pdf_bytes = build_dashboard_pdf(data)
