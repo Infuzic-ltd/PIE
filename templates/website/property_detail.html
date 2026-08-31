@@ -110,6 +110,24 @@
   .agent-role{ font-size:12.5px; color:var(--text-gray); margin-bottom:16px; }
   .agent-actions{ display:flex; flex-direction:column; gap:10px; }
 
+  .lead-form-card h3{ font-size:17px; margin-bottom:6px; }
+  .lead-form-card .lede{ font-size:13.5px; color:var(--text-gray); margin-bottom:18px; }
+  .lead-form-card .field{ margin-bottom:14px; }
+  .lead-form-card .field label{ display:block; font-size:13px; font-weight:600; color:var(--text-dark); margin-bottom:6px; }
+  .lead-form-card .field input, .lead-form-card .field textarea{
+    width:100%; padding:11px 14px; border:1px solid var(--border); border-radius:8px; font-size:14px;
+    color:var(--text-dark); background:var(--white); font-family:inherit;
+  }
+  .lead-form-card .field input:focus, .lead-form-card .field textarea:focus{ outline:none; border-color:var(--gold); }
+  .lead-form-card .field textarea{ resize:vertical; min-height:64px; }
+  .lead-form-card .form-msg{ font-size:12.5px; margin-top:4px; display:none; }
+  .lead-form-card .form-msg.show{ display:block; }
+  .lead-form-card .form-msg.error{ color:#dc2626; }
+  .lead-form-card .form-success{ display:none; text-align:center; padding:8px 0; }
+  .lead-form-card .form-success.show{ display:block; }
+  .lead-form-card .form-success svg{ width:34px; height:34px; stroke:var(--green); fill:none; stroke-width:1.8; margin:0 auto 10px; }
+  .lead-form-card .form-success p{ font-size:13.5px; color:var(--text-gray); }
+
   /* Similar properties */
   .similar-section{ max-width:1280px; margin:20px auto 60px; padding:0 40px; }
   .similar-section h3{ font-size:22px; font-weight:700; margin-bottom:20px; }
@@ -287,6 +305,36 @@
         <a href="{% url 'website_contact' %}" class="btn btn-gold" style="width:100%">✉ Contact About This Property</a>
       </div>
     </div>
+
+    <div class="section-card lead-form-card reveal">
+      <h3>Interested in this property?</h3>
+      <p class="lede">Share your details and the listing agent will reach out to you directly.</p>
+      <form id="propertyLeadForm">
+        {% csrf_token %}
+        <div class="field">
+          <label for="leadFullName">Full Name</label>
+          <input type="text" id="leadFullName" name="full_name" required>
+        </div>
+        <div class="field">
+          <label for="leadPhone">Phone Number</label>
+          <input type="tel" id="leadPhone" name="phone" required>
+        </div>
+        <div class="field">
+          <label for="leadEmail">Email (optional)</label>
+          <input type="email" id="leadEmail" name="email">
+        </div>
+        <div class="field">
+          <label for="leadMessage">Message (optional)</label>
+          <textarea id="leadMessage" name="message" placeholder="I'd like to know more about this property…"></textarea>
+        </div>
+        <button type="submit" class="btn btn-gold" style="width:100%" id="leadFormBtn">Send Inquiry</button>
+        <div class="form-msg error" id="leadFormError"></div>
+      </form>
+      <div class="form-success" id="leadFormSuccess">
+        <svg viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></svg>
+        <p>Thanks! Your inquiry has been sent — the agent will contact you shortly.</p>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -413,6 +461,42 @@
   function swapMain(src){
     const img = document.getElementById('mainGalleryImg');
     if(img) img.src = src;
+  }
+
+  const leadForm = document.getElementById('propertyLeadForm');
+  if (leadForm) {
+    const leadFormBtn = document.getElementById('leadFormBtn');
+    const leadFormError = document.getElementById('leadFormError');
+    leadForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      leadFormError.classList.remove('show');
+      leadFormBtn.disabled = true;
+      leadFormBtn.textContent = 'Sending…';
+
+      fetch("{% url 'submit_property_lead' property.pk %}", {
+        method: 'POST',
+        body: new FormData(leadForm),
+        credentials: 'same-origin',
+      })
+        .then(r => r.json().then(body => ({ status: r.status, body: body })))
+        .then(({ status, body }) => {
+          if (status === 201 && body.ok) {
+            leadForm.style.display = 'none';
+            document.getElementById('leadFormSuccess').classList.add('show');
+          } else {
+            leadFormError.textContent = body.errors ? Object.values(body.errors).join(' ') : 'Something went wrong. Please try again.';
+            leadFormError.classList.add('show');
+          }
+        })
+        .catch(()=>{
+          leadFormError.textContent = 'Network error — please check your connection and try again.';
+          leadFormError.classList.add('show');
+        })
+        .finally(()=>{
+          leadFormBtn.disabled = false;
+          leadFormBtn.textContent = 'Send Inquiry';
+        });
+    });
   }
 </script>
 

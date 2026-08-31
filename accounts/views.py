@@ -307,6 +307,59 @@ def submit_property_listing(request):
     }, status=201)
 
 
+@require_POST
+def submit_property_lead(request, pk):
+    """Public endpoint on the property detail page — creates a Lead tied to this
+    property, assigned to its listing agent (or auto-assigned if unset). No login required."""
+    property_obj = get_object_or_404(Property, pk=pk)
+
+    full_name = request.POST.get('full_name', '').strip()
+    phone = request.POST.get('phone', '').strip()
+
+    errors = {}
+    if not full_name:
+        errors['full_name'] = 'Your name is required.'
+    if not phone:
+        errors['phone'] = 'A contact phone number is required.'
+    if errors:
+        return JsonResponse({'ok': False, 'errors': errors}, status=400)
+
+    listing_agent = property_obj.created_by
+    agent = listing_agent or _auto_assign_agent()
+    lead = Lead.objects.create(
+        full_name=full_name,
+        phone=phone,
+        email=request.POST.get('email', '').strip(),
+        lead_type=Lead.TYPE_TENANT if property_obj.listing_type == Property.LISTING_RENT else Lead.TYPE_BUYER,
+        source='website',
+        property=property_obj,
+        notes=request.POST.get('message', '').strip(),
+        assigned_to=agent,
+        status=Lead.STATUS_ASSIGNED if agent else Lead.STATUS_RECEIVED,
+    )
+
+    if agent and listing_agent:
+        assignment_note = f' Assigned to listing agent {agent.get_full_name()}.'
+    elif agent:
+        assignment_note = f' Auto-assigned to {agent.get_full_name()} (property had no listing agent).'
+    else:
+        assignment_note = ' No active agent available to assign.'
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_CREATED,
+        description=f'Lead submitted from the property page for "{property_obj.title}".{assignment_note}',
+    )
+    if agent:
+        notify_user(
+            agent,
+            'New Lead Assigned',
+            f'{lead.full_name} is interested in {property_obj.title}.',
+            f'/crm/leads/{lead.pk}/',
+        )
+
+    return JsonResponse({'ok': True}, status=201)
+
+
 def initiate_featured_payment(request, pk):
     """Redirects the submitter to Safepay's hosted checkout to pay the featured-listing fee."""
     submission = get_object_or_404(PropertySubmission, pk=pk, wants_featured=True)
