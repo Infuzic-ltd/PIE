@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WhatsApp Delivery API — PIE Real Estate CRM</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0d1b3e; --ink-soft:#3d4a68; --ink-faint:#6b7690;
+  --accent:#2563eb; --gold:#a97a26;
+  --surface:#f6f7fb; --card:#ffffff;
+  --table-head:#eef1f6; --table-head-text:#0d1b3e; --table-row:#ffffff;
+  --border:#e2e6ee; --border-soft:#edf0f5; --code-bg:#f1f3f8;
+  --ok:#15803d; --err:#b91c1c;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --ink:#eef1f8; --ink-soft:#b7c0d4; --ink-faint:#8592ac;
+    --accent:#6c9bf7; --gold:#d9b364;
+    --surface:#0b1224; --card:#121b34;
+    --table-head:#1b2540; --table-head-text:#eef1f8; --table-row:#121b34;
+    --border:#26314e; --border-soft:#1c2540; --code-bg:#0f1730;
+    --ok:#4ade80; --err:#f87171;
+  }
+}
+:root[data-theme="dark"]{
+  --ink:#eef1f8; --ink-soft:#b7c0d4; --ink-faint:#8592ac;
+  --accent:#6c9bf7; --gold:#d9b364;
+  --surface:#0b1224; --card:#121b34;
+  --table-head:#1b2540; --table-head-text:#eef1f8; --table-row:#121b34;
+  --border:#26314e; --border-soft:#1c2540; --code-bg:#0f1730;
+  --ok:#4ade80; --err:#f87171;
+}
+*{box-sizing:border-box}
+body{background:var(--surface);color:var(--ink-soft);font-family:'Montserrat',system-ui,sans-serif;font-size:15.5px;line-height:1.6;margin:0}
+.page{max-width:880px;margin:0 auto;padding:44px 16px 72px}
+h1,h2,h3{font-weight:500;color:var(--ink);text-wrap:balance;margin:0}
+h1{font-size:28px;letter-spacing:-.01em;margin-top:12px}
+h2{font-size:20px;margin-top:44px;padding-top:14px;border-top:1px solid var(--border)}
+h3{font-size:13px;color:var(--ink-faint);font-weight:600;text-transform:uppercase;letter-spacing:.06em;margin-top:22px}
+p{margin:8px 0 0}
+.lede{max-width:66ch}
+.eyebrow{display:flex;align-items:center;gap:10px;font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.eyebrow::before{content:"";width:22px;height:2px;background:var(--gold)}
+.mono,code,pre{font-family:'JetBrains Mono',ui-monospace,monospace}
+code{font-size:.88em;background:var(--code-bg);padding:1px 6px;border-radius:4px;color:var(--ink)}
+pre{background:var(--code-bg);color:var(--ink);font-size:13px;line-height:1.55;padding:14px 16px;border-radius:10px;overflow-x:auto;margin:10px 0 0;border:1px solid var(--border-soft)}
+.summary{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:10px;padding:16px 20px;margin-top:20px}
+.summary ol{margin:8px 0 0;padding-left:20px}
+.summary li{margin-top:4px}
+.table-wrap{overflow-x:auto;border:1px solid var(--border);border-radius:10px;margin-top:12px}
+table{width:100%;border-collapse:collapse;font-size:14.5px}
+thead th{background:var(--table-head);color:var(--table-head-text);text-align:left;font-weight:600;padding:10px 14px;border-bottom:1px solid var(--border);white-space:nowrap}
+tbody td{background:var(--table-row);padding:10px 14px;border-bottom:1px solid var(--border-soft);vertical-align:top}
+tbody tr:last-child td{border-bottom:none}
+td:first-child{color:var(--ink);white-space:nowrap}
+.endpoint{display:flex;flex-wrap:wrap;align-items:center;gap:10px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-top:12px;font-family:'JetBrains Mono',ui-monospace,monospace;font-size:14px;color:var(--ink);word-break:break-all}
+.method{font-size:12px;font-weight:600;padding:3px 9px;border-radius:6px;background:var(--accent);color:#fff}
+.ok{color:var(--ok);font-weight:600}.err{color:var(--err);font-weight:600}
+.note{border-left:2px solid var(--gold);padding:2px 0 2px 14px;font-size:14px;margin-top:12px}
+</style>
+</head>
+<body>
+<main class="page">
+  <div class="eyebrow">Integration spec · for InstantConvo</div>
+  <h1>WhatsApp Delivery Failure API</h1>
+  <div class="summary">
+    <b style="color:var(--ink)">What we need from InstantConvo:</b>
+    <ol>
+      <li>Accept our <code>message_id</code> (a UUID) on each send request, and store it alongside the message.</li>
+      <li>When a message is <b>not delivered</b>, POST that <code>message_id</code> to our failure webhook (section 2), authenticated with the <code>X-Api-Key</code> listed under Credentials.</li>
+    </ol>
+    <p>Why: your send endpoint returns success before delivery is known, so this callback is how the CRM learns which messages actually failed. For each failure we show the recipient an in-app notification instead.</p>
+  </div>
+
+  <h2>Credentials</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Name</th><th>Header</th><th>Value</th><th>Used for</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">WHATSAPP_WEBHOOK_KEY</td><td><code>X-Api-Key</code></td><td class="mono">{{ webhook_key }}</td><td>InstantConvo → PIE failure callback (section 2)</td></tr>
+      <tr><td class="mono">WHATSAPP_API_TOKEN</td><td><code>X-ACCESS-TOKEN</code></td><td class="mono">{{ api_token }}</td><td>PIE → InstantConvo send request (section 1)</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>Integration points</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>#</th><th>Direction</th><th>Endpoint</th><th>Auth</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>PIE CRM → InstantConvo</td><td class="mono">POST https://chat.theinstantconvo.com/api/contacts/{contact_id}/send/text</td><td><code>X-ACCESS-TOKEN</code></td></tr>
+      <tr><td>2</td><td>InstantConvo → PIE CRM</td><td class="mono">POST {{ request.scheme }}://{{ request.get_host }}/api/whatsapp/failed/</td><td><code>X-Api-Key</code></td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>1. Send request (what we send you)</h2>
+  <p class="lede">This is your existing template endpoint, with one addition: a top-level <code>message_id</code>. Please echo this exact value back in the failure callback.</p>
+  <div class="endpoint"><span class="method">POST</span>https://chat.theinstantconvo.com/api/contacts/923122211828/send/text</div>
+  <h3>Headers</h3>
+  <pre>Content-Type: application/json
+X-ACCESS-TOKEN: {{ api_token }}</pre>
+  <h3>Body — example (template <code>property_new_listing</code>)</h3>
+  <pre>{
+  "contact_id": "923122211828",
+  "message_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "message": {
+    "type": "template",
+    "channel": "omnichannel",
+    "template_name": "property_new_listing",
+    "language": { "code": "en_US" },
+    "components": [
+      { "type": "header", "parameters": [ { "type": "text", "text": "PROP-0155" } ] },
+      { "type": "body", "parameters": [
+          { "type": "text", "text": "3-Bed Apartment, DHA Phase 6 — PKR 1.20 Cr" },
+          { "type": "text", "text": "Ahmed Raza" },
+          { "type": "text", "text": "28 Aug 2026, 3:45 PM" }
+      ] },
+      { "type": "button", "sub_type": "url", "index": "0",
+        "parameters": [ { "type": "text", "text": "155" } ] }
+    ]
+  }
+}</pre>
+  <h3>Fields</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">message_id</td><td>string (UUID v4)</td><td><b>New.</b> Unique per message, generated by PIE CRM. Store it, and return it in the failure callback.</td></tr>
+      <tr><td class="mono">contact_id</td><td>string</td><td>Recipient phone, digits only, in international format (<code>92…</code>). Same value as in the URL path.</td></tr>
+      <tr><td class="mono">message</td><td>object</td><td>Unchanged: the WhatsApp template payload (<code>template_name</code>, <code>language</code>, <code>components</code>).</td></tr>
+    </tbody>
+  </table></div>
+
+  <h2>2. Failure callback (what you call)</h2>
+  <p class="lede">Call this once for each message that fails delivery. Don't call it for messages that are delivered or read.</p>
+  <div class="endpoint"><span class="method">POST</span>{{ request.scheme }}://{{ request.get_host }}/api/whatsapp/failed/</div>
+  <h3>Headers</h3>
+  <pre>Content-Type: application/json
+X-Api-Key: {{ webhook_key }}</pre>
+  <h3>Body</h3>
+  <pre>{
+  "message_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7",
+  "error": "131026: Message undeliverable"
+}</pre>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Field</th><th>Required</th><th>Description</th></tr></thead>
+    <tbody>
+      <tr><td class="mono">message_id</td><td>Yes</td><td>The exact UUID we sent in the send request.</td></tr>
+      <tr><td class="mono">error</td><td>No</td><td>Human-readable reason or WhatsApp error code, up to 1000 characters. We store it for troubleshooting.</td></tr>
+    </tbody>
+  </table></div>
+  <h3>Responses</h3>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Status</th><th>Body</th><th>Meaning</th><th>Retry?</th></tr></thead>
+    <tbody>
+      <tr><td class="ok">200</td><td class="mono">{"ok": true}</td><td>Recorded. Also returned if this <code>message_id</code> was already reported, so repeats are safe.</td><td>No</td></tr>
+      <tr><td class="err">400</td><td class="mono">{"error": "..."}</td><td>Body isn't JSON, or <code>message_id</code> is missing or isn't a valid UUID.</td><td>No, fix the payload</td></tr>
+      <tr><td class="err">401</td><td class="mono">{"error": "..."}</td><td><code>X-Api-Key</code> header is missing or wrong.</td><td>No, check the key</td></tr>
+      <tr><td class="err">404</td><td class="mono">{"error": "..."}</td><td>We have no record of this <code>message_id</code>.</td><td>No</td></tr>
+      <tr><td class="err">405</td><td>—</td><td>Method other than POST.</td><td>No</td></tr>
+      <tr><td class="err">5xx / timeout</td><td>—</td><td>Temporary server problem on our side.</td><td>Yes, with backoff</td></tr>
+    </tbody>
+  </table></div>
+  <div class="note">The endpoint is idempotent. Sending the same <code>message_id</code> more than once does nothing after the first time, so a retry after a timeout can't create duplicate notifications.</div>
+  <h3>Test with cURL</h3>
+  <pre>curl -X POST {{ request.scheme }}://{{ request.get_host }}/api/whatsapp/failed/ \
+  -H "Content-Type: application/json" \
+  -H "X-Api-Key: {{ webhook_key }}" \
+  -d '{"message_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7", "error": "test"}'</pre>
+  <p>If the UUID is random, expect <code>404 Unknown message_id</code>. That still shows the URL and key work. A <code>message_id</code> from a real send returns <code>200</code>.</p>
+
+  <h2>Go-live checklist</h2>
+  <div class="table-wrap"><table>
+    <thead><tr><th>Step</th><th>Owner</th></tr></thead>
+    <tbody>
+      <tr><td>Accept and store the top-level <code>message_id</code> on send requests</td><td>InstantConvo</td></tr>
+      <tr><td>Configure the failure webhook URL and <code>X-Api-Key</code> header for the PIE account</td><td>InstantConvo</td></tr>
+      <tr><td>Test: a send to an invalid number triggers the callback and returns <code>200</code></td><td>Both</td></tr>
+    </tbody>
+  </table></div>
+</main>
+</body>
+</html>

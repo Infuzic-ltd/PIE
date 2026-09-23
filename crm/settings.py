@@ -117,6 +117,12 @@ VAPID_ADMIN_EMAIL = os.environ.get('VAPID_ADMIN_EMAIL', 'admin@pierealestate.com
 # secret via the LEAD_API_KEY environment variable before going to production.
 LEAD_API_KEY = os.environ.get('LEAD_API_KEY', 'pie-lead-api-dev-key-8f2a1c-change-in-production')
 
+# ── WhatsApp (InstantConvo) ───────────────────────────────────────────────────
+# WHATSAPP_API_TOKEN: X-ACCESS-TOKEN for outbound sends (sending is skipped if empty).
+# WHATSAPP_WEBHOOK_KEY: X-Api-Key InstantConvo must send to POST /api/whatsapp/failed/.
+WHATSAPP_API_TOKEN = os.environ.get('WHATSAPP_API_TOKEN', '')
+WHATSAPP_WEBHOOK_KEY = os.environ.get('WHATSAPP_WEBHOOK_KEY', '')
+
 # ── Cloudinary (direct upload — URL saved to DB) ─────────────────────────────
 cloudinary.config(
     cloud_name=os.environ.get('CLOUDINARY_CLOUD_NAME', 'm25w8okr'),

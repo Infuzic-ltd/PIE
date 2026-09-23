@@ -5,7 +5,7 @@ from .models import (
     Customer, Block, BlockRequiredDocument,
     Lead, LeadActivity, LeadDocument, LeadPayment,
     Role, PushSubscription, Notification, AgentTarget,
-    PropertySubmission, PropertySubmissionImage, SiteSettings,
+    PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage,
 )
 
 
@@ -279,4 +279,15 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         return not SiteSettings.objects.exists()
 
     def has_delete_permission(self, request, obj=None):
+        return False
+
+
+@admin.register(WhatsAppMessage)
+class WhatsAppMessageAdmin(admin.ModelAdmin):
+    list_display = ('message_id', 'template_name', 'recipient', 'phone', 'property', 'status', 'created_at')
+    list_filter = ('status', 'template_name')
+    search_fields = ('message_id', 'phone', 'recipient__email')
+    readonly_fields = [f.name for f in WhatsAppMessage._meta.fields]
+
+    def has_add_permission(self, request):
         return False

@@ -19,6 +19,7 @@ from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
 from accounts.views import website_homepage, website_about, website_services, website_properties, website_property_detail, website_contact, website_listing, submit_property_listing, submit_property_lead, initiate_featured_payment, payment_success, payment_cancelled, safepay_webhook, lead_api_create, lead_api_docs, safepay_setup_guide, whatsapp_templates_docs
+from accounts.whatsapp import whatsapp_failed_webhook, whatsapp_api_docs
 
 urlpatterns = [
     path('admin/', admin.site.urls),
@@ -37,6 +38,8 @@ urlpatterns = [
     path('payment/webhook/safepay/', safepay_webhook, name='safepay_webhook'),
     path('api/leads/create/', lead_api_create, name='lead_api_create'),
     path('api/leads/docs/', lead_api_docs, name='lead_api_docs'),
+    path('api/whatsapp-failed/', whatsapp_failed_webhook, name='whatsapp_failed_webhook'),
+    path('api/whatsapp/docs/', whatsapp_api_docs, name='whatsapp_api_docs'),
     path('safepay-setup/', safepay_setup_guide, name='safepay_setup_guide'),
     path('whatsapp-templates/docs/', whatsapp_templates_docs, name='whatsapp_templates_docs'),
     path('crm/', include('accounts.urls')),

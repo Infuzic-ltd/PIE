@@ -1,3 +1,4 @@
+import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -1046,6 +1047,28 @@ class Notification(models.Model):
 
     def __str__(self):
         return f'{self.recipient.email} — {self.title}'
+
+
+class WhatsAppMessage(models.Model):
+    """One outbound WhatsApp send. message_id is echoed back by InstantConvo's failure callback."""
+    STATUS_SENT = 'sent'
+    STATUS_FAILED = 'failed'
+    STATUS_CHOICES = [(STATUS_SENT, 'Sent'), (STATUS_FAILED, 'Failed')]
+
+    message_id = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
+    recipient = models.ForeignKey('User', on_delete=models.CASCADE, related_name='whatsapp_messages')
+    phone = models.CharField(max_length=20)
+    template_name = models.CharField(max_length=100)
+    property = models.ForeignKey('Property', on_delete=models.SET_NULL, null=True, blank=True, related_name='whatsapp_messages')
+    status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_SENT)
+    error = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.template_name} → {self.phone} ({self.status})'
 
 
 class PropertyImage(models.Model):

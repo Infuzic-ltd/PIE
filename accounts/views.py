@@ -28,6 +28,7 @@ from .models import Property, PropertyImage, PropertyDocument, PropertyActivity,
 from . import payments as safepay_payments
 from .emailer import send_html_email, EmailNotConfigured, EmailSendError
 from .reports import build_dashboard_pdf
+from .whatsapp import _normalize_phone_digits, notify_new_listing
 from django.template.loader import render_to_string
 
 
@@ -913,6 +914,7 @@ def property_create(request):
             description=f'Property listed by {request.user.get_full_name() or request.user.email}.',
             created_by=request.user,
         )
+        notify_new_listing(prop)
         return redirect('property_view', pk=prop.pk)
     return render(request, 'accounts/property_create.html', {
         'form': form,
@@ -1246,6 +1248,7 @@ def property_submission_convert(request, pk):
             description=f'Property created from submission {submission.reference_code()} by {request.user.get_full_name() or request.user.email}.',
             created_by=request.user,
         )
+        notify_new_listing(prop)
         messages.success(request, f'Property created and listed from submission {submission.reference_code()}.')
         return redirect('property_view', pk=prop.pk)
 
@@ -2063,15 +2066,6 @@ def _int_or_none(value):
         return int(value)
     except (TypeError, ValueError):
         return None
-
-
-def _normalize_phone_digits(raw):
-    """Digits only, with a Pakistani local '0...' prefix rewritten to the '92...' country code
-    so local and international formats of the same number compare equal."""
-    digits = re.sub(r'\D', '', raw or '')
-    if digits.startswith('0') and len(digits) == 11:
-        digits = '92' + digits[1:]
-    return digits
 
 
 @csrf_exempt
