@@ -42,3 +42,15 @@ class WhatsAppNewListingTests(TestCase):
         msg.refresh_from_db()
         self.assertEqual((msg.status, msg.error), (WhatsAppMessage.STATUS_FAILED, 'undeliverable'))
         self.assertEqual(Notification.objects.filter(recipient=agent).count(), 1)
+
+    def test_webhook_errors_return_json(self):
+        post = lambda body: self.client.post('/api/whatsapp/failed/', body, content_type='application/json', HTTP_X_API_KEY='hook')
+        self.assertEqual(post('[1, 2]').status_code, 400)
+        self.assertEqual(post('{"message_id": "not-a-uuid"}').status_code, 400)
+        ok_id = '{"message_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"}'
+        self.assertEqual(post(ok_id).status_code, 404)
+        from django.db import ProgrammingError
+        with mock.patch('accounts.whatsapp.WhatsAppMessage.objects.select_related', side_effect=ProgrammingError('no table')):
+            r = post(ok_id)
+        self.assertEqual(r.status_code, 503)
+        self.assertIn('error', r.json())

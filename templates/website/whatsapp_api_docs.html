@@ -118,7 +118,7 @@ X-Api-Key: 99326155-4fb1-4f6d-8bb3-215405cfc8f2</pre>
       <tr><td class="err">401</td><td class="mono">{"error": "..."}</td><td><code>X-Api-Key</code> header is missing or wrong.</td><td>No, fix the header</td></tr>
       <tr><td class="err">404</td><td class="mono">{"error": "..."}</td><td>We have no message with this <code>message_id</code>.</td><td>No</td></tr>
       <tr><td class="err">405</td><td>—</td><td>A method other than POST was used.</td><td>No</td></tr>
-      <tr><td class="err">5xx / timeout</td><td>—</td><td>Temporary problem on our side.</td><td>Yes, with backoff</td></tr>
+      <tr><td class="err">500 / 503 / timeout</td><td class="mono">{"error": "..."}</td><td>Temporary problem on our side.</td><td>Yes, with backoff</td></tr>
     </tbody>
   </table></div>
   <div class="note">Reporting the same <code>message_id</code> more than once is safe. Only the first call has any effect, so retrying after a timeout never creates duplicate notifications.</div>

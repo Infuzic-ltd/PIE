@@ -6,12 +6,14 @@ they POST that id to `whatsapp_failed_webhook`, which falls back to an in-CRM
 notification for the recipient.
 """
 import json
+import logging
 import re
 import uuid
 from zoneinfo import ZoneInfo
 
 import requests
 from django.conf import settings
+from django.db import DatabaseError
 from django.db.models import Q
 from django.http import JsonResponse
 from django.shortcuts import render
@@ -23,6 +25,7 @@ from .models import User, WhatsAppMessage
 
 SEND_URL = 'https://chat.theinstantconvo.com/api/contacts/{contact_id}/send/text'
 PKT = ZoneInfo('Asia/Karachi')
+logger = logging.getLogger(__name__)
 
 
 def _normalize_phone_digits(raw):
@@ -110,7 +113,8 @@ def notify_new_listing(prop):
         for user in recipients:
             send_template(user, 'property_new_listing', components, prop=prop)
     except Exception:
-        pass  # a WhatsApp outage must never break property creation
+        # a WhatsApp outage must never break property creation
+        logger.exception('WhatsApp new-listing send failed for property %s', prop.pk)
 
 
 @csrf_exempt
@@ -121,17 +125,25 @@ def whatsapp_failed_webhook(request):
         return JsonResponse({'error': 'Invalid or missing API key.'}, status=401)
     try:
         data = json.loads(request.body)
+        if not isinstance(data, dict):
+            raise TypeError
         message_id = uuid.UUID(str(data['message_id']))
     except (ValueError, KeyError, TypeError):
         return JsonResponse({'error': 'Body must be JSON with a valid "message_id" UUID.'}, status=400)
 
-    msg = WhatsAppMessage.objects.select_related('recipient', 'property').filter(message_id=message_id).first()
-    if not msg:
-        return JsonResponse({'error': 'Unknown message_id.'}, status=404)
-    if msg.status == WhatsAppMessage.STATUS_FAILED:
-        return JsonResponse({'ok': True})  # already handled — callbacks may repeat
-
-    _mark_failed(msg, data.get('error'))
+    try:
+        msg = WhatsAppMessage.objects.select_related('recipient', 'property').filter(message_id=message_id).first()
+        if not msg:
+            return JsonResponse({'error': 'Unknown message_id.'}, status=404)
+        if msg.status == WhatsAppMessage.STATUS_FAILED:
+            return JsonResponse({'ok': True})  # already handled — callbacks may repeat
+        _mark_failed(msg, data.get('error'))
+    except DatabaseError:
+        logger.exception('WhatsApp failure webhook: database error for message_id %s', message_id)
+        return JsonResponse({'error': 'Temporarily unavailable, please retry later.'}, status=503)
+    except Exception:
+        logger.exception('WhatsApp failure webhook: unexpected error for message_id %s', message_id)
+        return JsonResponse({'error': 'Internal server error, please retry later.'}, status=500)
     return JsonResponse({'ok': True})
 
 
