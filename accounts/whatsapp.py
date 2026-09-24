@@ -136,7 +136,4 @@ def whatsapp_failed_webhook(request):
 
 
 def whatsapp_api_docs(request):
-    return render(request, 'website/whatsapp_api_docs.html', {
-        'api_token': settings.WHATSAPP_API_TOKEN or 'not set',
-        'webhook_key': settings.WHATSAPP_WEBHOOK_KEY or 'not set',
-    })
+    return render(request, 'website/whatsapp_api_docs.html')
