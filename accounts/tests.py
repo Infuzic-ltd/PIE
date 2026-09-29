@@ -31,7 +31,7 @@ class WhatsAppNewListingTests(TestCase):
         self.assertEqual(comps[0]['parameters'][0]['text'], prop.property_id)
         self.assertEqual(comps[1]['parameters'][0]['text'], '3-Bed Apartment, DHA Phase 6 — PKR 1.20 Cr')
         self.assertEqual(comps[1]['parameters'][1]['text'], 'Ahmed Raza')
-        self.assertEqual(comps[2]['parameters'][0]['text'], str(prop.pk))
+        self.assertEqual(comps[2]['parameters'][0]['text'], f'{prop.pk}/')
 
         payload = json.dumps({'message_id': str(msg.message_id), 'error': 'undeliverable'})
         self.assertEqual(self.client.post('/api/whatsapp/failed/', payload, content_type='application/json',

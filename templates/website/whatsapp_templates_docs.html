@@ -104,8 +104,8 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
 
   <div class="masthead">
     <div class="eyebrow">WhatsApp Business API &mdash; Template Submission Plan</div>
-    <h1>PIE Real Estate needs 14 message templates</h1>
-    <p class="lede">Four cover inventory changes, three cover the lead pipeline, five (one per property count) cover property recommendations to clients, one covers client milestones and one covers affiliate onboarding with login details. Every template follows WhatsApp&rsquo;s variable rules (see Template rules), so none will be rejected for a variable at the start or end.</p>
+    <h1>PIE Real Estate needs 10 message templates</h1>
+    <p class="lede">Four cover inventory changes, three cover the lead pipeline, one sends a property recommendation to a client (one property per message), one covers client milestones and one covers affiliate onboarding with login details. Every template follows WhatsApp&rsquo;s variable rules (see Template rules), so none will be rejected for a variable at the start or end.</p>
     <div class="decisions">
       <span class="chip">Scope &rarr; <b>grouped by shape</b></span>
       <span class="chip">Lead-facing templates &rarr; <b>Utility</b></span>
@@ -115,7 +115,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
   </div>
 
   <h2>At a glance</h2>
-  <p class="lede">All fourteen submit under Meta&rsquo;s current three-category system (Utility / Marketing / Authentication) and every one here is Utility. The inventory and internal templates report on an operational change the recipient already manages; the two client-facing templates are scoped to a reply to that specific lead&rsquo;s own inquiry or an update on their own active deal (see the compliance notes in those cards).</p>
+  <p class="lede">All ten submit under Meta&rsquo;s current three-category system (Utility / Marketing / Authentication) and every one here is Utility. The inventory and internal templates report on an operational change the recipient already manages; the two client-facing templates are scoped to a reply to that specific lead&rsquo;s own inquiry or an update on their own active deal (see the compliance notes in those cards).</p>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Template</th><th>Audience</th><th>Covers</th><th>Category</th></tr></thead>
@@ -127,7 +127,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
         <tr><td class="name mono">lead_reminder_alert</td><td>Clients &amp; CRM users</td><td>Any reminder: Site Visit &middot; Follow-Up &middot; Payment Due &middot; Documents &middot; Meeting</td><td>Utility</td></tr>
         <tr><td class="name mono">internal_fyi_alert</td><td>Agents &amp; Admins</td><td>New Lead Assigned &middot; Submission Needs Evaluation &middot; Deal Lost (View Lead button)</td><td>Utility</td></tr>
         <tr><td class="name mono">internal_figures_alert</td><td>Agents &amp; Admins</td><td>Payment Recorded &middot; Deal Terms Locked &middot; Agent Target Pace (View Lead button)</td><td>Utility</td></tr>
-        <tr><td class="name mono">property_recommendation_1 &hellip; _5</td><td>Clients</td><td>1&ndash;5 matching properties, each with a website link (5 templates)</td><td>Utility</td></tr>
+        <tr><td class="name mono">property_recommendation</td><td>Clients</td><td>One matching property with a View Property button to the website (send once per property)</td><td>Utility</td></tr>
         <tr><td class="name mono">client_milestone_alert</td><td>Leads &amp; Customers</td><td>Booking Confirmed &middot; Documentation &middot; Possession Complete &middot; Deal Closed</td><td>Utility</td></tr>
         <tr><td class="name mono">affiliate_approved_alert</td><td>Affiliates</td><td>Account Approved, with login email and temporary password</td><td>Utility</td></tr>
       </tbody>
@@ -147,9 +147,9 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
 💰 Figures: {{2}}</td></tr>
         <tr><td>3</td><td>A variable&rsquo;s value can&rsquo;t contain line breaks, tabs or more than 4 spaces in a row. Lists need one variable per line.</td><td class="mono">{{2}} = &quot;1. Flat&#10;2. House&quot;</td><td class="mono">Option 1: {{2}}
 Option 2: {{3}}</td></tr>
-        <tr><td>4</td><td>Every variable must be filled on every send. Values can&rsquo;t be empty.</td><td>One template for &ldquo;up to 5&rdquo; items</td><td>One template per item count</td></tr>
+        <tr><td>4</td><td>Every variable must be filled on every send. Values can&rsquo;t be empty.</td><td>One template for &ldquo;up to 5&rdquo; items</td><td>One item per message, sent once per item</td></tr>
         <tr><td>5</td><td>Enough fixed text around the variables. Too many variables for the length gets rejected.</td><td class="mono">{{1}} {{2}} {{3}}</td><td>Labels on every line</td></tr>
-        <tr><td>6</td><td>A URL button&rsquo;s variable can only go at the end of the link. At most 2 URL buttons.</td><td class="mono">https://site.com/{{1}}/view</td><td class="mono">https://site.com/crm/{{1}}</td></tr>
+        <tr><td>6</td><td>A URL button&rsquo;s variable can only go at the end of the link. At most 2 URL buttons.</td><td class="mono">https://site.com/{{1}}/</td><td class="mono">https://site.com/properties/{{1}} with value 31/</td></tr>
         <tr><td>7</td><td>Limits: header 60 characters, body 1,024, footer 60. Footer has no variables.</td><td>&mdash;</td><td>&mdash;</td></tr>
         <tr><td>8</td><td>Give a sample value for every variable when submitting</td><td>&mdash;</td><td>Use the &ldquo;Sample value&rdquo; column</td></tr>
       </tbody>
@@ -172,7 +172,7 @@ Option 2: {{3}}</td></tr>
         <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">New Listing: {{1}}</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
         <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
-https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+https://www.pieestate.com/crm/properties/{{1}}</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">A new property has been added to inventory.
@@ -192,7 +192,7 @@ Open the CRM for full listing details.</div></div>
           <tr><td class="mono">Body {{1}}</td><td>Type, location, price summary</td><td class="mono">3-Bed Apartment, DHA Phase 6 &mdash; PKR 1.2 Cr</td></tr>
           <tr><td class="mono">Body {{2}}</td><td>Agent/affiliate who listed it</td><td class="mono">Ahmed Raza</td></tr>
           <tr><td class="mono">Body {{3}}</td><td>Date &amp; time added</td><td class="mono">28 Aug 2026, 3:45 PM</td></tr>
-          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">155</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID with a trailing slash (URL suffix)</td><td class="mono">155/</td></tr>
         </tbody>
       </table>
     </div>
@@ -226,7 +226,7 @@ Open the CRM for full listing details.</div>
         <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Status Update: {{1}}</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
         <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
-https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+https://www.pieestate.com/crm/properties/{{1}}</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">Previous status: {{1}}
@@ -244,7 +244,7 @@ Open the CRM for full listing details.</div></div>
           <tr><td class="mono">Body {{1}}</td><td>Status before the change</td><td class="mono">Active</td></tr>
           <tr><td class="mono">Body {{2}}</td><td>Status after the change</td><td class="mono">Sold / Closed</td></tr>
           <tr><td class="mono">Body {{3}}</td><td>Date &amp; time of change</td><td class="mono">28 Aug 2026, 2:15 PM</td></tr>
-          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">142</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID with a trailing slash (URL suffix)</td><td class="mono">142/</td></tr>
         </tbody>
       </table>
     </div>
@@ -276,7 +276,7 @@ Open the CRM for full listing details.</div>
         <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Price Update: {{1}}</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
         <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
-https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+https://www.pieestate.com/crm/properties/{{1}}</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">Previous price: {{1}}
@@ -294,7 +294,7 @@ Open the CRM for full listing details.</div></div>
           <tr><td class="mono">Body {{1}}</td><td>Price before the change</td><td class="mono">PKR 1.15 Cr</td></tr>
           <tr><td class="mono">Body {{2}}</td><td>Price after the change</td><td class="mono">PKR 1.25 Cr</td></tr>
           <tr><td class="mono">Body {{3}}</td><td>Date &amp; time of change</td><td class="mono">28 Aug 2026, 4:10 PM</td></tr>
-          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">142</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID with a trailing slash (URL suffix)</td><td class="mono">142/</td></tr>
         </tbody>
       </table>
     </div>
@@ -326,7 +326,7 @@ Open the CRM for full listing details.</div>
         <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Listing Updated: {{1}}</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
         <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Property
-https://your-pie-domain.com/crm/properties/{{1}}/</div></div>
+https://www.pieestate.com/crm/properties/{{1}}</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">What changed: {{1}}
@@ -346,7 +346,7 @@ Open the CRM for full listing details.</div></div>
           <tr><td class="mono">Body {{2}}</td><td>Value/state before</td><td class="mono">Title deed pending upload</td></tr>
           <tr><td class="mono">Body {{3}}</td><td>Value/state after</td><td class="mono">Title deed uploaded</td></tr>
           <tr><td class="mono">Body {{4}}</td><td>Date &amp; time of change</td><td class="mono">28 Aug 2026, 5:00 PM</td></tr>
-          <tr><td class="mono">Button {{1}}</td><td>Property ID (URL suffix)</td><td class="mono">142</td></tr>
+          <tr><td class="mono">Button {{1}}</td><td>Property ID with a trailing slash (URL suffix)</td><td class="mono">142/</td></tr>
         </tbody>
       </table>
     </div>
@@ -382,7 +382,7 @@ Open the CRM for full listing details.</div>
         <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">Reminder: {{1}}</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate</div></div>
         <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Details
-https://your-pie-domain.com/{{1}}</div></div>
+https://www.pieestate.com/{{1}}</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hello {{1}}, this is a friendly reminder from PIE Real Estate.
@@ -461,7 +461,7 @@ Please reply to this message if you need to reschedule or have any questions.</d
         <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">CRM Alert: {{1}}</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
         <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Lead
-https://your-pie-domain.com/crm/{{1}}</div></div>
+https://www.pieestate.com/crm/{{1}}</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hello {{1}}, here is a new update from PIE CRM.
@@ -523,7 +523,7 @@ Tap View Lead below to open it in the CRM.</div>
         <div class="field"><div class="field-label">Header (text, 1 var)</div><div class="field-value mono">CRM Update: {{1}}</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate CRM</div></div>
         <div class="field"><div class="field-label">Button (URL, dynamic)</div><div class="field-value mono">View Lead
-https://your-pie-domain.com/crm/{{1}}</div></div>
+https://www.pieestate.com/crm/{{1}}</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hello {{1}}, a financial update has been recorded in PIE CRM.
@@ -582,38 +582,29 @@ Tap View Lead below for the full breakdown.</div>
   <div class="tpl">
     <div class="tpl-head">
       <div>
-        <div class="tpl-name">property_recommendation_1 &hellip; _5</div>
-        <div class="tpl-covers">Covers: 1 to 5 matching properties sent to a client, each with a link to its page on the website</div>
+        <div class="tpl-name">property_recommendation</div>
+        <div class="tpl-covers">Covers: one recommended property per message, with a button to its page on the website. To share 5 properties, send it 5 times.</div>
       </div>
       <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
     </div>
-    <p>WhatsApp requires every variable to be filled on every send, and a value can&rsquo;t contain line breaks. So one template can&rsquo;t hold &ldquo;up to 5&rdquo; properties. Submit <b>five templates</b> with identical wording: <span class="mono">property_recommendation_1</span> to <span class="mono">_5</span>, where the number is how many properties it holds. The sending code picks the one that matches the number of recommendations. The spec below is <span class="mono">property_recommendation_5</span>. The others simply stop after Option 1, 2, 3 or 4.</p>
     <div class="spec-grid">
       <div>
-        <div class="field"><div class="field-label">Header (text, static)</div><div class="field-value mono">Properties Matching Your Search</div></div>
+        <div class="field"><div class="field-label">Header (text, static)</div><div class="field-value mono">Property Recommended For You</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate</div></div>
-        <div class="field"><div class="field-label">Button (URL, static)</div><div class="field-value mono">Browse All Properties
-https://your-pie-domain.com/properties/</div></div>
+        <div class="field"><div class="field-label">Button 1 (URL, dynamic)</div><div class="field-value mono">View Property
+https://www.pieestate.com/properties/{{1}}</div></div>
+        <div class="field"><div class="field-label">Button 2 (URL, static)</div><div class="field-value mono">Browse All Properties
+https://www.pieestate.com/properties/</div></div>
       </div>
       <div>
-        <div class="field"><div class="field-label">Body (property_recommendation_5)</div><div class="field-value mono">Hi {{1}}, thank you for your interest in PIE Real Estate. Here are properties that match your requirements:
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hi {{1}}, here is a property from PIE Real Estate that matches your requirements.
 
-🏠 *Option 1:* {{2}}
-🔗 https://your-pie-domain.com/properties/{{3}}/
+🏠 {{2}}
+📍 Location: {{3}}
+💰 Price: {{4}}
+📐 Details: {{5}}
 
-🏠 *Option 2:* {{4}}
-🔗 https://your-pie-domain.com/properties/{{5}}/
-
-🏠 *Option 3:* {{6}}
-🔗 https://your-pie-domain.com/properties/{{7}}/
-
-🏠 *Option 4:* {{8}}
-🔗 https://your-pie-domain.com/properties/{{9}}/
-
-🏠 *Option 5:* {{10}}
-🔗 https://your-pie-domain.com/properties/{{11}}/
-
-Tap any link to see photos and full details. To book a viewing, reply here or call {{12}} anytime.</div></div>
+Tap View Property below to see photos and full details. To book a viewing, reply here or call {{6}} anytime.</div></div>
       </div>
     </div>
     <div class="table-wrap var-table">
@@ -621,45 +612,33 @@ Tap any link to see photos and full details. To book a viewing, reply here or ca
         <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
         <tbody>
           <tr><td class="mono">Body {{1}}</td><td>Client&rsquo;s first name</td><td class="mono">Ayesha</td></tr>
-          <tr><td class="mono">Body {{2}}, {{4}}, {{6}}, {{8}}, {{10}}</td><td>One-line property summary: type, area, price, match. Keep it to 60 characters or fewer.</td><td class="mono">3-Bed Apartment, DHA Phase 6 · PKR 1.2 Cr · 92% match</td></tr>
-          <tr><td class="mono">Body {{3}}, {{5}}, {{7}}, {{9}}, {{11}}</td><td>Property ID, which completes the website link</td><td class="mono">155</td></tr>
-          <tr><td class="mono">Body last variable</td><td>Assigned agent&rsquo;s name and number</td><td class="mono">Ahmed Raza (0300-1234567)</td></tr>
-        </tbody>
-      </table>
-    </div>
-    <div class="table-wrap var-table">
-      <table>
-        <thead><tr><th>Template</th><th>Properties</th><th>Variables</th><th>Agent variable</th></tr></thead>
-        <tbody>
-          <tr><td class="mono">property_recommendation_1</td><td>1</td><td>4</td><td class="mono">{{4}}</td></tr>
-          <tr><td class="mono">property_recommendation_2</td><td>2</td><td>6</td><td class="mono">{{6}}</td></tr>
-          <tr><td class="mono">property_recommendation_3</td><td>3</td><td>8</td><td class="mono">{{8}}</td></tr>
-          <tr><td class="mono">property_recommendation_4</td><td>4</td><td>10</td><td class="mono">{{10}}</td></tr>
-          <tr><td class="mono">property_recommendation_5</td><td>5</td><td>12</td><td class="mono">{{12}}</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Property title</td><td class="mono">3-Bed Apartment</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Area and city</td><td class="mono">DHA Phase 6, Karachi</td></tr>
+          <tr><td class="mono">Body {{4}}</td><td>Price</td><td class="mono">PKR 1.2 Cr</td></tr>
+          <tr><td class="mono">Body {{5}}</td><td>Size, beds, baths, all on one line</td><td class="mono">10 Marla · 3 Bed · 3 Bath</td></tr>
+          <tr><td class="mono">Body {{6}}</td><td>Assigned agent&rsquo;s name and number</td><td class="mono">Ahmed Raza (0300-1234567)</td></tr>
+          <tr><td class="mono">Button 1 {{1}}</td><td>Property ID with a trailing slash, completing the website link</td><td class="mono">31/</td></tr>
         </tbody>
       </table>
     </div>
     <div class="wa-frame">
-      <div class="wa-label">Rendered preview (property_recommendation_3)</div>
+      <div class="wa-label">Rendered preview</div>
       <div class="wa-bubble">
-        <div class="wa-header">Properties Matching Your Search</div>
-        <div>Hi Ayesha, thank you for your interest in PIE Real Estate. Here are properties that match your requirements:
+        <div class="wa-header">Property Recommended For You</div>
+        <div>Hi Ayesha, here is a property from PIE Real Estate that matches your requirements.
 
-🏠 <b>Option 1:</b> 3-Bed Apartment, DHA Phase 6 · PKR 1.2 Cr · 92% match
-🔗 <span style="color:var(--accent)">https://your-pie-domain.com/properties/155/</span>
+🏠 3-Bed Apartment
+📍 Location: DHA Phase 6, Karachi
+💰 Price: PKR 1.2 Cr
+📐 Details: 10 Marla · 3 Bed · 3 Bath
 
-🏠 <b>Option 2:</b> 2-Bed Apartment, Clifton Block 5 · PKR 95 Lakh · 85% match
-🔗 <span style="color:var(--accent)">https://your-pie-domain.com/properties/142/</span>
-
-🏠 <b>Option 3:</b> 4-Bed House, Bahria Town · PKR 2.1 Cr · 80% match
-🔗 <span style="color:var(--accent)">https://your-pie-domain.com/properties/131/</span>
-
-Tap any link to see photos and full details. To book a viewing, reply here or call Ahmed Raza (0300-1234567) anytime.</div>
+Tap View Property below to see photos and full details. To book a viewing, reply here or call Ahmed Raza (0300-1234567) anytime.</div>
         <div class="wa-footer">PIE Real Estate</div>
+        <div class="wa-btn">&#128279; View Property</div>
         <div class="wa-btn">&#128279; Browse All Properties</div>
       </div>
     </div>
-    <div class="note">Links are in the body because a template can have at most 2 URL buttons. Each link opens the public property page (<span class="mono">/properties/&lt;id&gt;/</span>) with photos and full details. Compliance: Utility only while this goes to a client who asked about properties and opted in to WhatsApp. An unsolicited &ldquo;new listings this week&rdquo; blast counts as Marketing and needs its own Marketing template.</div>
+    <div class="note">View Property opens <span class="mono">https://www.pieestate.com/properties/31/</span>. The link has to end with the variable, so the trailing slash is part of the value (<span class="mono">31/</span>), not the template. No value can contain line breaks, which is why each detail has its own line and variable. Compliance: Utility only while this goes to a client who asked about properties and opted in to WhatsApp. An unsolicited &ldquo;new listings&rdquo; blast counts as Marketing and needs its own Marketing template.</div>
   </div>
 
   <div class="tpl">
@@ -724,7 +703,7 @@ For any questions, reply to this message or contact your agent Ahmed Raza (0300-
         <div class="field"><div class="field-label">Header (text, static)</div><div class="field-value mono">Your Affiliate Account Is Approved</div></div>
         <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate</div></div>
         <div class="field"><div class="field-label">Button (URL, static)</div><div class="field-value mono">Log In
-https://your-pie-domain.com/crm/login/</div></div>
+https://www.pieestate.com/crm/login/</div></div>
       </div>
       <div>
         <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hi {{1}}, welcome to PIE Real Estate! Your affiliate account has been approved.
@@ -770,11 +749,11 @@ Tap Log In below to sign in, then change your password from your account setting
   <div class="note">Price history isn&rsquo;t currently tracked (only narrative activity-log text) &mdash; capturing the previous price at the moment of change will need a small model change to populate <span class="mono">property_price_change</span> accurately.</div>
   <div class="note"><span class="mono">Lead.follow_up_date</span> and <span class="mono">Lead.visit_scheduled_at</span> are stored today but nothing reads them back &mdash; the reminder and visit-reminder triggers in <span class="mono">lead_reminder_alert</span> need a new scheduled job (daily for follow-ups, hourly or T-1-day for visits), not just a hook on an existing view. Agent Target Pace needs a similar new weekly job.</div>
   <div class="note"><span class="mono">LeadPayment</span> creation (<span class="mono">lead_add_payment</span>) and locking deal financials (<span class="mono">lead_set_deal_financials</span>) currently call zero notification code at all &mdash; wiring WhatsApp here means adding the first-ever notification hook to both views, in-app included.</div>
-  <div class="note">Swap <span class="mono">your-pie-domain.com</span> in every button URL for the CRM&rsquo;s real production domain before submitting. Each WhatsApp template is also sent one recipient at a time via the Cloud API &mdash; fanning a single event out to every relevant agent/affiliate/lead is orchestration this document doesn&rsquo;t cover.</div>
+  <div class="note">All links use the production domain <span class="mono">www.pieestate.com</span>. Each WhatsApp template is also sent one recipient at a time via the Cloud API &mdash; fanning a single event out to every relevant agent/affiliate/lead is orchestration this document doesn&rsquo;t cover.</div>
   <div class="note">Skipped on purpose: document-expiry reminders (<span class="mono">PropertyDocument</span> has no expiry/valid-until field today) and affiliate commission-earned alerts (no commission field exists anywhere on the affiliate relationship). Add the underlying field to the data model first, then template these.</div>
 
   <div class="note">Affiliate approval (<span class="mono">affiliate_set_status</span>) needs to generate a temporary password, call <span class="mono">set_password</span> and send it in <span class="mono">affiliate_approved_alert</span>. The invite password can&rsquo;t be reused because only its hash is stored.</div>
-  <div class="note">Property recommendations: build each summary line (60 characters or fewer, no line breaks) and pick <span class="mono">property_recommendation_N</span> where N is the number of properties (1&ndash;5). The existing <span class="mono">wa.me</span> share text is multi-line, so it can&rsquo;t be reused as a variable value.</div>
+  <div class="note">Property recommendations: send <span class="mono">property_recommendation</span> once per property (e.g. 5 times to share 5). The existing <span class="mono">wa.me</span> share text is one multi-line block, so its pieces have to be split into the separate variables instead.</div>
 
   <footer>Prepared for WhatsApp Business Manager template submission &middot; PIE Real Estate CRM</footer>
 

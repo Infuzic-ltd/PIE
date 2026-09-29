@@ -107,7 +107,7 @@ def notify_new_listing(prop):
                 {'type': 'text', 'text': f'{listed_at.day} {listed_at:%b %Y}, {listed_at.hour % 12 or 12}:{listed_at:%M %p}'},
             ]},
             {'type': 'button', 'sub_type': 'url', 'index': '0',
-             'parameters': [{'type': 'text', 'text': str(prop.pk)}]},
+             'parameters': [{'type': 'text', 'text': f'{prop.pk}/'}]},
         ]
         # ponytail: synchronous, one HTTP call per recipient inside the request; move to a queue/cron if listing gets slow.
         for user in recipients:
