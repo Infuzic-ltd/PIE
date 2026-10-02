@@ -38,6 +38,7 @@ urlpatterns = [
     path('team/add/', views.team_member_create, name='team_member_create'),
     path('team/<int:pk>/edit/', views.team_member_update, name='team_member_update'),
     path('team/<int:pk>/delete/', views.team_member_delete, name='team_member_delete'),
+    path('team/<int:pk>/toggle-website/', views.team_member_toggle_website, name='team_member_toggle_website'),
 
     # Affiliates
     path('affiliates/', views.affiliate_list, name='affiliate_list'),

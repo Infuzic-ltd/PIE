@@ -1,6 +1,8 @@
+import re
 import uuid
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.utils.text import slugify
 
 PERMISSION_LIST = [
     ('dashboard',          'View Dashboard'),
@@ -96,8 +98,26 @@ class User(AbstractUser):
         help_text='Approval workflow state — only meaningful when role is Affiliate.',
     )
 
+    show_on_website = models.BooleanField(
+        default=False, help_text='Show this member in "Meet Our Team" on the public website.',
+    )
+    slug = models.SlugField(max_length=160, unique=True, null=True, blank=True,
+                            help_text='Public profile URL (/team/<slug>/), generated from the name.')
+
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['username', 'first_name', 'last_name']
+
+    def save(self, *args, **kwargs):
+        # Keep the slug in step with the name: regenerate when it no longer matches (e.g. after a rename).
+        base = slugify(f'{self.first_name} {self.last_name}') or slugify(self.email.split('@')[0]) or 'member'
+        if not self.slug or not re.fullmatch(rf'{re.escape(base)}(-\d+)?', self.slug):
+            slug, n = base, 2
+            while User.objects.filter(slug=slug).exclude(pk=self.pk).exists():
+                slug, n = f'{base}-{n}', n + 1
+            self.slug = slug
+            if kwargs.get('update_fields') is not None:
+                kwargs['update_fields'] = {*kwargs['update_fields'], 'slug'}
+        super().save(*args, **kwargs)
 
     def get_full_name(self):
         return f'{self.first_name} {self.last_name}'.strip() or self.email

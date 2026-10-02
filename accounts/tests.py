@@ -57,3 +57,41 @@ class WhatsAppNewListingTests(TestCase):
             r = post(ok_id)
         self.assertEqual(r.status_code, 503)
         self.assertIn('error', r.json())
+
+
+class TeamWebsiteProfileTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(username='adm', email='adm@x.pk', password='x', role=User.ROLE_ADMIN, first_name='Sara', last_name='Admin')
+        self.agent = User.objects.create_user(username='ag', email='ag@x.pk', password='x', first_name='Ahmed', last_name='Raza')
+
+    def test_slug_from_name_unique_and_follows_rename(self):
+        twin = User.objects.create_user(username='ag2', email='ag2@x.pk', password='x', first_name='Ahmed', last_name='Raza')
+        self.assertEqual((self.agent.slug, twin.slug), ('ahmed-raza', 'ahmed-raza-2'))
+        self.agent.last_name = 'Khan'
+        self.agent.save()
+        self.assertEqual(self.agent.slug, 'ahmed-khan')
+        twin.save()  # unchanged name keeps its slug
+        self.assertEqual(twin.slug, 'ahmed-raza-2')
+
+    def test_publish_toggle_controls_homepage_and_profile(self):
+        url = '/team/ahmed-raza/'
+        self.assertEqual(self.client.get(url).status_code, 404)
+        self.assertNotContains(self.client.get('/'), url)
+
+        self.client.force_login(self.admin)
+        self.client.post(f'/crm/team/{self.agent.pk}/toggle-website/')
+        self.agent.refresh_from_db()
+        self.assertTrue(self.agent.show_on_website)
+
+        self.assertContains(self.client.get('/'), url)
+        r = self.client.get(url)
+        self.assertContains(r, 'Ahmed Raza')
+
+        self.client.post(f'/crm/team/{self.agent.pk}/toggle-website/')
+        self.assertEqual(self.client.get(url).status_code, 404)
+
+    def test_toggle_is_admin_only(self):
+        self.client.force_login(self.agent)
+        self.client.post(f'/crm/team/{self.agent.pk}/toggle-website/')
+        self.agent.refresh_from_db()
+        self.assertFalse(self.agent.show_on_website)

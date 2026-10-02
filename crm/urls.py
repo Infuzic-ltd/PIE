@@ -18,13 +18,14 @@ from django.contrib import admin
 from django.urls import path, include
 from django.conf import settings
 from django.conf.urls.static import static
-from accounts.views import website_homepage, website_about, website_services, website_properties, website_property_detail, website_contact, website_listing, submit_property_listing, submit_property_lead, initiate_featured_payment, payment_success, payment_cancelled, safepay_webhook, lead_api_create, lead_api_docs, safepay_setup_guide, whatsapp_templates_docs
+from accounts.views import website_homepage, website_about, website_team_member, website_services, website_properties, website_property_detail, website_contact, website_listing, submit_property_listing, submit_property_lead, initiate_featured_payment, payment_success, payment_cancelled, safepay_webhook, lead_api_create, lead_api_docs, safepay_setup_guide, whatsapp_templates_docs
 from accounts.whatsapp import whatsapp_failed_webhook, whatsapp_api_docs
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('', website_homepage, name='website_homepage'),
     path('about/', website_about, name='website_about'),
+    path('team/<slug:slug>/', website_team_member, name='website_team_member'),
     path('services/', website_services, name='website_services'),
     path('properties/', website_properties, name='website_properties'),
     path('properties/<int:pk>/', website_property_detail, name='website_property_detail'),

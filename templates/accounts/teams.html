@@ -85,6 +85,8 @@ tbody td{padding:12px 14px;font-size:13.5px;vertical-align:middle}
 .act-ic{width:32px;height:32px;border-radius:8px;border:1px solid var(--line);background:#fff;display:grid;place-items:center;color:var(--ink-soft);cursor:pointer;transition:background .15s,color .15s;text-decoration:none}
 .act-ic svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.8}
 .act-ic:hover{background:#f1f5fb;color:var(--ink)}
+.act-ic.on{background:#dcfce7;border-color:#bbf7d0;color:#16a34a}
+.badge.web{background:#dcfce7;color:#16a34a}
 .act-ic.danger:hover{background:#fef2f2;color:var(--red);border-color:#fecaca}
 .empty{text-align:center;padding:48px 20px;color:var(--ink-soft)}
 .empty svg{width:40px;height:40px;stroke:var(--ink-faint);fill:none;stroke-width:1.4;margin-bottom:12px}
@@ -176,6 +178,7 @@ body.view-list .grid-container{display:none}
           <th>Base Role</th>
           <th>Custom Role</th>
           <th>Status</th>
+          <th>Website</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -203,10 +206,15 @@ body.view-list .grid-container{display:none}
             {% else %}<span class="badge inactive">Inactive</span>{% endif %}
           </td>
           <td>
+            {% if m.show_on_website %}<span class="badge web">Published</span>
+            {% else %}<span class="badge inactive">Hidden</span>{% endif %}
+          </td>
+          <td>
             <div class="actions">
               <a href="{% url 'team_member_update' m.pk %}" class="act-ic" title="Edit">
                 <svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg>
               </a>
+              {% if m.role != "affiliate" %}<form method="post" action="{% url 'team_member_toggle_website' m.pk %}">{% csrf_token %}<button type="submit" class="act-ic{% if m.show_on_website %} on{% endif %}" title="{% if m.show_on_website %}Unpublish from website{% else %}Publish on website{% endif %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></button></form>{% if m.show_on_website and m.is_active and m.slug %}<a href="{% url 'website_team_member' m.slug %}" target="_blank" class="act-ic" title="View on website"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>{% endif %}{% endif %}
               {% if m.pk != request.user.pk %}
               <form method="post" action="{% url 'team_member_delete' m.pk %}" class="crm-confirm-form" data-confirm-message="Remove {{ m.get_full_name }}?" data-confirm-style="danger" data-confirm-label="Remove">
                 {% csrf_token %}
@@ -219,7 +227,7 @@ body.view-list .grid-container{display:none}
           </td>
         </tr>
         {% empty %}
-        <tr><td colspan="6">
+        <tr><td colspan="7">
           <div class="empty">
             <svg viewBox="0 0 24 24"><circle cx="9" cy="7" r="4"/><path d="M3 20a6 6 0 0 1 12 0"/></svg>
             <p>No team members yet. <a href="{% url 'team_member_create' %}" style="color:var(--blue);font-weight:600">Add the first member →</a></p>
@@ -245,10 +253,12 @@ body.view-list .grid-container{display:none}
             {% else %}<span class="badge agent">Agent</span>{% endif %}
             {% if m.assigned_role %}<span class="badge custom">{{ m.assigned_role.name }}</span>{% endif %}
             {% if m.is_active %}<span class="badge active">Active</span>{% else %}<span class="badge inactive">Inactive</span>{% endif %}
+            {% if m.show_on_website %}<span class="badge web">On website</span>{% endif %}
           </div>
           {% if m.phone %}<div class="mem-phone">📞 {{ m.phone }}</div>{% endif %}
           <div class="mem-acts">
             <a href="{% url 'team_member_update' m.pk %}" class="act-ic" title="Edit"><svg viewBox="0 0 24 24"><path d="M4 20h4L18 10l-4-4L4 16z"/><path d="m13 5 4 4"/></svg></a>
+            {% if m.role != "affiliate" %}<form method="post" action="{% url 'team_member_toggle_website' m.pk %}">{% csrf_token %}<button type="submit" class="act-ic{% if m.show_on_website %} on{% endif %}" title="{% if m.show_on_website %}Unpublish from website{% else %}Publish on website{% endif %}"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></svg></button></form>{% if m.show_on_website and m.is_active and m.slug %}<a href="{% url 'website_team_member' m.slug %}" target="_blank" class="act-ic" title="View on website"><svg viewBox="0 0 24 24"><path d="M14 4h6v6M20 4l-9 9"/><path d="M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a>{% endif %}{% endif %}
             {% if m.pk != request.user.pk %}
             <form method="post" action="{% url 'team_member_delete' m.pk %}" class="crm-confirm-form" data-confirm-message="Remove {{ m.get_full_name }}?" data-confirm-style="danger" data-confirm-label="Remove">{% csrf_token %}<button type="submit" class="act-ic danger" title="Remove"><svg viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></form>
             {% endif %}

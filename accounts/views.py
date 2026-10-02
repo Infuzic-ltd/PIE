@@ -134,13 +134,21 @@ def website_homepage(request):
         'blocks': Block.objects.all(),
         'featured_properties': featured_properties,
         'featured_types': featured_types,
-        'agents': User.objects.filter(is_active=True, role__in=[User.ROLE_AGENT, User.ROLE_MANAGER]).order_by('first_name')[:4],
+        'agents': User.objects.filter(is_active=True, show_on_website=True).exclude(role=User.ROLE_AFFILIATE).order_by('first_name'),
         'property_type_choices': Property.PROPERTY_TYPE_CHOICES,
     })
 
 
 def website_about(request):
     return render(request, 'website/about.html')
+
+
+def website_team_member(request, slug):
+    member = get_object_or_404(
+        User.objects.exclude(role=User.ROLE_AFFILIATE), slug=slug, is_active=True, show_on_website=True,
+    )
+    listings = member.properties.filter(status=Property.STATUS_ACTIVE, show_on_website=True).prefetch_related('images').order_by('-created_at')[:6]
+    return render(request, 'website/team_member.html', {'member': member, 'listings': listings})
 
 
 def website_services(request):
@@ -1334,6 +1342,15 @@ def team_member_update(request, pk):
     return render(request, 'accounts/team_member_form.html', {
         'form': form, 'member': member, 'action': 'Edit Member',
     })
+
+
+@admin_required
+@require_POST
+def team_member_toggle_website(request, pk):
+    member = get_object_or_404(User.objects.exclude(role=User.ROLE_AFFILIATE), pk=pk)
+    member.show_on_website = not member.show_on_website
+    member.save(update_fields=['show_on_website'])
+    return redirect('team_list')
 
 
 @admin_required
