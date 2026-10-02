@@ -1071,6 +1071,27 @@ class WhatsAppMessage(models.Model):
         return f'{self.template_name} → {self.phone} ({self.status})'
 
 
+class WhatsAppFailure(models.Model):
+    """One row per failure event: an immediate send error, or each failure callback from InstantConvo
+    (repeats and unknown message_ids included), with the raw payload for troubleshooting."""
+    SOURCE_SEND = 'send'
+    SOURCE_CALLBACK = 'callback'
+    SOURCE_CHOICES = [(SOURCE_SEND, 'Send error'), (SOURCE_CALLBACK, 'Failure callback')]
+
+    whatsapp_message = models.ForeignKey(WhatsAppMessage, on_delete=models.SET_NULL, null=True, blank=True, related_name='failures')
+    message_id = models.UUIDField(db_index=True)
+    source = models.CharField(max_length=10, choices=SOURCE_CHOICES)
+    error = models.TextField(blank=True)
+    payload = models.JSONField(default=dict, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.get_source_display()} — {self.message_id}'
+
+
 class PropertyImage(models.Model):
     property = models.ForeignKey(Property, on_delete=models.CASCADE, related_name='images')
     image = models.URLField(max_length=500)

@@ -21,7 +21,7 @@ from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
-from .models import User, WhatsAppMessage
+from .models import User, WhatsAppFailure, WhatsAppMessage
 
 SEND_URL = 'https://chat.theinstantconvo.com/api/contacts/{contact_id}/send/text'
 PKT = ZoneInfo('Asia/Karachi')
@@ -64,6 +64,11 @@ def send_template(user, template_name, components, prop=None):
         )
         resp.raise_for_status()
     except requests.RequestException as e:
+        r = e.response
+        WhatsAppFailure.objects.create(
+            whatsapp_message=msg, message_id=msg.message_id, source=WhatsAppFailure.SOURCE_SEND, error=str(e)[:1000],
+            payload={'status_code': r.status_code, 'body': r.text[:2000]} if r is not None else {},
+        )
         _mark_failed(msg, e)
     return msg
 
@@ -133,6 +138,10 @@ def whatsapp_failed_webhook(request):
 
     try:
         msg = WhatsAppMessage.objects.select_related('recipient', 'property').filter(message_id=message_id).first()
+        WhatsAppFailure.objects.create(
+            whatsapp_message=msg, message_id=message_id, source=WhatsAppFailure.SOURCE_CALLBACK,
+            error=str(data.get('error') or '')[:1000], payload=data,
+        )
         if not msg:
             return JsonResponse({'error': 'Unknown message_id.'}, status=404)
         if msg.status == WhatsAppMessage.STATUS_FAILED:

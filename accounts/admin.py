@@ -5,7 +5,7 @@ from .models import (
     Customer, Block, BlockRequiredDocument,
     Lead, LeadActivity, LeadDocument, LeadPayment,
     Role, PushSubscription, Notification, AgentTarget,
-    PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage,
+    PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage, WhatsAppFailure,
 )
 
 
@@ -282,12 +282,35 @@ class SiteSettingsAdmin(admin.ModelAdmin):
         return False
 
 
+class WhatsAppFailureInline(admin.TabularInline):
+    model = WhatsAppFailure
+    fields = ('created_at', 'source', 'error', 'payload')
+    readonly_fields = fields
+    extra = 0
+    can_delete = False
+
+    def has_add_permission(self, request, obj=None):
+        return False
+
+
 @admin.register(WhatsAppMessage)
 class WhatsAppMessageAdmin(admin.ModelAdmin):
+    inlines = [WhatsAppFailureInline]
     list_display = ('message_id', 'template_name', 'recipient', 'phone', 'property', 'status', 'created_at')
     list_filter = ('status', 'template_name')
     search_fields = ('message_id', 'phone', 'recipient__email')
     readonly_fields = [f.name for f in WhatsAppMessage._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+
+@admin.register(WhatsAppFailure)
+class WhatsAppFailureAdmin(admin.ModelAdmin):
+    list_display = ('created_at', 'source', 'message_id', 'whatsapp_message', 'error')
+    list_filter = ('source',)
+    search_fields = ('message_id', 'error', 'whatsapp_message__phone', 'whatsapp_message__recipient__email')
+    readonly_fields = [f.name for f in WhatsAppFailure._meta.fields]
 
     def has_add_permission(self, request):
         return False

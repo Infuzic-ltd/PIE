@@ -3,7 +3,7 @@ from unittest import mock
 
 from django.test import TestCase, override_settings
 
-from .models import Notification, Property, User, WhatsAppMessage
+from .models import Notification, Property, User, WhatsAppFailure, WhatsAppMessage
 from .whatsapp import notify_new_listing
 
 
@@ -42,6 +42,8 @@ class WhatsAppNewListingTests(TestCase):
         msg.refresh_from_db()
         self.assertEqual((msg.status, msg.error), (WhatsAppMessage.STATUS_FAILED, 'undeliverable'))
         self.assertEqual(Notification.objects.filter(recipient=agent).count(), 1)
+        # every authenticated callback is logged, including the repeat
+        self.assertEqual(WhatsAppFailure.objects.filter(whatsapp_message=msg, source=WhatsAppFailure.SOURCE_CALLBACK).count(), 2)
 
     def test_webhook_errors_return_json(self):
         post = lambda body: self.client.post('/api/whatsapp/failed/', body, content_type='application/json', HTTP_X_API_KEY='hook')
@@ -49,6 +51,7 @@ class WhatsAppNewListingTests(TestCase):
         self.assertEqual(post('{"message_id": "not-a-uuid"}').status_code, 400)
         ok_id = '{"message_id": "7c9e6679-7425-40de-944b-e07fc1f90ae7"}'
         self.assertEqual(post(ok_id).status_code, 404)
+        self.assertTrue(WhatsAppFailure.objects.filter(whatsapp_message=None, message_id='7c9e6679-7425-40de-944b-e07fc1f90ae7').exists())
         from django.db import ProgrammingError
         with mock.patch('accounts.whatsapp.WhatsAppMessage.objects.select_related', side_effect=ProgrammingError('no table')):
             r = post(ok_id)
