@@ -340,12 +340,12 @@
         </div>
 
         <p style="color:var(--ink); font-weight:600; font-size:14px; margin:22px 0 6px">Assignment: auto vs. explicit</p>
-        <p class="tight">Most leads have no agent yet, so by default the lead is auto-assigned — round-robin to whichever active agent currently has the fewest leads. If the lead is <b style="color:var(--ink)">already assigned</b> on your side — say, it came from an agent's own listing, or a referral routed to a specific agent — pass that agent's phone number in <code>agent_phone</code> instead. It's matched by digits only, so local (<code>0312 2211828</code>) and international (<code>+92 312 2211828</code>) formats both work, and auto-assignment is skipped entirely.</p>
+        <p class="tight">Most leads have no agent yet, so by default the lead is auto-assigned — round-robin to whichever active agent currently has the fewest leads. If the lead is <b style="color:var(--ink)">already assigned</b> on your side — say, it came from an agent's own listing, or a referral routed to a specific agent — pass that person's phone number in <code>agent_phone</code>. It matches any active CRM user (agent, manager or admin) on the last 10 digits, so <code>0312 2211828</code>, <code>+92 312 2211828</code>, <code>0092 312 2211828</code> and <code>3122211828</code> all work, and auto-assignment is skipped.</p>
+        <p class="tight"><b style="color:var(--ink)">A non-matching <code>agent_phone</code> never rejects the lead.</b> If no active CRM user has that number, the lead is still created (<code>201</code>), auto-assigned as usual, and the response includes a <code>warning</code>.</p>
         <div class="table-wrap">
           <table>
             <tbody>
-              <tr><td class="type" style="white-space:nowrap">400</td><td><code>{"error": "agent_phone is not a valid phone number."}</code></td></tr>
-              <tr><td class="type">400</td><td><code>{"error": "No active agent found with phone ..."}</code></td></tr>
+              <tr><td class="type" style="white-space:nowrap">201</td><td><code>{"id": 412, ..., "assigned_agent": {..., "assignment": "auto"}, "warning": "No active CRM user found with phone 0316 5939101; lead was auto-assigned instead."}</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -373,7 +373,8 @@
         <div class="kv"><div class="k">id</div><div class="v">The lead's primary key — build a CRM deep link as <code>/crm/leads/&#123;id&#125;/</code></div></div>
         <div class="kv"><div class="k">lead_score</div><div class="v"><code>hot</code>, <code>warm</code>, or <code>cold</code> — see <a href="#behavior">Behavior</a></div></div>
         <div class="kv"><div class="k">assigned_agent</div><div class="v"><code>null</code> if no active agent exists to assign to</div></div>
-        <div class="kv"><div class="k">.assignment</div><div class="v"><code>"auto"</code> (round-robin) or <code>"explicit"</code> (you supplied <code>agent_phone</code>)</div></div>
+        <div class="kv"><div class="k">.assignment</div><div class="v"><code>"auto"</code> (round-robin) or <code>"explicit"</code> (you supplied <code>agent_phone</code> and it matched)</div></div>
+        <div class="kv"><div class="k">warning</div><div class="v">Only present when <code>agent_phone</code> matched no active CRM user. The lead is still created and auto-assigned.</div></div>
 
         <p><span class="pill status-4xx">Errors</span></p>
         <div class="table-wrap">
@@ -384,8 +385,6 @@
               <tr><td class="type">400</td><td><code>{"error": "full_name and phone are required."}</code></td></tr>
               <tr><td class="type">400</td><td><code>{"error": "Invalid source. Choices: [...]"}</code></td></tr>
               <tr><td class="type">400</td><td><code>{"error": "Invalid lead_type. Choices: [...]"}</code></td></tr>
-              <tr><td class="type">400</td><td><code>{"error": "agent_phone is not a valid phone number."}</code></td></tr>
-              <tr><td class="type">400</td><td><code>{"error": "No active agent found with phone ..."}</code></td></tr>
             </tbody>
           </table>
         </div>
@@ -398,7 +397,7 @@
         <p class="tight">When <code>agent_phone</code> isn't supplied, the lead goes to whichever active agent currently has the fewest leads — this keeps the workload equal across the team over time. If no active agent exists, <code>assigned_to</code> stays empty.</p>
 
         <p style="color:var(--ink); font-weight:600; font-size:14px; margin-bottom:6px">Explicit assignment</p>
-        <p class="tight">When <code>agent_phone</code> is supplied and matches an active agent, the lead is assigned directly to them and auto-assignment is skipped entirely — this is how an already-assigned lead is registered.</p>
+        <p class="tight">When <code>agent_phone</code> is supplied and matches an active CRM user (agent, manager or admin), the lead is assigned directly to them and auto-assignment is skipped. If it matches no one, the lead falls back to auto-assignment and the response carries a <code>warning</code>.</p>
 
         <p style="color:var(--ink); font-weight:600; font-size:14px; margin-bottom:6px">Lead scoring</p>
         <p class="tight">A starter rule based on what's known about the lead at creation time:</p>

@@ -2120,19 +2120,21 @@ def lead_api_create(request):
     valid_interests = {i for i, _ in Lead.INTEREST_CHOICES}
     interested_in = [i for i in raw_interests if i in valid_interests]
 
+    # agent_phone is a hint, never a reason to drop the lead: if it doesn't match an active CRM user
+    # (any format: 0300…, +92 300…, 0092 300…), the lead is still created and auto-assigned.
     agent_phone = str(data.get('agent_phone') or '').strip()
     preassigned_agent = None
+    agent_phone_warning = None
     if agent_phone:
-        digits = _normalize_phone_digits(agent_phone)
-        if len(digits) < 6:
-            return JsonResponse({'error': 'agent_phone is not a valid phone number.'}, status=400)
-        preassigned_agent = next(
-            (u for u in User.objects.filter(role=User.ROLE_AGENT, is_active=True).exclude(phone='')
-             if _normalize_phone_digits(u.phone) == digits),
-            None,
-        )
+        key = re.sub(r'\D', '', agent_phone)[-10:]  # last 10 digits = PK mobile number without 0/92 prefix
+        if len(key) == 10:
+            preassigned_agent = next(
+                (u for u in User.objects.filter(is_active=True).exclude(role=User.ROLE_AFFILIATE).exclude(phone='')
+                 if re.sub(r'\D', '', u.phone)[-10:] == key),
+                None,
+            )
         if not preassigned_agent:
-            return JsonResponse({'error': f'No active agent found with phone {agent_phone}.'}, status=400)
+            agent_phone_warning = f'No active CRM user found with phone {agent_phone}; lead was auto-assigned instead.'
 
     lead = Lead(
         full_name=full_name,
@@ -2160,6 +2162,8 @@ def lead_api_create(request):
     agent = lead.assigned_to
     if preassigned_agent:
         assignment_note = f' Already assigned to {agent.get_full_name()} (per agent_phone).'
+    elif agent_phone_warning and agent:
+        assignment_note = f' agent_phone {agent_phone} matched no active CRM user; auto-assigned to {agent.get_full_name()}.'
     elif agent:
         assignment_note = f' Auto-assigned to {agent.get_full_name()}.'
     else:
@@ -2188,6 +2192,7 @@ def lead_api_create(request):
             'phone': agent.phone,
             'assignment': 'explicit' if preassigned_agent else 'auto',
         } if agent else None,
+        **({'warning': agent_phone_warning} if agent_phone_warning else {}),
     }, status=201)
 
 

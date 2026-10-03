@@ -95,3 +95,30 @@ class TeamWebsiteProfileTests(TestCase):
         self.client.post(f'/crm/team/{self.agent.pk}/toggle-website/')
         self.agent.refresh_from_db()
         self.assertFalse(self.agent.show_on_website)
+
+
+@override_settings(LEAD_API_KEY='lk')
+class LeadApiAgentPhoneTests(TestCase):
+    def setUp(self):
+        self.manager = User.objects.create_user(username='m', email='m@x.pk', password='x', role=User.ROLE_MANAGER, phone='+92 3008929319')
+        self.agent = User.objects.create_user(username='a', email='a@x.pk', password='x', role=User.ROLE_AGENT, phone='')
+
+    def post(self, agent_phone):
+        return self.client.post('/api/leads/create/', json.dumps({'full_name': 'Ali', 'phone': '03211234567', 'agent_phone': agent_phone}),
+                                content_type='application/json', HTTP_X_API_KEY='lk')
+
+    def test_any_format_matches_manager(self):
+        for fmt in ('0300 8929319', '+92 300 8929319', '0092-300-8929319', '3008929319'):
+            r = self.post(fmt)
+            self.assertEqual(r.status_code, 201, fmt)
+            self.assertEqual(r.json()['assigned_agent']['assignment'], 'explicit', fmt)
+            self.assertNotIn('warning', r.json())
+
+    def test_unknown_number_still_creates_lead_and_auto_assigns(self):
+        for fmt in ('0316 5939101', '12'):
+            r = self.post(fmt)
+            self.assertEqual(r.status_code, 201, fmt)
+            body = r.json()
+            self.assertEqual(body['assigned_agent']['assignment'], 'auto')
+            self.assertEqual(body['assigned_agent']['name'], self.agent.get_full_name())
+            self.assertIn('warning', body)

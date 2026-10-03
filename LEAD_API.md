@@ -80,15 +80,14 @@ to whichever active agent currently has the fewest leads, keeping the workload e
 across the team.
 
 If the lead is **already assigned** on your side (e.g. it came from an agent's own
-listing, or a referral routed to a specific agent), pass that agent's phone number
-in `agent_phone` instead. The number is matched by digits only, so local
-(`0312 2211828`) and international (`+92 312 2211828`) formats both work — auto-assignment
-is skipped and the lead goes straight to that agent.
+listing, or a referral routed to a specific agent), pass that person's phone number
+in `agent_phone`. It matches any active CRM user (agent, manager or admin) on the
+last 10 digits, so `0312 2211828`, `+92 312 2211828`, `0092 312 2211828` and
+`3122211828` all work. Auto-assignment is skipped and the lead goes straight to them.
 
-| Response | Status |
-|---|---|
-| `{"error": "agent_phone is not a valid phone number."}` | `400` — fewer than 6 digits after stripping formatting |
-| `{"error": "No active agent found with phone ..."}` | `400` — no active agent matches that number |
+**A non-matching `agent_phone` never rejects the lead.** If no active CRM user has
+that number, the lead is still created (`201`), auto-assigned as usual, and the
+response includes a `warning` saying so.
 
 ### Error responses
 
@@ -98,8 +97,6 @@ is skipped and the lead goes straight to that agent.
 | `{"error": "full_name and phone are required."}` | `400` |
 | `{"error": "Invalid source. Choices: [...]"}` | `400` |
 | `{"error": "Invalid lead_type. Choices: [...]"}` | `400` |
-| `{"error": "agent_phone is not a valid phone number."}` | `400` |
-| `{"error": "No active agent found with phone ..."}` | `400` |
 
 ## Success response
 
@@ -126,7 +123,8 @@ is skipped and the lead goes straight to that agent.
 | `status` | Always `"new"` for a freshly created lead |
 | `lead_score` | `"hot"`, `"warm"`, or `"cold"` — auto-calculated, see below |
 | `assigned_agent` | `null` if no active agent exists to assign to; otherwise the assigned agent's name, phone, and how they were assigned |
-| `assigned_agent.assignment` | `"auto"` (round-robin) or `"explicit"` (you supplied `agent_phone`) |
+| `assigned_agent.assignment` | `"auto"` (round-robin) or `"explicit"` (you supplied `agent_phone` and it matched) |
+| `warning` | Only present when `agent_phone` matched no active CRM user, e.g. `"No active CRM user found with phone 0316 5939101; lead was auto-assigned instead."` |
 
 ## Behavior details
 
@@ -135,9 +133,10 @@ active agent (`role=agent`, `is_active=True`) currently has the fewest leads
 assigned — this keeps the workload equal across the team over time. If no active
 agent exists, `assigned_to` stays empty and `assigned_agent` in the response is `null`.
 
-**Explicit assignment.** When `agent_phone` is supplied and matches an active agent,
-the lead is assigned directly to them and auto-assignment is skipped entirely —
-this is how an already-assigned lead is registered.
+**Explicit assignment.** When `agent_phone` is supplied and matches an active CRM
+user (agent, manager or admin), the lead is assigned directly to them and
+auto-assignment is skipped. If it matches no one, the lead falls back to
+auto-assignment and the response carries a `warning`.
 
 **Lead scoring.** A starter rule based on what's known about the lead:
 
