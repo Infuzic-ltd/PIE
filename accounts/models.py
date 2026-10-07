@@ -434,6 +434,7 @@ class Lead(models.Model):
         ('walk_in', 'Walk-in'),
         ('phone_call', 'Phone Call'),
         ('social_media', 'Social Media'),
+        ('chatbot', 'Chatbot'),
         ('other', 'Other'),
     ]
 

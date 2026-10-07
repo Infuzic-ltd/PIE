@@ -308,7 +308,7 @@
 
       <section id="request">
         <h2>Request</h2>
-        <p class="section-sub">Only <code>full_name</code> and <code>phone</code> are required. Everything else falls back to a sensible default.</p>
+        <p class="section-sub">Send <code>full_name</code> and <code>phone</code> with every lead. <b>With a valid API key, a lead is never rejected</b>: anything missing or malformed is fixed up, the lead is saved (<code>201</code>), and the response&rsquo;s <code>warning</code> explains what changed.</p>
         <div class="kv"><div class="k">Method</div><div class="v">POST</div></div>
         <div class="kv"><div class="k">Content-Type</div><div class="v"><code>application/json</code> (recommended), or <code>application/x-www-form-urlencoded</code></div></div>
         <div class="kv"><div class="k">Body</div><div class="v">A JSON object — see field reference below</div></div>
@@ -324,8 +324,8 @@
               <tr><td class="field">phone</td><td class="type">string</td><td><span class="pill req">required</span></td><td>—</td><td>Any format, stored as-is</td></tr>
               <tr><td class="field">email</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>—</td></tr>
               <tr><td class="field">alternate_phone</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>—</td></tr>
-              <tr><td class="field">source</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>website</code></td><td>website · whatsapp · referral · property_listing · walk_in · phone_call · social_media · other</td></tr>
-              <tr><td class="field">lead_type</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>buyer</code></td><td>buyer · seller · investor · tenant</td></tr>
+              <tr><td class="field">source</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>website</code></td><td>website · whatsapp · referral · property_listing · walk_in · phone_call · social_media · chatbot · other. Anything else is saved as <code>chatbot</code>.</td></tr>
+              <tr><td class="field">lead_type</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>buyer</code></td><td>buyer · seller · investor · tenant. Anything else is saved as <code>buyer</code>.</td></tr>
               <tr><td class="field">interested_in</td><td class="type">string[]</td><td><span class="pill opt">optional</span></td><td><code>[]</code></td><td>apartment · house · plot · commercial — unknown values dropped silently</td></tr>
               <tr><td class="field">area_preferences</td><td class="type">string</td><td><span class="pill opt">optional</span></td><td><code>""</code></td><td>Free text, e.g. "Block A, Block C"</td></tr>
               <tr><td class="field">budget_min / budget_max</td><td class="type">number</td><td><span class="pill opt">optional</span></td><td><code>null</code></td><td>—</td></tr>
@@ -374,17 +374,30 @@
         <div class="kv"><div class="k">lead_score</div><div class="v"><code>hot</code>, <code>warm</code>, or <code>cold</code> — see <a href="#behavior">Behavior</a></div></div>
         <div class="kv"><div class="k">assigned_agent</div><div class="v"><code>null</code> if no active agent exists to assign to</div></div>
         <div class="kv"><div class="k">.assignment</div><div class="v"><code>"auto"</code> (round-robin) or <code>"explicit"</code> (you supplied <code>agent_phone</code> and it matched)</div></div>
-        <div class="kv"><div class="k">warning</div><div class="v">Only present when <code>agent_phone</code> matched no active CRM user. The lead is still created and auto-assigned.</div></div>
+        <div class="kv"><div class="k">warning</div><div class="v">Only present when something in the request was fixed up (unknown source, unmatched <code>agent_phone</code>, missing name, etc.). The lead is saved either way.</div></div>
 
         <p><span class="pill status-4xx">Errors</span></p>
         <div class="table-wrap">
           <table>
             <tbody>
               <tr><td class="type" style="white-space:nowrap">401</td><td><code>{"error": "Invalid or missing API key."}</code></td></tr>
-              <tr><td class="type">400</td><td><code>{"error": "Invalid JSON body."}</code></td></tr>
-              <tr><td class="type">400</td><td><code>{"error": "full_name and phone are required."}</code></td></tr>
-              <tr><td class="type">400</td><td><code>{"error": "Invalid source. Choices: [...]"}</code></td></tr>
-              <tr><td class="type">400</td><td><code>{"error": "Invalid lead_type. Choices: [...]"}</code></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="tight">A wrong or missing API key is the only error. Everything else is saved:</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Problem in the request</th><th>What happens</th></tr></thead>
+            <tbody>
+              <tr><td>Unknown <code>source</code> (e.g. <code>"chat bot"</code>)</td><td>Saved with source <code>chatbot</code></td></tr>
+              <tr><td>Unknown <code>lead_type</code></td><td>Saved as <code>buyer</code></td></tr>
+              <tr><td><code>full_name</code> missing</td><td>Saved as <code>Unknown</code></td></tr>
+              <tr><td><code>phone</code> missing</td><td>Saved with an empty phone; check the notes</td></tr>
+              <tr><td>Body isn&rsquo;t valid JSON</td><td>Saved as an <code>Unknown</code> lead with the raw body in the notes</td></tr>
+              <tr><td>JSON sent without <code>Content-Type: application/json</code></td><td>Read as JSON anyway</td></tr>
+              <tr><td>Budget too large, <code>NaN</code> or not a number</td><td>Treated as not given</td></tr>
+              <tr><td>A field the database rejects</td><td>Saved with name, phone, source and type only; the full original payload goes in the notes</td></tr>
+              <tr><td>Notification fails after saving</td><td>Lead is kept; response is still <code>201</code></td></tr>
             </tbody>
           </table>
         </div>

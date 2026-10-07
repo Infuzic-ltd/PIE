@@ -122,3 +122,59 @@ class LeadApiAgentPhoneTests(TestCase):
             self.assertEqual(body['assigned_agent']['assignment'], 'auto')
             self.assertEqual(body['assigned_agent']['name'], self.agent.get_full_name())
             self.assertIn('warning', body)
+
+
+@override_settings(LEAD_API_KEY='lk')
+class LeadApiNeverLosesLeadTests(TestCase):
+    def setUp(self):
+        self.agent = User.objects.create_user(username='a', email='a@x.pk', password='x', role=User.ROLE_AGENT)
+
+    def send(self, body, content_type='application/json'):
+        r = self.client.post('/api/leads/create/', body, content_type=content_type, HTTP_X_API_KEY='lk')
+        self.assertEqual(r.status_code, 201, r.content)
+        from .models import Lead
+        return r.json(), Lead.objects.get(pk=r.json()['id'])
+
+    def test_unknown_source_becomes_chatbot(self):
+        body, lead = self.send(json.dumps({'full_name': 'Ali', 'phone': '0321', 'source': 'chat bot widget', 'lead_type': 'buyerr'}))
+        self.assertEqual((lead.source, lead.lead_type, lead.assigned_to), ('chatbot', 'buyer', self.agent))
+        self.assertIn('chatbot', body['warning'])
+
+    def test_missing_name_and_phone_still_saved(self):
+        body, lead = self.send(json.dumps({'email': 'x@y.pk'}))
+        self.assertEqual((lead.full_name, lead.phone, lead.email), ('Unknown', '', 'x@y.pk'))
+
+    def test_invalid_json_kept_in_notes(self):
+        body, lead = self.send('name=Ali; phone=0300 {broken', content_type='application/json')
+        self.assertIn('phone=0300', lead.notes)
+
+    def test_json_without_json_content_type(self):
+        body, lead = self.send(json.dumps({'full_name': 'Sana', 'phone': '0333'}), content_type='text/plain')
+        self.assertEqual((lead.full_name, lead.phone), ('Sana', '0333'))
+
+    def test_out_of_range_budget_ignored(self):
+        body, lead = self.send(json.dumps({'full_name': 'Big', 'phone': '0300', 'budget_min': '1' + '0' * 30, 'budget_max': 'NaN'}))
+        self.assertEqual((lead.budget_min, lead.budget_max), (None, None))
+
+    def test_failed_save_falls_back_to_minimal_lead(self):
+        from .models import Lead
+        real_save, calls = Lead.save, []
+        def flaky_save(obj, *a, **kw):
+            calls.append(1)
+            if len(calls) == 1:
+                raise ValueError('db rejected a field')
+            return real_save(obj, *a, **kw)
+        with mock.patch.object(Lead, 'save', flaky_save):
+            body, lead = self.send(json.dumps({'full_name': 'Ali', 'phone': '0300', 'area_preferences': 'DHA'}))
+        self.assertEqual((lead.full_name, lead.phone), ('Ali', '0300'))
+        self.assertIn('area_preferences', lead.notes)
+        self.assertIn('original payload', body['warning'])
+
+    def test_notification_failure_does_not_lose_lead(self):
+        with mock.patch('accounts.views.notify_user', side_effect=RuntimeError('push down')):
+            body, lead = self.send(json.dumps({'full_name': 'Ali', 'phone': '0300'}))
+        self.assertEqual(lead.full_name, 'Ali')
+
+    def test_wrong_key_still_refused(self):
+        r = self.client.post('/api/leads/create/', '{}', content_type='application/json', HTTP_X_API_KEY='nope')
+        self.assertEqual(r.status_code, 401)

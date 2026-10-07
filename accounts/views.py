@@ -1,4 +1,5 @@
 import json
+import logging
 import re
 from datetime import timedelta
 from decimal import Decimal, InvalidOperation
@@ -11,6 +12,7 @@ from django.contrib import messages
 from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from django.db import transaction
 from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
 from django.conf import settings
@@ -30,6 +32,8 @@ from .emailer import send_html_email, EmailNotConfigured, EmailSendError
 from .reports import build_dashboard_pdf
 from .whatsapp import _normalize_phone_digits, notify_new_listing
 from django.template.loader import render_to_string
+
+logger = logging.getLogger(__name__)
 
 
 # ── Access decorators ─────────────────────────────────────────────────────────
@@ -2071,9 +2075,11 @@ def _decimal_or_none(value):
     if value in (None, ''):
         return None
     try:
-        return Decimal(str(value))
+        d = Decimal(str(value))
     except (InvalidOperation, ValueError):
         return None
+    # Must fit DecimalField(max_digits=14, decimal_places=2); NaN/Infinity/huge values become "not given".
+    return d if d.is_finite() and abs(d) < Decimal('1e12') else None
 
 
 def _int_or_none(value):
@@ -2091,28 +2097,41 @@ def lead_api_create(request):
     if request.headers.get('X-Api-Key') != settings.LEAD_API_KEY:
         return JsonResponse({'error': 'Invalid or missing API key.'}, status=401)
 
-    if request.content_type == 'application/json':
-        try:
-            data = json.loads(request.body.decode('utf-8') or '{}')
-        except (json.JSONDecodeError, UnicodeDecodeError):
-            return JsonResponse({'error': 'Invalid JSON body.'}, status=400)
-    else:
+    # Never lose a lead: anything malformed is fixed up or kept verbatim in notes, never rejected.
+    warnings = []
+    raw_body = request.body.decode('utf-8', errors='replace')[:5000]
+    if request.content_type in ('application/x-www-form-urlencoded', 'multipart/form-data'):
         data = request.POST
+    else:  # JSON, whatever Content-Type the caller sent (some bots omit or mislabel it)
+        try:
+            data = json.loads(raw_body or '{}')
+        except json.JSONDecodeError:
+            data = None
+        if not isinstance(data, dict):
+            data = {'notes': f'Original API body (not valid JSON): {raw_body}'}
+            warnings.append('Body was not a valid JSON object; it was saved in the lead notes.')
 
-    full_name = str(data.get('full_name') or '').strip()
     phone = str(data.get('phone') or '').strip()
-    if not full_name or not phone:
-        return JsonResponse({'error': 'full_name and phone are required.'}, status=400)
+    if not phone:
+        warnings.append('phone was missing; check the lead notes for contact details.')
+    full_name = str(data.get('full_name') or '').strip()
+    if not full_name:
+        full_name = 'Unknown'
+        warnings.append('full_name was missing; saved as "Unknown".')
 
     valid_sources = {s for s, _ in Lead.SOURCE_CHOICES}
-    source = data.get('source') or 'website'
+    raw_source = str(data.get('source') or '').strip()
+    source = raw_source.lower().replace(' ', '_') or 'website'
     if source not in valid_sources:
-        return JsonResponse({'error': f'Invalid source. Choices: {sorted(valid_sources)}'}, status=400)
+        source = 'chatbot'
+        warnings.append(f'Unknown source "{raw_source}"; saved as "chatbot".')
 
     valid_types = {t for t, _ in Lead.TYPE_CHOICES}
-    lead_type = data.get('lead_type') or Lead.TYPE_BUYER
+    raw_type = str(data.get('lead_type') or '').strip()
+    lead_type = raw_type.lower() or Lead.TYPE_BUYER
     if lead_type not in valid_types:
-        return JsonResponse({'error': f'Invalid lead_type. Choices: {sorted(valid_types)}'}, status=400)
+        lead_type = Lead.TYPE_BUYER
+        warnings.append(f'Unknown lead_type "{raw_type}"; saved as "buyer".')
 
     raw_interests = data.get('interested_in') or []
     if isinstance(raw_interests, str):
@@ -2135,16 +2154,17 @@ def lead_api_create(request):
             )
         if not preassigned_agent:
             agent_phone_warning = f'No active CRM user found with phone {agent_phone}; lead was auto-assigned instead.'
+            warnings.append(agent_phone_warning)
 
     lead = Lead(
-        full_name=full_name,
-        phone=phone,
-        alternate_phone=str(data.get('alternate_phone') or '').strip(),
-        email=str(data.get('email') or '').strip(),
+        full_name=full_name[:150],
+        phone=phone[:20],
+        alternate_phone=str(data.get('alternate_phone') or '').strip()[:20],
+        email=str(data.get('email') or '').strip()[:254],
         lead_type=lead_type,
         source=source,
         interested_in=interested_in,
-        area_preferences=str(data.get('area_preferences') or '').strip(),
+        area_preferences=str(data.get('area_preferences') or '').strip()[:500],
         budget_min=_decimal_or_none(data.get('budget_min')),
         budget_max=_decimal_or_none(data.get('budget_max')),
         bedrooms_min=_int_or_none(data.get('bedrooms_min')),
@@ -2157,29 +2177,43 @@ def lead_api_create(request):
         notes=str(data.get('notes') or '').strip(),
     )
     lead.assigned_to = preassigned_agent or _auto_assign_agent()
-    lead.save()
+    try:
+        with transaction.atomic():
+            lead.save()
+    except Exception:
+        # Last resort (e.g. an out-of-range budget): save the essentials and keep the full payload in notes.
+        logger.exception('Lead API: full save failed, saving minimal lead for %s', phone)
+        raw = raw_body or json.dumps(data.dict() if hasattr(data, 'dict') else data, default=str)[:5000]
+        lead = Lead(full_name=full_name[:150], phone=phone[:20], source=source, lead_type=lead_type,
+                    assigned_to=lead.assigned_to, notes=f'Saved with essentials only. Original API payload: {raw}')
+        lead.save()
+        warnings.append('Some fields could not be saved; the full original payload is in the lead notes.')
 
     agent = lead.assigned_to
-    if preassigned_agent:
-        assignment_note = f' Already assigned to {agent.get_full_name()} (per agent_phone).'
-    elif agent_phone_warning and agent:
-        assignment_note = f' agent_phone {agent_phone} matched no active CRM user; auto-assigned to {agent.get_full_name()}.'
-    elif agent:
-        assignment_note = f' Auto-assigned to {agent.get_full_name()}.'
-    else:
-        assignment_note = ' No active agent available to assign.'
-    LeadActivity.objects.create(
-        lead=lead,
-        activity_type=LeadActivity.TYPE_CREATED,
-        description=f'Lead received via API (source: {lead.get_source_display()}).{assignment_note}',
-    )
-    if agent:
-        notify_user(
-            agent,
-            'New Lead Assigned',
-            f'{lead.full_name} ({lead.get_source_display()}) has been assigned to you.',
-            f'/crm/leads/{lead.pk}/',
+    try:
+        if preassigned_agent:
+            assignment_note = f' Already assigned to {agent.get_full_name()} (per agent_phone).'
+        elif agent_phone_warning and agent:
+            assignment_note = f' agent_phone {agent_phone} matched no active CRM user; auto-assigned to {agent.get_full_name()}.'
+        elif agent:
+            assignment_note = f' Auto-assigned to {agent.get_full_name()}.'
+        else:
+            assignment_note = ' No active agent available to assign.'
+        LeadActivity.objects.create(
+            lead=lead,
+            activity_type=LeadActivity.TYPE_CREATED,
+            description=f'Lead received via API (source: {lead.get_source_display()}).{assignment_note}'
+                        + ''.join(f' {w}' for w in warnings if w != agent_phone_warning),
         )
+        if agent:
+            notify_user(
+                agent,
+                'New Lead Assigned',
+                f'{lead.full_name} ({lead.get_source_display()}) has been assigned to you.',
+                f'/crm/leads/{lead.pk}/',
+            )
+    except Exception:
+        logger.exception('Lead API: lead %s saved, but activity/notification failed', lead.pk)
 
     return JsonResponse({
         'id': lead.pk,
@@ -2192,7 +2226,7 @@ def lead_api_create(request):
             'phone': agent.phone,
             'assignment': 'explicit' if preassigned_agent else 'auto',
         } if agent else None,
-        **({'warning': agent_phone_warning} if agent_phone_warning else {}),
+        **({'warning': ' '.join(warnings)} if warnings else {}),
     }, status=201)
 
 

@@ -43,8 +43,9 @@ like a password (don't put it in client-side JS, don't commit it to a public rep
 - **Content-Type**: `application/json` (recommended) or `application/x-www-form-urlencoded`
 - **Body**: a JSON object (or form fields) — see field reference below
 
-Only `full_name` and `phone` are required. Everything else is optional and falls
-back to a sensible default if omitted.
+Send `full_name` and `phone` with every lead. **The API never rejects a lead with a
+valid API key**: anything missing or malformed is fixed up, the lead is saved (`201`),
+and the response's `warning` explains what was changed. See *Never losing a lead* below.
 
 ### Field reference
 
@@ -54,8 +55,8 @@ back to a sensible default if omitted.
 | `phone` | string | **yes** | — | Any format; stored as-is |
 | `email` | string | no | `""` | |
 | `alternate_phone` | string | no | `""` | |
-| `source` | string | no | `website` | One of: `website`, `whatsapp`, `referral`, `property_listing`, `walk_in`, `phone_call`, `social_media`, `other` |
-| `lead_type` | string | no | `buyer` | One of: `buyer`, `seller`, `investor`, `tenant` |
+| `source` | string | no | `website` | One of: `website`, `whatsapp`, `referral`, `property_listing`, `walk_in`, `phone_call`, `social_media`, `chatbot`, `other`. Anything else is saved as `chatbot`. |
+| `lead_type` | string | no | `buyer` | One of: `buyer`, `seller`, `investor`, `tenant`. Anything else is saved as `buyer`. |
 | `interested_in` | array of strings (or a single string) | no | `[]` | Any of: `apartment`, `house`, `plot`, `commercial`. Unknown values are silently dropped. |
 | `area_preferences` | string | no | `""` | Free text, e.g. `"Block A, Block C"` |
 | `budget_min` | number | no | `null` | |
@@ -70,8 +71,8 @@ back to a sensible default if omitted.
 | `notes` | string | no | `""` | Free text |
 | `agent_phone` | string | no | — | Send a lead that's **already assigned** to a specific agent — see below. Omit for a fresh, unassigned lead. |
 
-Sending an invalid `source` or `lead_type` returns a `400` with the list of valid
-choices.
+An unrecognised `source` is saved as `chatbot`, and an unrecognised `lead_type` as
+`buyer`. The lead is still created, and the response includes a `warning`.
 
 ### Assignment: auto vs. explicit
 
@@ -93,10 +94,23 @@ response includes a `warning` saying so.
 
 | Response | Status |
 |---|---|
-| `{"error": "Invalid JSON body."}` | `400` |
-| `{"error": "full_name and phone are required."}` | `400` |
-| `{"error": "Invalid source. Choices: [...]"}` | `400` |
-| `{"error": "Invalid lead_type. Choices: [...]"}` | `400` |
+| `{"error": "Invalid or missing API key."}` | `401` (the only error the API returns) |
+
+### Never losing a lead
+
+| Problem in the request | What happens |
+|---|---|
+| Unknown `source` (e.g. `"chat bot"`) | Saved with source `chatbot` |
+| Unknown `lead_type` | Saved as `buyer` |
+| `full_name` missing | Saved as `Unknown` |
+| `phone` missing | Saved with an empty phone; check the notes |
+| Body isn't valid JSON | Saved as an `Unknown` lead with the raw body in the notes |
+| JSON sent without `Content-Type: application/json` | Read as JSON anyway |
+| Budget too large, `NaN` or not a number | Treated as not given |
+| A field the database rejects | Saved with name, phone, source and type only; the full original payload goes in the notes |
+| Notification fails after saving | Lead is kept, and the response is still `201` |
+
+Each case adds a sentence to the response's `warning` and to the lead's activity log.
 
 ## Success response
 
@@ -124,7 +138,7 @@ response includes a `warning` saying so.
 | `lead_score` | `"hot"`, `"warm"`, or `"cold"` — auto-calculated, see below |
 | `assigned_agent` | `null` if no active agent exists to assign to; otherwise the assigned agent's name, phone, and how they were assigned |
 | `assigned_agent.assignment` | `"auto"` (round-robin) or `"explicit"` (you supplied `agent_phone` and it matched) |
-| `warning` | Only present when `agent_phone` matched no active CRM user, e.g. `"No active CRM user found with phone 0316 5939101; lead was auto-assigned instead."` |
+| `warning` | Only present when something in the request was fixed up (unknown source, unmatched `agent_phone`, missing name, etc.). The lead is saved either way. |
 
 ## Behavior details
 
