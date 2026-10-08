@@ -341,6 +341,15 @@
   ========================================================= */
   .agents{ background:var(--bg-light); }
   .agents-grid{ display:grid; grid-template-columns:repeat(4, 1fr); gap:24px; }
+  .agents-grid:not(.expanded) .agent-extra{ display:none; }
+  .agents-grid.expanded .agent-extra{ animation:agentIn .35s ease both; }
+  @keyframes agentIn{ from{ opacity:0; transform:translateY(12px); } to{ opacity:1; transform:none; } }
+  .agents-toggle-wrap{ display:flex; justify-content:center; margin-top:32px; }
+  .agents-toggle{ display:inline-flex; align-items:center; gap:10px; padding:12px 22px; border-radius:30px; border:1.5px solid var(--border); background:var(--white); color:var(--text-dark); font-weight:600; font-size:14px; transition:.2s; }
+  .agents-toggle:hover{ border-color:var(--gold); color:var(--gold-dark); }
+  .agents-toggle svg{ width:18px; height:18px; fill:none; stroke:currentColor; stroke-width:2.2; stroke-linecap:round; stroke-linejoin:round; transition:transform .25s ease; }
+  .agents-toggle[aria-expanded="true"] svg{ transform:rotate(180deg); }
+  @media (prefers-reduced-motion: reduce){ .agents-grid.expanded .agent-extra{ animation:none; } .agents-toggle svg{ transition:none; } }
   .agent-card{
     background:var(--white); border:1px solid var(--border); border-radius:var(--radius-md);
     overflow:hidden; text-align:center; padding-bottom:22px; transition:.25s;
@@ -815,9 +824,9 @@
       <p class="sub">Experienced, and dedicated to finding you the right match. More agents joining soon.</p>
     </div>
 
-    <div class="agents-grid"{% if agents|length < 4 %} style="grid-template-columns:repeat({{ agents|length|default:1 }}, minmax(0, 280px));justify-content:center"{% endif %}>
+    <div class="agents-grid" id="agentsGrid"{% if agents|length < 4 %} style="grid-template-columns:repeat({{ agents|length|default:1 }}, minmax(0, 280px));justify-content:center"{% endif %}>
       {% for agent in agents %}
-      <div class="agent-card">
+      <div class="agent-card{% if forloop.counter > 4 %} agent-extra{% endif %}">
         <a href="{% url 'website_team_member' agent.slug %}" class="agent-photo" style="position:relative;display:block" aria-label="View {{ agent.get_full_name }}'s profile">
           {% if agent.badge %}<span class="agent-badge">{{ agent.get_badge_display }}</span>{% endif %}
           {% if agent.photo %}
@@ -838,6 +847,14 @@
       <div style="grid-column:1/-1;text-align:center;color:var(--text-gray)">Agent profiles coming soon.</div>
       {% endfor %}
     </div>
+    {% if agents|length > 4 %}
+    <div class="agents-toggle-wrap">
+      <button type="button" class="agents-toggle" id="agentsToggle" aria-expanded="false" aria-controls="agentsGrid">
+        <span>View all {{ agents|length }} specialists</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>
+      </button>
+    </div>
+    {% endif %}
   </div>
 </section>
 
@@ -1069,6 +1086,19 @@
       boxShadow:'0 10px 30px rgba(0,0,0,.15)'
     });
   });
+
+  const agentsToggle = document.getElementById('agentsToggle');
+  if(agentsToggle){
+    const agentsGrid = document.getElementById('agentsGrid');
+    const label = agentsToggle.querySelector('span');
+    const expandText = label.textContent;
+    agentsToggle.addEventListener('click', ()=>{
+      const expanded = agentsGrid.classList.toggle('expanded');
+      agentsToggle.setAttribute('aria-expanded', expanded);
+      label.textContent = expanded ? 'Show less' : expandText;
+      if(!expanded) document.getElementById('agents').scrollIntoView({behavior:'smooth', block:'start'});
+    });
+  }
 </script>
 </body>
 </html>

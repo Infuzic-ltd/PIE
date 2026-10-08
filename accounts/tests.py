@@ -298,3 +298,14 @@ class LeadPropertySearchTests(TestCase):
         self.assertEqual([r['title'] for r in self.client.get(url, {'q': dha.property_id}).json()['results']], ['Villa DHA'])
         self.assertEqual(len(self.client.get(url).json()['results']), 2)
         self.assertContains(self.client.get(f'/crm/leads/{lead.pk}/'), 'id="openAllPropsBtn"')
+
+
+class HomepageTeamExpandTests(TestCase):
+    def test_four_cards_shown_rest_behind_toggle(self):
+        for i in range(6):
+            User.objects.create_user(username=f'u{i}', email=f'u{i}@x.pk', password='x', first_name=f'Agent{i}', show_on_website=True)
+        page = self.client.get('/').content.decode()
+        self.assertEqual(page.count('agent-card agent-extra'), 2)
+        self.assertIn('View all 6 specialists', page)
+        User.objects.filter(username__in=['u4', 'u5']).update(show_on_website=False)
+        self.assertNotIn('id="agentsToggle"', self.client.get('/').content.decode())
