@@ -82,7 +82,7 @@ class DashboardPDF(FPDF):
         self.set_y(-12)
         self.set_font('Helvetica', '', 8)
         self.set_text_color(*INK_FAINT)
-        self.cell(0, 6, 'PIE Real Estate  |  +92 311 1222141  |  info@pierealestate.com', new_x=XPos.RIGHT, new_y=YPos.TOP)
+        self.cell(0, 6, 'PIE Real Estate  |  +92 311 1222141  |  info@pieestate.com', new_x=XPos.RIGHT, new_y=YPos.TOP)
         self.set_x(-45)
         self.cell(30, 6, f'Page {self.page_no()} of {{nb}}', align='R')
 
