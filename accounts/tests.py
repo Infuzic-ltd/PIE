@@ -7,43 +7,97 @@ from .models import Notification, Property, User, WhatsAppFailure, WhatsAppMessa
 from .whatsapp import notify_new_listing
 
 
+def fake_instantconvo(calls, fail_send=False):
+    """Stand-in for requests.post: records each call and answers like InstantConvo."""
+    def post(url, json=None, data=None, headers=None, timeout=None):
+        calls.append((url, json if json is not None else data, headers))
+        r = mock.Mock(status_code=200, text='{}')
+        if fail_send and '/send/' in url:
+            import requests
+            r.status_code, r.text = 500, 'boom'
+            r.raise_for_status.side_effect = requests.HTTPError('500 boom', response=r)
+        if url.endswith('/contacts'):
+            r.json.return_value = {'success': True, 'data': {'id': json['phone'].lstrip('+')}}
+        else:
+            r.json.return_value = {'success': True}
+        return r
+    return post
+
+
 @override_settings(WHATSAPP_API_TOKEN='tok', WHATSAPP_WEBHOOK_KEY='hook')
+@mock.patch('accounts.whatsapp.time.sleep', lambda s: None)
 class WhatsAppNewListingTests(TestCase):
-    def test_send_and_failure_callback(self):
-        agent = User.objects.create_user(username='a', email='a@x.pk', password='x', phone='0312-2211828', first_name='Ahmed', last_name='Raza')
+    def setUp(self):
+        self.agent = User.objects.create_user(username='a', email='a@x.pk', password='x', phone='0312-2211828', first_name='Ahmed', last_name='Raza')
         User.objects.create_user(username='b', email='b@x.pk', password='x')  # no phone -> skipped
         User.objects.create_user(username='c', email='c@x.pk', password='x', phone='03001234567',
                                  role=User.ROLE_AFFILIATE, affiliate_status=User.AFFILIATE_STATUS_APPROVED)
-        prop = Property.objects.create(title='3-Bed Apartment, DHA Phase 6', price=12_000_000, area_size=10,
-                                       city='Karachi', location='DHA', created_by=agent, show_to_affiliates=False)
+        self.prop = Property.objects.create(title='3-Bed Apartment, DHA Phase 6', price=12_000_000, area_size=10,
+                                            city='Karachi', location='DHA', created_by=self.agent, show_to_affiliates=False)
 
-        with mock.patch('accounts.whatsapp.requests.post') as post:
-            notify_new_listing(prop)
+    def test_three_step_send_and_failure_callback(self):
+        calls = []
+        with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo(calls)):
+            notify_new_listing(self.prop)
 
         msg = WhatsAppMessage.objects.get()  # affiliate excluded: property not shared with affiliates
-        url, kwargs = post.call_args.args[0], post.call_args.kwargs
-        body = kwargs['json']
-        self.assertEqual(url, 'https://chat.theinstantconvo.com/api/contacts/923122211828/send/text')
-        self.assertEqual(kwargs['headers'], {'X-ACCESS-TOKEN': 'tok'})
-        self.assertEqual(body['contact_id'], '923122211828')
-        self.assertEqual(body['message_id'], str(msg.message_id))
-        comps = body['message']['components']
-        self.assertEqual(comps[0]['parameters'][0]['text'], prop.property_id)
-        self.assertEqual(comps[1]['parameters'][0]['text'], '3-Bed Apartment, DHA Phase 6 — PKR 1.20 Cr')
-        self.assertEqual(comps[1]['parameters'][1]['text'], 'Ahmed Raza')
-        self.assertEqual(comps[2]['parameters'][0]['text'], f'{prop.pk}/')
+        (u1, contact, h1), (u2, custom, _), (u3, _, _) = calls
+        self.assertEqual(u1, 'https://chat.theinstantconvo.com/api/contacts')
+        self.assertEqual(h1, {'X-ACCESS-TOKEN': 'tok'})
+        self.assertEqual(contact['phone'], '+923122211828')
+        values = {a['field_name']: a['value'] for a in contact['actions']}
+        self.assertEqual(values, {
+            'tpl_property_ref': self.prop.property_id, 'tpl_property_summary': '3-Bed Apartment, DHA Phase 6 — PKR 1.20 Cr',
+            'tpl_listed_by': 'Ahmed Raza', 'tpl_event_time': values['tpl_event_time'], 'tpl_property_id_path': f'{self.prop.pk}/',
+        })
+        self.assertEqual(u2, 'https://chat.theinstantconvo.com/api/contacts/923122211828/custom_fields/216066')
+        self.assertEqual(custom, {'value': str(msg.message_id)})
+        self.assertEqual(u3, 'https://chat.theinstantconvo.com/api/contacts/923122211828/send/1788774002369')
 
-        payload = json.dumps({'message_id': str(msg.message_id), 'error': 'undeliverable'})
+        # InstantConvo echoes custom field 216066 under its own key name; key accepted via ?key= too
+        payload = json.dumps({'custom_field': str(msg.message_id), 'error': 'undeliverable'})
         self.assertEqual(self.client.post('/api/whatsapp/failed/', payload, content_type='application/json',
                                           HTTP_X_API_KEY='wrong').status_code, 401)
         for _ in range(2):  # repeated callback must not double-notify
-            r = self.client.post('/api/whatsapp/failed/', payload, content_type='application/json', HTTP_X_API_KEY='hook')
+            r = self.client.post('/api/whatsapp/failed/?key=hook', payload, content_type='application/json')
             self.assertEqual(r.status_code, 200)
         msg.refresh_from_db()
         self.assertEqual((msg.status, msg.error), (WhatsAppMessage.STATUS_FAILED, 'undeliverable'))
-        self.assertEqual(Notification.objects.filter(recipient=agent).count(), 1)
-        # every authenticated callback is logged, including the repeat
+        self.assertEqual(Notification.objects.filter(recipient=self.agent).count(), 1)
         self.assertEqual(WhatsAppFailure.objects.filter(whatsapp_message=msg, source=WhatsAppFailure.SOURCE_CALLBACK).count(), 2)
+
+    def test_send_error_marks_failed_and_notifies(self):
+        with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo([], fail_send=True)):
+            notify_new_listing(self.prop)
+        msg = WhatsAppMessage.objects.get()
+        self.assertEqual(msg.status, WhatsAppMessage.STATUS_FAILED)
+        self.assertEqual(WhatsAppFailure.objects.get().payload, {'status_code': 500, 'body': 'boom'})
+        self.assertEqual(Notification.objects.filter(recipient=self.agent).count(), 1)
+
+    def test_price_and_status_edits_send_their_templates(self):
+        self.client.force_login(self.agent)
+        with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo([])):
+            self.client.post(f'/crm/properties/{self.prop.pk}/set-status/', {'status': Property.STATUS_SOLD})
+        self.assertEqual(list(WhatsAppMessage.objects.values_list('template_name', flat=True)), ['property_status_change'])
+
+    def test_recommendation_button_and_failure_line(self):
+        from .models import Lead
+        lead = Lead.objects.create(full_name='Sana Malik', phone='03331234567', assigned_to=self.agent, created_by=self.agent)
+        self.client.force_login(self.agent)
+        with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo(calls := [])):
+            r = self.client.post(f'/crm/leads/{lead.pk}/whatsapp/recommend/{self.prop.pk}/')
+        body = r.json()
+        self.assertEqual((body['ok'], body['status']), (True, 'sent'))
+        self.assertEqual(calls[0][1]['phone'], '+923331234567')
+        status_url = f'/crm/whatsapp/messages/{body["message_id"]}/'
+        self.assertEqual(self.client.get(status_url).json()['status'], 'sent')
+
+        self.client.post('/api/whatsapp/failed/', json.dumps({'message_id': body['message_id']}),
+                         content_type='application/json', HTTP_X_API_KEY='hook')
+        self.assertEqual(self.client.get(status_url).json()['status'], 'failed')
+        # client message failed -> the agent who sent it is told
+        self.assertTrue(Notification.objects.filter(recipient=self.agent, title__startswith='WhatsApp not delivered').exists())
+        self.assertContains(self.client.get(f'/crm/leads/{lead.pk}/'), 'Last send not delivered')
 
     def test_webhook_errors_return_json(self):
         post = lambda body: self.client.post('/api/whatsapp/failed/', body, content_type='application/json', HTTP_X_API_KEY='hook')
@@ -178,3 +232,24 @@ class LeadApiNeverLosesLeadTests(TestCase):
     def test_wrong_key_still_refused(self):
         r = self.client.post('/api/leads/create/', '{}', content_type='application/json', HTTP_X_API_KEY='nope')
         self.assertEqual(r.status_code, 401)
+
+
+@override_settings(WHATSAPP_API_TOKEN='tok')
+@mock.patch('accounts.whatsapp.time.sleep', lambda s: None)
+class WhatsAppLeadTriggerTests(TestCase):
+    def test_milestone_to_client_and_deal_lost_to_agent_and_admins(self):
+        from .models import Lead
+        from .whatsapp import on_lead_status_changed
+        agent = User.objects.create_user(username='a', email='a@x.pk', password='x', phone='03122211828')
+        admin = User.objects.create_user(username='ad', email='ad@x.pk', password='x', phone='03001112223', role=User.ROLE_ADMIN)
+        lead = Lead.objects.create(full_name='Sana Malik', phone='03331234567', assigned_to=agent, status=Lead.STATUS_BOOKING_CONFIRMED)
+        calls = []
+        with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo(calls)):
+            on_lead_status_changed(lead, Lead.STATUS_NEGOTIATION)
+            lead.status, lead.lost_reason = Lead.STATUS_DEAL_LOST, 'Budget'
+            on_lead_status_changed(lead, Lead.STATUS_BOOKING_CONFIRMED)
+        sent = sorted(WhatsAppMessage.objects.values_list('template_name', 'phone'))
+        self.assertEqual(sent, [('client_milestone_alert', '923331234567'),
+                                ('fyi_internal_alert', '923001112223'), ('fyi_internal_alert', '923122211828')])
+        milestone = {a['field_name']: a['value'] for a in calls[0][1]['actions']}
+        self.assertEqual(milestone['tpl_milestone_text'], 'Your booking for your property has been confirmed.')

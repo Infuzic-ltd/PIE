@@ -125,6 +125,11 @@ a{color:inherit;text-decoration:none}
 .rec-loc{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
 .rec-price{font-size:13px;font-weight:700;color:var(--blue);margin-top:4px}
 .rec-meta{font-size:11.5px;color:var(--ink-faint);margin-top:1px}
+.rec-wa{padding:6px 12px 2px}
+.wa-send-btn{font-size:12px;padding:5px 11px;background:#25D366;color:#fff;border:none;border-radius:6px;font-weight:600;cursor:pointer;font-family:inherit}
+.wa-send-btn:disabled{opacity:.6;cursor:default}
+.wa-status{font-size:11.5px;color:var(--ink-soft);margin-top:4px;min-height:14px}
+.wa-status.failed{color:#dc2626;font-weight:600}
 .match-pct{padding:2px 7px;border-radius:20px;font-size:11px;font-weight:700;float:right;margin-top:2px}
 .match-hi{background:#d1fae5;color:#065f46}
 .match-md{background:#fef3c7;color:#92400e}
@@ -608,6 +613,7 @@ a{color:inherit;text-decoration:none}
     {% if recommendations %}
     <div class="prop-recs">
       {% for prop in recommendations %}
+      <div class="rec-wrap">
       <a href="{% url 'property_view' prop.pk %}" class="rec-card">
         {% with img=prop.get_primary_image %}
         {% if img %}<img src="{{ img.image_url }}" class="rec-img" alt="{{ prop.title }}" style="display:block">
@@ -627,6 +633,16 @@ a{color:inherit;text-decoration:none}
           </div>
         </div>
       </a>
+      {% if can_edit and lead.phone %}
+      <div class="rec-wa">
+        <button type="button" class="wa-send-btn" data-url="{% url 'lead_send_recommendation' lead.pk prop.pk %}">Send on WhatsApp</button>
+        <div class="wa-status{% if prop.wa_msg.status == 'failed' %} failed{% endif %}"{% if prop.wa_msg.status == 'sent' %} data-poll="{% url 'whatsapp_message_status' prop.wa_msg.message_id %}"{% endif %}>
+          {% if prop.wa_msg.status == 'failed' %}✗ Last send not delivered{% if prop.wa_msg.error %}: {{ prop.wa_msg.error|truncatechars:120 }}{% endif %}
+          {% elif prop.wa_msg %}✓ Sent {{ prop.wa_msg.created_at|timesince }} ago{% endif %}
+        </div>
+      </div>
+      {% endif %}
+      </div>
       {% endfor %}
     </div>
     {% else %}
@@ -891,5 +907,38 @@ if(paymentMethodSelect){
   paymentMethodSelect.addEventListener('change', updateReferenceVisibility);
   updateReferenceVisibility();
 }
+</script>
+<script>
+(function(){
+  var csrf = (document.querySelector('[name=csrfmiddlewaretoken]') || {}).value;
+  function show(el, text, failed){ el.textContent = text; el.classList.toggle('failed', !!failed); }
+  // Delivery failures arrive later via InstantConvo's callback, so keep checking for a few minutes.
+  function poll(el, url, triesLeft){
+    if(triesLeft <= 0) return;
+    setTimeout(function(){
+      fetch(url, {credentials:'same-origin'}).then(function(r){ return r.json(); }).then(function(d){
+        if(d.status === 'failed') show(el, '✗ Not delivered' + (d.error ? ': ' + d.error : ''), true);
+        else poll(el, url, triesLeft - 1);
+      }).catch(function(){ poll(el, url, triesLeft - 1); });
+    }, 10000);
+  }
+  document.querySelectorAll('.wa-status[data-poll]').forEach(function(el){ poll(el, el.dataset.poll, 18); });
+  document.querySelectorAll('.wa-send-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var el = btn.parentElement.querySelector('.wa-status');
+      btn.disabled = true; show(el, 'Sending…', false);
+      fetch(btn.dataset.url, {method:'POST', credentials:'same-origin', headers:{'X-CSRFToken': csrf}})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(!d.ok) return show(el, '✗ ' + (d.error || 'Could not send.'), true);
+          if(d.status === 'failed') return show(el, '✗ Not delivered' + (d.error ? ': ' + d.error : ''), true);
+          show(el, '✓ Sent. Checking delivery…', false);
+          poll(el, '/crm/whatsapp/messages/' + d.message_id + '/', 18);
+        })
+        .catch(function(){ show(el, '✗ Network error. Please try again.', true); })
+        .finally(function(){ btn.disabled = false; });
+    });
+  });
+})();
 </script>
 </body></html>

@@ -26,11 +26,15 @@ from .forms import (
     SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm,
     RoleForm, LeadForm, LeadDocumentForm, AffiliateInviteForm, ChangePasswordForm,
 )
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage
 from . import payments as safepay_payments
 from .emailer import send_html_email, EmailNotConfigured, EmailSendError
 from .reports import build_dashboard_pdf
-from .whatsapp import _normalize_phone_digits, notify_new_listing
+from .whatsapp import (
+    _normalize_phone_digits, notify_new_listing, notify_price_change, notify_status_change,
+    notify_listing_modified, notify_lead_assigned, notify_submission_received, notify_lead_figures,
+    notify_visit_scheduled, notify_affiliate_approved, on_lead_status_changed, send_property_recommendation,
+)
 from django.template.loader import render_to_string
 
 logger = logging.getLogger(__name__)
@@ -313,6 +317,7 @@ def submit_property_listing(request):
         result = cloudinary.uploader.upload(f, folder='pie-website/submissions', resource_type='image')
         PropertySubmissionImage.objects.create(submission=submission, image_url=result['secure_url'])
 
+    notify_submission_received(submission)
     payment_url = reverse('initiate_featured_payment', args=[submission.pk]) if wants_featured else None
     return JsonResponse({
         'ok': True, 'reference': submission.reference_code(),
@@ -369,6 +374,7 @@ def submit_property_lead(request, pk):
             f'{lead.full_name} is interested in {property_obj.title}.',
             f'/crm/leads/{lead.pk}/',
         )
+        notify_lead_assigned(lead)
 
     return JsonResponse({'ok': True}, status=201)
 
@@ -949,18 +955,60 @@ def property_view(request, pk):
     })
 
 
+# Fields whose edits aren't announced on WhatsApp: price and status have their own templates,
+# and the customer is private client information.
+_PROP_FIELDS_NOT_ANNOUNCED = {'price', 'status', 'customer', 'sold_at'}
+
+
+def _prop_field_display(prop, name):
+    """Human-readable value of a Property field for change alerts, or None for non-model form fields."""
+    try:
+        field = prop._meta.get_field(name)
+    except Exception:
+        return None
+    if field.choices:
+        return getattr(prop, f'get_{name}_display')() or '-'
+    value = getattr(prop, name, None)
+    if isinstance(value, bool):
+        return 'Yes' if value else 'No'
+    if isinstance(value, (list, tuple)):
+        return ', '.join(map(str, value)) or '-'
+    return '-' if value in (None, '') else str(value)
+
+
+def _prop_field_label(name):
+    return str(Property._meta.get_field(name).verbose_name).capitalize()
+
+
 @login_required
 def property_update(request, pk):
     prop = get_object_or_404(
         Property.objects.prefetch_related('images', 'documents'), pk=pk,
     )
     old_status = prop.status
+    old_status_label = prop.get_status_display()
+    old_price, old_price_label = prop.price, prop.price_display()
     form = PropertyForm(request.POST or None, instance=prop, user=request.user)
+    # Snapshot before is_valid(), which writes the submitted values onto `prop`.
+    before = {name: _prop_field_display(prop, name) for name in form.fields if name not in _PROP_FIELDS_NOT_ANNOUNCED}
     if request.method == 'POST' and form.is_valid():
         form.save()
         if prop.status == Property.STATUS_SOLD and old_status != Property.STATUS_SOLD:
             prop.sold_at = timezone.now()
             prop.save(update_fields=['sold_at'])
+        if prop.price != old_price:
+            notify_price_change(prop, old_price_label)
+        if prop.status != old_status:
+            notify_status_change(prop, old_status_label)
+        changed = [(name, old, _prop_field_display(prop, name)) for name, old in before.items()
+                   if old is not None and _prop_field_display(prop, name) != old]
+        if len(changed) == 1:
+            name, old, new = changed[0]
+            notify_listing_modified(prop, _prop_field_label(name), old[:60], new[:60])
+        elif changed:
+            labels = [_prop_field_label(n) for n, _, _ in changed]
+            notify_listing_modified(prop, ', '.join(labels[:4]) + (f' +{len(labels) - 4} more' if len(labels) > 4 else ''),
+                                    'See CRM', f'{len(labels)} fields updated')
         _upload_images(request.FILES, prop)
         PropertyActivity.objects.create(
             property=prop,
@@ -1002,6 +1050,7 @@ def property_set_status(request, pk):
                 description=f'Status changed from {old_display} to {prop.get_status_display()} by {request.user.get_full_name() or request.user.email}.',
                 created_by=request.user,
             )
+            notify_status_change(prop, old_display)
     return redirect(request.POST.get('next', 'property_list'))
 
 
@@ -1037,6 +1086,7 @@ def property_add_document(request, pk):
             description=f'{doc.get_document_type_display()} "{doc.title}" uploaded by {request.user.get_full_name() or request.user.email}.',
             created_by=request.user,
         )
+        notify_listing_modified(prop, 'Documents', '-', f'{doc.get_document_type_display()} "{doc.title}" uploaded')
     next_url = request.GET.get('next') or request.POST.get('next')
     return redirect(next_url) if next_url else redirect('property_update', pk=prop.pk)
 
@@ -1416,6 +1466,7 @@ def affiliate_set_status(request, pk):
             affiliate, 'Account Approved',
             'Your affiliate account has been approved — you can now log in.', '/crm/login/',
         )
+        notify_affiliate_approved(affiliate)
         messages.success(request, f'{affiliate.get_full_name()} approved.')
     elif new_status == User.AFFILIATE_STATUS_REJECTED:
         affiliate.affiliate_status = User.AFFILIATE_STATUS_REJECTED
@@ -1931,6 +1982,7 @@ def lead_create(request):
                 f'{lead.full_name} has been assigned to you.',
                 f'/crm/leads/{lead.pk}/',
             )
+            notify_lead_assigned(lead)
         return redirect('lead_detail', pk=lead.pk)
     return render(request, 'accounts/lead_form.html', {
         'form': form, 'lead': None,
@@ -1977,6 +2029,10 @@ def lead_detail(request, pk):
         eligible_agents = User.objects.none()
 
     whatsapp_url = _build_whatsapp_share_url(request, lead, recommendations)
+    latest_sends = {m.property_id: m for m in WhatsAppMessage.objects.filter(
+        lead=lead, template_name='property_recommendation').order_by('created_at')}
+    for prop in recommendations:
+        prop.wa_msg = latest_sends.get(prop.pk)
     payments = lead.payments.select_related('recorded_by').all()
     total_paid = lead.total_paid()
 
@@ -2040,6 +2096,8 @@ def lead_update(request, pk):
                 f'{updated.full_name} has been assigned to you.',
                 f'/crm/leads/{updated.pk}/',
             )
+            notify_lead_assigned(updated)
+        on_lead_status_changed(updated, old_status)
         if updated.property_id and updated.property_id != old_property_id:
             LeadActivity.objects.create(
                 lead=updated,
@@ -2212,6 +2270,7 @@ def lead_api_create(request):
                 f'{lead.full_name} ({lead.get_source_display()}) has been assigned to you.',
                 f'/crm/leads/{lead.pk}/',
             )
+            notify_lead_assigned(lead)
     except Exception:
         logger.exception('Lead API: lead %s saved, but activity/notification failed', lead.pk)
 
@@ -2412,6 +2471,7 @@ def lead_status_update(request, pk):
         )
 
     old = lead.get_status_display()
+    old_status = lead.status
     is_contact_transition = new_status == Lead.STATUS_CONTACTED
     lead.status = new_status
     lead.save(update_fields=list(update_fields))
@@ -2421,6 +2481,7 @@ def lead_status_update(request, pk):
         description=f'Status changed from {old} to {lead.get_status_display()}.',
         created_by=request.user,
     )
+    on_lead_status_changed(lead, old_status)
     if is_ajax:
         return JsonResponse({'ok': True, 'status': lead.status, 'label': lead.get_status_display(), 'color': lead.status_color()})
     return redirect('lead_detail', pk=pk)
@@ -2456,6 +2517,31 @@ def lead_share_properties(request, pk):
     )
     _advance_status(lead, Lead.STATUS_PROPERTY_SHARED, request.user)
     return redirect(whatsapp_url)
+
+
+@login_required
+@require_POST
+def lead_send_recommendation(request, pk, prop_pk):
+    """'Send on WhatsApp' button on a recommended property: sends property_recommendation to the lead.
+    The page then polls whatsapp_message_status to show a red line if delivery fails later."""
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    prop = get_object_or_404(Property, pk=prop_pk)
+    if not lead.phone:
+        return JsonResponse({'ok': False, 'error': 'This lead has no phone number.'}, status=400)
+    msg = send_property_recommendation(lead, prop, request.user)
+    if not msg:
+        return JsonResponse({'ok': False, 'error': "Couldn't send: WhatsApp isn't configured or the phone number is invalid."}, status=400)
+    sent = msg.status == WhatsAppMessage.STATUS_SENT
+    LeadActivity.objects.create(
+        lead=lead,
+        activity_type=LeadActivity.TYPE_PROPERTY,
+        description=(f'Property "{prop.title}" sent to the lead on WhatsApp by {request.user.get_full_name() or request.user.email}.'
+                     if sent else f'Sending property "{prop.title}" on WhatsApp failed: {msg.error[:200]}'),
+        created_by=request.user,
+    )
+    if sent:
+        _advance_status(lead, Lead.STATUS_PROPERTY_SHARED, request.user)
+    return JsonResponse({'ok': True, 'message_id': str(msg.message_id), 'status': msg.status, 'error': msg.error})
 
 
 @login_required
@@ -2515,6 +2601,7 @@ def lead_schedule_visit(request, pk):
             f'{lead.full_name} — visit for {prop.title} on {when}.',
             f'/crm/leads/{lead.pk}/',
         )
+    notify_visit_scheduled(lead, prop, visit_dt)
     return redirect('lead_detail', pk=pk)
 
 
@@ -2550,6 +2637,7 @@ def lead_set_deal_financials(request, pk):
         ),
         created_by=request.user,
     )
+    notify_lead_figures(lead, 'Deal Terms Locked', f'Deal amount PKR {deal_amount:,.0f} | Commission PKR {commission_amount:,.0f}')
     return redirect('lead_detail', pk=pk)
 
 
@@ -2595,6 +2683,11 @@ def lead_add_payment(request, pk):
     )
     if lead.status == Lead.STATUS_DOCUMENTATION:
         _advance_status(lead, Lead.STATUS_PAYMENT_TRACKING, request.user)
+    notify_lead_figures(
+        lead, 'Payment Received',
+        f'PKR {amount:,.0f} received ({payment.get_payment_against_display()}) | '
+        f'Deal remaining PKR {lead.deal_remaining():,.0f} | Commission remaining PKR {lead.commission_remaining():,.0f}',
+    )
     return redirect('lead_detail', pk=pk)
 
 
@@ -2617,8 +2710,10 @@ def lead_mark_possession_complete(request, pk):
             )
         return redirect('lead_detail', pk=pk)
     old = lead.get_status_display()
+    old_status = lead.status
     lead.status = Lead.STATUS_POSSESSION_COMPLETE
     lead.save(update_fields=['status', 'lead_score', 'updated_at'])
+    on_lead_status_changed(lead, old_status)
     LeadActivity.objects.create(
         lead=lead,
         activity_type=LeadActivity.TYPE_STATUS,

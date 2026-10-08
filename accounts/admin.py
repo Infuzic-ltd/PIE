@@ -296,9 +296,9 @@ class WhatsAppFailureInline(admin.TabularInline):
 @admin.register(WhatsAppMessage)
 class WhatsAppMessageAdmin(admin.ModelAdmin):
     inlines = [WhatsAppFailureInline]
-    list_display = ('message_id', 'template_name', 'recipient', 'phone', 'property', 'status', 'created_at')
+    list_display = ('message_id', 'template_name', 'recipient', 'lead', 'phone', 'property', 'status', 'created_at')
     list_filter = ('status', 'template_name')
-    search_fields = ('message_id', 'phone', 'recipient__email')
+    search_fields = ('message_id', 'phone', 'recipient__email', 'lead__full_name')
     readonly_fields = [f.name for f in WhatsAppMessage._meta.fields]
 
     def has_add_permission(self, request):

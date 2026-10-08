@@ -1071,18 +1071,26 @@ class Notification(models.Model):
 
 
 class WhatsAppMessage(models.Model):
-    """One outbound WhatsApp send. message_id is echoed back by InstantConvo's failure callback."""
+    """One outbound WhatsApp send. message_id is stored in InstantConvo's custom field and echoed
+    back by their failure callback. Recipient is a CRM user, or a lead (client) when recipient is empty."""
     STATUS_SENT = 'sent'
     STATUS_FAILED = 'failed'
     STATUS_CHOICES = [(STATUS_SENT, 'Sent'), (STATUS_FAILED, 'Failed')]
 
     message_id = models.UUIDField(unique=True, default=uuid.uuid4, editable=False)
-    recipient = models.ForeignKey('User', on_delete=models.CASCADE, related_name='whatsapp_messages')
+    recipient = models.ForeignKey('User', on_delete=models.CASCADE, null=True, blank=True, related_name='whatsapp_messages')
+    lead = models.ForeignKey('Lead', on_delete=models.SET_NULL, null=True, blank=True, related_name='whatsapp_messages')
+    sent_by = models.ForeignKey('User', on_delete=models.SET_NULL, null=True, blank=True, related_name='whatsapp_messages_sent',
+                                help_text='Who clicked send, for manual sends. Empty for automatic alerts.')
     phone = models.CharField(max_length=20)
     template_name = models.CharField(max_length=100)
     property = models.ForeignKey('Property', on_delete=models.SET_NULL, null=True, blank=True, related_name='whatsapp_messages')
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default=STATUS_SENT)
     error = models.TextField(blank=True)
+    # In-CRM notification raised if delivery fails (who gets it is decided in whatsapp._mark_failed).
+    notify_title = models.CharField(max_length=200, blank=True)
+    notify_body = models.CharField(max_length=500, blank=True)
+    notify_url = models.CharField(max_length=300, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:

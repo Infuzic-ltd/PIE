@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 import dj_database_url
 from dotenv import load_dotenv
@@ -120,8 +121,10 @@ LEAD_API_KEY = os.environ.get('LEAD_API_KEY', 'pie-lead-api-dev-key-8f2a1c-chang
 # ── WhatsApp (InstantConvo) ───────────────────────────────────────────────────
 # WHATSAPP_API_TOKEN: X-ACCESS-TOKEN for outbound sends (sending is skipped if empty).
 # WHATSAPP_WEBHOOK_KEY: X-Api-Key InstantConvo must send to POST /api/whatsapp/failed/.
-WHATSAPP_API_TOKEN = os.environ.get('WHATSAPP_API_TOKEN', '1103377.0ilnzJkfgp8A1jO1a3wU3LnXInVFkl57MTq6qWjYBH')
+WHATSAPP_API_TOKEN = os.environ.get('WHATSAPP_API_TOKEN', '1103377.q6e9lZud8VINRgIVupoan4cLZJVbgraR')
 WHATSAPP_WEBHOOK_KEY = os.environ.get('WHATSAPP_WEBHOOK_KEY', '99326155-4fb1-4f6d-8bb3-215405cfc8f2')
+if sys.argv[1:2] == ['test']:
+    WHATSAPP_API_TOKEN = ''  # the test suite must never send real WhatsApp messages
 
 # ── Cloudinary (direct upload — URL saved to DB) ─────────────────────────────
 cloudinary.config(
