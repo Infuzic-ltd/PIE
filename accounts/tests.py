@@ -97,7 +97,9 @@ class WhatsAppNewListingTests(TestCase):
         self.assertEqual(self.client.get(status_url).json()['status'], 'failed')
         # client message failed -> the agent who sent it is told
         self.assertTrue(Notification.objects.filter(recipient=self.agent, title__startswith='WhatsApp not delivered').exists())
-        self.assertContains(self.client.get(f'/crm/leads/{lead.pk}/'), 'Last send not delivered')
+        page = self.client.get(f'/crm/leads/{lead.pk}/')
+        self.assertContains(page, 'Last send not delivered')
+        self.assertContains(page, 'id="shareModalSendApi"')
 
     def test_webhook_errors_return_json(self):
         post = lambda body: self.client.post('/api/whatsapp/failed/', body, content_type='application/json', HTTP_X_API_KEY='hook')
@@ -232,6 +234,28 @@ class LeadApiNeverLosesLeadTests(TestCase):
     def test_wrong_key_still_refused(self):
         r = self.client.post('/api/leads/create/', '{}', content_type='application/json', HTTP_X_API_KEY='nope')
         self.assertEqual(r.status_code, 401)
+
+
+class WhatsAppRecommendFiveTests(TestCase):
+    @override_settings(WHATSAPP_API_TOKEN='tok')
+    @mock.patch('accounts.whatsapp.time.sleep', lambda s: None)
+    def test_five_properties_sent_as_five_messages(self):
+        from .models import Lead
+        agent = User.objects.create_user(username='a', email='a@x.pk', password='x', phone='03122211828', first_name='Ahmed')
+        lead = Lead.objects.create(full_name='Sana Malik', phone='03331234567', assigned_to=agent, created_by=agent)
+        props = [Property.objects.create(title=f'House {i}', price=10_000_000 + i, area_size=5, city='Karachi',
+                                         location='Naya Nazimabad', created_by=agent) for i in range(5)]
+        self.client.force_login(agent)
+        calls = []
+        with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo(calls)):
+            for p in props:  # the dialog sends them one request at a time
+                self.assertEqual(self.client.post(f'/crm/leads/{lead.pk}/whatsapp/recommend/{p.pk}/').json()['status'], 'sent')
+        msgs = WhatsAppMessage.objects.filter(lead=lead, template_name='property_recommendation')
+        self.assertEqual(sorted(msgs.values_list('property_id', flat=True)), sorted(p.pk for p in props))
+        paths = [{a['field_name']: a['value'] for a in body['actions']}['tpl_property_id_path']
+                 for url, body, _ in calls if url.endswith('/contacts')]
+        self.assertEqual(paths, [f'{p.pk}/' for p in props])
+        self.assertEqual(len([u for u, _, _ in calls if '/send/1788774297339' in u]), 5)
 
 
 @override_settings(WHATSAPP_API_TOKEN='tok')

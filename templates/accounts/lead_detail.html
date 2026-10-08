@@ -635,7 +635,7 @@ a{color:inherit;text-decoration:none}
       </a>
       {% if can_edit and lead.phone %}
       <div class="rec-wa">
-        <button type="button" class="wa-send-btn" data-url="{% url 'lead_send_recommendation' lead.pk prop.pk %}">Send on WhatsApp</button>
+        <button type="button" class="wa-send-btn" data-prop="{{ prop.pk }}" data-url="{% url 'lead_send_recommendation' lead.pk prop.pk %}">Send on WhatsApp</button>
         <div class="wa-status{% if prop.wa_msg.status == 'failed' %} failed{% endif %}"{% if prop.wa_msg.status == 'sent' %} data-poll="{% url 'whatsapp_message_status' prop.wa_msg.message_id %}"{% endif %}>
           {% if prop.wa_msg.status == 'failed' %}✗ Last send not delivered{% if prop.wa_msg.error %}: {{ prop.wa_msg.error|truncatechars:120 }}{% endif %}
           {% elif prop.wa_msg %}✓ Sent {{ prop.wa_msg.created_at|timesince }} ago{% endif %}
@@ -751,7 +751,7 @@ a{color:inherit;text-decoration:none}
 <div class="modal-scrim" id="shareModalScrim">
   <div class="modal-box" style="max-width:460px">
     <h3>Share Properties on WhatsApp</h3>
-    <p>Choose which properties to include and add an optional note before sending.</p>
+    <p>Choose the properties to send.{% if lead.phone %} Each one goes to {{ lead.full_name }} as its own WhatsApp message, and its delivery status shows under it in Recommended Properties.{% endif %}</p>
     <form method="post" action="{% url 'lead_share_properties' lead.pk %}" target="_blank" id="shareForm">
       {% csrf_token %}
       <div style="max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:14px">
@@ -769,11 +769,12 @@ a{color:inherit;text-decoration:none}
         </label>
         {% endfor %}
       </div>
-      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">Add a note (optional)</label>
+      <label style="font-size:12px;font-weight:600;color:var(--ink-soft);display:block;margin-bottom:4px">Add a note (optional, only for &ldquo;Open in my WhatsApp&rdquo;)</label>
       <textarea name="note" rows="2" placeholder="e.g. Thought you'd like these especially…" style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;outline:none;color:var(--ink);margin-bottom:14px;resize:vertical"></textarea>
       <div class="modal-actions">
         <button type="button" class="btn" id="shareModalCancel">Cancel</button>
-        <button type="submit" class="btn primary" id="shareModalSend">Send via WhatsApp</button>
+        <button type="submit" class="btn" id="shareModalSend">Open in my WhatsApp</button>
+        {% if lead.phone %}<button type="button" class="btn primary" id="shareModalSendApi">Send on WhatsApp</button>{% endif %}
       </div>
     </form>
   </div>
@@ -923,21 +924,34 @@ if(paymentMethodSelect){
     }, 10000);
   }
   document.querySelectorAll('.wa-status[data-poll]').forEach(function(el){ poll(el, el.dataset.poll, 18); });
+  // One property per request: each completes InstantConvo's save-then-send before the next starts.
+  function sendOne(btn){
+    var el = btn.parentElement.querySelector('.wa-status');
+    btn.disabled = true; show(el, 'Sending…', false);
+    return fetch(btn.dataset.url, {method:'POST', credentials:'same-origin', headers:{'X-CSRFToken': csrf}})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if(!d.ok) return show(el, '✗ ' + (d.error || 'Could not send.'), true);
+        if(d.status === 'failed') return show(el, '✗ Not delivered' + (d.error ? ': ' + d.error : ''), true);
+        show(el, '✓ Sent. Checking delivery…', false);
+        poll(el, '/crm/whatsapp/messages/' + d.message_id + '/', 18);
+      })
+      .catch(function(){ show(el, '✗ Network error. Please try again.', true); })
+      .finally(function(){ btn.disabled = false; });
+  }
   document.querySelectorAll('.wa-send-btn').forEach(function(btn){
-    btn.addEventListener('click', function(){
-      var el = btn.parentElement.querySelector('.wa-status');
-      btn.disabled = true; show(el, 'Sending…', false);
-      fetch(btn.dataset.url, {method:'POST', credentials:'same-origin', headers:{'X-CSRFToken': csrf}})
-        .then(function(r){ return r.json(); })
-        .then(function(d){
-          if(!d.ok) return show(el, '✗ ' + (d.error || 'Could not send.'), true);
-          if(d.status === 'failed') return show(el, '✗ Not delivered' + (d.error ? ': ' + d.error : ''), true);
-          show(el, '✓ Sent. Checking delivery…', false);
-          poll(el, '/crm/whatsapp/messages/' + d.message_id + '/', 18);
-        })
-        .catch(function(){ show(el, '✗ Network error. Please try again.', true); })
-        .finally(function(){ btn.disabled = false; });
-    });
+    btn.addEventListener('click', function(){ sendOne(btn); });
+  });
+
+  var sendApiBtn = document.getElementById('shareModalSendApi');
+  if(sendApiBtn) sendApiBtn.addEventListener('click', function(){
+    var ids = Array.prototype.map.call(document.querySelectorAll('#shareForm input[name="property_ids"]:checked'), function(i){ return i.value; });
+    if(!ids.length) return crmAlert('Select at least one property to share.', {style:'danger'});
+    document.getElementById('shareModalScrim').classList.remove('open');
+    var btns = ids.map(function(id){ return document.querySelector('.wa-send-btn[data-prop="' + id + '"]'); }).filter(Boolean);
+    btns.forEach(function(b){ show(b.parentElement.querySelector('.wa-status'), 'Waiting…', false); });
+    if(btns[0]) btns[0].scrollIntoView({behavior:'smooth', block:'center'});
+    btns.reduce(function(chain, b){ return chain.then(function(){ return sendOne(b); }); }, Promise.resolve());
   });
 })();
 </script>
