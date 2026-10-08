@@ -130,6 +130,18 @@ a{color:inherit;text-decoration:none}
 .wa-send-btn:disabled{opacity:.6;cursor:default}
 .wa-status{font-size:11.5px;color:var(--ink-soft);margin-top:4px;min-height:14px}
 .wa-status.failed{color:#dc2626;font-weight:600}
+.ap-list{overflow-y:auto;display:flex;flex-direction:column;gap:8px;min-height:120px}
+.ap-row{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px}
+.ap-row img,.ap-row .ap-ph{width:52px;height:52px;border-radius:8px;object-fit:cover;flex:0 0 52px;background:#f1f5f9}
+.ap-info{flex:1;min-width:0}
+.ap-title{font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:block}
+.ap-title:hover{color:var(--blue)}
+.ap-sub{font-size:11.5px;color:var(--ink-soft);margin-top:1px}
+.ap-price{font-size:12.5px;font-weight:700;color:var(--blue);margin-top:3px}
+.ap-send{flex:0 0 150px;text-align:right}
+.ap-send .wa-status{text-align:right}
+.ap-empty{text-align:center;color:var(--ink-faint);font-size:13px;padding:30px 0}
+@media(max-width:560px){.ap-row{flex-wrap:wrap}.ap-send{flex:1 1 100%;text-align:left}.ap-send .wa-status{text-align:left}}
 .match-pct{padding:2px 7px;border-radius:20px;font-size:11px;font-weight:700;float:right;margin-top:2px}
 .match-hi{background:#d1fae5;color:#065f46}
 .match-md{background:#fef3c7;color:#92400e}
@@ -616,7 +628,7 @@ a{color:inherit;text-decoration:none}
       <div class="rec-wrap">
       <a href="{% url 'property_view' prop.pk %}" class="rec-card">
         {% with img=prop.get_primary_image %}
-        {% if img %}<img src="{{ img.image_url }}" class="rec-img" alt="{{ prop.title }}" style="display:block">
+        {% if img %}<img src="{{ img.image }}" class="rec-img" alt="{{ prop.title }}" style="display:block">
         {% else %}<div class="rec-img"><svg viewBox="0 0 24 24"><path d="M3 10 12 3l9 7"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></div>{% endif %}
         {% endwith %}
         <div class="rec-info">
@@ -653,10 +665,17 @@ a{color:inherit;text-decoration:none}
     {% endif %}
     <!-- Actions row below recommendations -->
     <div style="display:flex;gap:8px;margin-top:12px;border-top:1px solid var(--border);padding-top:12px;flex-wrap:wrap">
+      {% if can_edit and lead.phone %}
+      <button type="button" id="openAllPropsBtn" class="btn" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px;cursor:pointer;font-family:inherit">
+        <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+        View All Properties
+      </button>
+      {% else %}
       <a href="{% url 'property_list' %}" class="btn" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px;text-decoration:none">
         <svg viewBox="0 0 24 24" style="width:13px;height:13px;fill:none;stroke:currentColor;stroke-width:2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
         View All Properties
       </a>
+      {% endif %}
       {% if whatsapp_url and can_edit %}
       <button type="button" id="openShareModalBtn" style="font-size:12px;padding:6px 12px;display:inline-flex;align-items:center;gap:5px;background:#25D366;color:#fff;border-radius:6px;font-weight:600;border:none;cursor:pointer;font-family:inherit">
         <svg viewBox="0 0 24 24" style="width:14px;height:14px;fill:currentColor"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/></svg>
@@ -748,6 +767,22 @@ a{color:inherit;text-decoration:none}
 </form>
 
 <!-- Share Properties on WhatsApp modal -->
+{% if can_edit and lead.phone %}
+<div class="modal-scrim" id="allPropsModal" data-url="{% url 'lead_property_search' lead.pk %}">
+  <div class="modal-box" style="max-width:560px;display:flex;flex-direction:column;max-height:86vh">
+    <h3>All Properties</h3>
+    <p>Search any active property and send it to {{ lead.full_name }} on WhatsApp. Each one goes as its own message.</p>
+    <input type="search" id="allPropsSearch" placeholder="Search by title, area, city or PROP-0031…" autocomplete="off"
+           style="width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 11px;font-size:13px;font-family:inherit;outline:none;margin-bottom:12px">
+    <div id="allPropsList" class="ap-list"></div>
+    <div class="modal-actions" style="margin-top:12px">
+      <a href="{% url 'property_list' %}" class="btn" style="text-decoration:none">Open property list</a>
+      <button type="button" class="btn" id="allPropsClose">Close</button>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <div class="modal-scrim" id="shareModalScrim">
   <div class="modal-box" style="max-width:460px">
     <h3>Share Properties on WhatsApp</h3>
@@ -759,7 +794,7 @@ a{color:inherit;text-decoration:none}
         <label style="display:flex;align-items:center;gap:10px;padding:8px;border:1px solid var(--line);border-radius:8px;cursor:pointer">
           <input type="checkbox" name="property_ids" value="{{ prop.pk }}" checked style="flex:0 0 auto;width:16px;height:16px">
           {% with img=prop.get_primary_image %}
-          {% if img %}<img src="{{ img.image_url }}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex:0 0 44px">
+          {% if img %}<img src="{{ img.image }}" alt="" style="width:44px;height:44px;border-radius:6px;object-fit:cover;flex:0 0 44px">
           {% else %}<div style="width:44px;height:44px;border-radius:6px;background:#f1f5f9;flex:0 0 44px"></div>{% endif %}
           {% endwith %}
           <div style="flex:1;min-width:0">
@@ -953,6 +988,49 @@ if(paymentMethodSelect){
     if(btns[0]) btns[0].scrollIntoView({behavior:'smooth', block:'center'});
     btns.reduce(function(chain, b){ return chain.then(function(){ return sendOne(b); }); }, Promise.resolve());
   });
+
+  // "View All Properties" modal: search every active property and send any of them.
+  var apModal = document.getElementById('allPropsModal');
+  if(apModal){
+    var apList = document.getElementById('allPropsList'), apSearch = document.getElementById('allPropsSearch'), apTimer, apSeq = 0;
+    function el(tag, cls, text){ var e = document.createElement(tag); if(cls) e.className = cls; if(text) e.textContent = text; return e; }
+    function renderRow(p){
+      var row = el('div', 'ap-row');
+      if(p.image){ var img = el('img'); img.src = p.image; img.alt = ''; row.appendChild(img); } else row.appendChild(el('div', 'ap-ph'));
+      var info = el('div', 'ap-info');
+      var title = el('a', 'ap-title', p.title); title.href = '/crm/properties/' + p.id + '/'; title.target = '_blank';
+      info.appendChild(title);
+      info.appendChild(el('div', 'ap-sub', p.code + (p.location ? ' · ' + p.location : '')));
+      info.appendChild(el('div', 'ap-price', p.price));
+      if(p.meta) info.appendChild(el('div', 'ap-sub', p.meta));
+      row.appendChild(info);
+      var send = el('div', 'ap-send');
+      var btn = el('button', 'wa-send-btn', 'Send on WhatsApp'); btn.type = 'button'; btn.dataset.url = p.send_url;
+      btn.addEventListener('click', function(){ sendOne(btn); });
+      var status = el('div', 'wa-status');
+      if(p.last_status === 'failed') show(status, '✗ Last send not delivered' + (p.last_error ? ': ' + p.last_error : ''), true);
+      else if(p.last_status === 'sent'){ show(status, '✓ Sent before', false); if(p.poll_url) poll(status, p.poll_url, 6); }
+      send.appendChild(btn); send.appendChild(status); row.appendChild(send);
+      return row;
+    }
+    function load(q){
+      var seq = ++apSeq;
+      apList.replaceChildren(el('div', 'ap-empty', 'Loading…'));
+      fetch(apModal.dataset.url + '?q=' + encodeURIComponent(q), {credentials:'same-origin'})
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if(seq !== apSeq) return;  // a newer search already started
+          apList.replaceChildren.apply(apList, d.results.length ? d.results.map(renderRow) : [el('div', 'ap-empty', 'No properties match "' + q + '".')]);
+        })
+        .catch(function(){ if(seq === apSeq) apList.replaceChildren(el('div', 'ap-empty', 'Could not load properties. Please try again.')); });
+    }
+    document.getElementById('openAllPropsBtn').addEventListener('click', function(){
+      apModal.classList.add('open'); apSearch.value = ''; load(''); apSearch.focus();
+    });
+    apSearch.addEventListener('input', function(){ clearTimeout(apTimer); apTimer = setTimeout(function(){ load(apSearch.value.trim()); }, 250); });
+    document.getElementById('allPropsClose').addEventListener('click', function(){ apModal.classList.remove('open'); });
+    apModal.addEventListener('click', function(e){ if(e.target === apModal) apModal.classList.remove('open'); });
+  }
 })();
 </script>
 </body></html>

@@ -2545,6 +2545,46 @@ def lead_send_recommendation(request, pk, prop_pk):
 
 
 @login_required
+def lead_property_search(request, pk):
+    """JSON for the 'All Properties' modal on the lead page: active properties matching ?q=
+    (title, area, city or PROP-0031 code), with the last WhatsApp send to this lead for each."""
+    lead = get_object_or_404(_lead_qs(request), pk=pk)
+    q = request.GET.get('q', '').strip()
+    qs = Property.objects.filter(status=Property.STATUS_ACTIVE).prefetch_related('images')
+    if q:
+        match = Q(title__icontains=q) | Q(location__icontains=q) | Q(city__icontains=q)
+        code = re.fullmatch(r'(?:prop-?)?0*(\d+)', q, re.IGNORECASE)
+        if code:
+            match |= Q(pk=int(code.group(1)))
+        qs = qs.filter(match)
+    props = list(qs.order_by('-created_at')[:25])
+    last = {m.property_id: m for m in WhatsAppMessage.objects.filter(
+        lead=lead, template_name='property_recommendation', property__in=props).order_by('created_at')}
+    results = []
+    for prop in props:
+        img = prop.get_primary_image()
+        msg = last.get(prop.pk)
+        results.append({
+            'id': prop.pk,
+            'code': prop.property_id,
+            'title': prop.title,
+            'location': ', '.join(x for x in [prop.location, prop.city] if x),
+            'price': prop.price_display(),
+            'meta': ' · '.join(x for x in [
+                prop.get_property_type_display(),
+                f'{prop.bedrooms} Bed' if prop.bedrooms else '',
+                f'{prop.bathrooms} Bath' if prop.bathrooms else '',
+            ] if x),
+            'image': img.image if img else '',
+            'send_url': reverse('lead_send_recommendation', args=[lead.pk, prop.pk]),
+            'last_status': msg.status if msg else '',
+            'last_error': msg.error[:120] if msg else '',
+            'poll_url': reverse('whatsapp_message_status', args=[msg.message_id]) if msg and msg.status == WhatsAppMessage.STATUS_SENT else '',
+        })
+    return JsonResponse({'results': results})
+
+
+@login_required
 @require_POST
 def lead_auto_follow_up(request, pk):
     lead = get_object_or_404(_lead_qs(request), pk=pk)

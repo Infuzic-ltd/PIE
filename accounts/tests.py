@@ -277,3 +277,24 @@ class WhatsAppLeadTriggerTests(TestCase):
                                 ('fyi_internal_alert', '923001112223'), ('fyi_internal_alert', '923122211828')])
         milestone = {a['field_name']: a['value'] for a in calls[0][1]['actions']}
         self.assertEqual(milestone['tpl_milestone_text'], 'Your booking for your property has been confirmed.')
+
+
+class LeadPropertySearchTests(TestCase):
+    def test_search_any_active_property_with_last_send(self):
+        from .models import Lead
+        agent = User.objects.create_user(username='a', email='a@x.pk', password='x', phone='03122211828')
+        lead = Lead.objects.create(full_name='Sana', phone='03331234567', assigned_to=agent, created_by=agent)
+        dha = Property.objects.create(title='Villa DHA', price=1, area_size=1, city='Karachi', location='DHA', created_by=agent)
+        Property.objects.create(title='Flat Clifton', price=1, area_size=1, city='Karachi', location='Clifton', created_by=agent)
+        Property.objects.create(title='Sold DHA', price=1, area_size=1, city='Karachi', location='DHA', status=Property.STATUS_SOLD, created_by=agent)
+        WhatsAppMessage.objects.create(lead=lead, property=dha, phone='923331234567', template_name='property_recommendation',
+                                       status=WhatsAppMessage.STATUS_FAILED, error='undeliverable')
+        self.client.force_login(agent)
+        url = f'/crm/leads/{lead.pk}/properties/search/'
+        res = self.client.get(url, {'q': 'dha'}).json()['results']
+        self.assertEqual([r['title'] for r in res], ['Villa DHA'])  # sold excluded
+        self.assertEqual((res[0]['last_status'], res[0]['last_error']), ('failed', 'undeliverable'))
+        self.assertEqual(res[0]['send_url'], f'/crm/leads/{lead.pk}/whatsapp/recommend/{dha.pk}/')
+        self.assertEqual([r['title'] for r in self.client.get(url, {'q': dha.property_id}).json()['results']], ['Villa DHA'])
+        self.assertEqual(len(self.client.get(url).json()['results']), 2)
+        self.assertContains(self.client.get(f'/crm/leads/{lead.pk}/'), 'id="openAllPropsBtn"')

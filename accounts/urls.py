@@ -77,6 +77,7 @@ urlpatterns = [
     path('leads/<int:pk>/status/', views.lead_status_update, name='lead_status_update'),
     path('leads/<int:pk>/share-properties/', views.lead_share_properties, name='lead_share_properties'),
     path('leads/<int:pk>/whatsapp/recommend/<int:prop_pk>/', views.lead_send_recommendation, name='lead_send_recommendation'),
+    path('leads/<int:pk>/properties/search/', views.lead_property_search, name='lead_property_search'),
     path('whatsapp/messages/<uuid:message_id>/', whatsapp.whatsapp_message_status, name='whatsapp_message_status'),
     path('leads/<int:pk>/follow-up/', views.lead_auto_follow_up, name='lead_auto_follow_up'),
     path('leads/<int:pk>/schedule-visit/', views.lead_schedule_visit, name='lead_schedule_visit'),
