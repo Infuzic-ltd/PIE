@@ -2112,7 +2112,7 @@ def lead_update(request, pk):
         'form': form, 'lead': lead,
         'interest_choices': Lead.INTEREST_CHOICES,
     })
-
+#new
 
 @login_required
 def lead_delete(request, pk):
