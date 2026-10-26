@@ -309,3 +309,39 @@ class HomepageTeamExpandTests(TestCase):
         self.assertIn('View all 6 specialists', page)
         User.objects.filter(username__in=['u4', 'u5']).update(show_on_website=False)
         self.assertNotIn('id="agentsToggle"', self.client.get('/').content.decode())
+
+
+@override_settings(LEAD_API_KEY='lk')
+class AssignLeadsToggleTests(TestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(username='ad', email='ad@x.pk', password='x', role=User.ROLE_ADMIN)
+        self.on = User.objects.create_user(username='on', email='on@x.pk', password='x', role=User.ROLE_AGENT)
+        self.off = User.objects.create_user(username='off', email='off@x.pk', password='x', role=User.ROLE_AGENT,
+                                            phone='03008929319', can_receive_leads=False)
+
+    def test_agents_default_on(self):
+        self.assertTrue(self.on.can_receive_leads)
+
+    def test_auto_assign_and_api_skip_disabled_agent(self):
+        from .views import _auto_assign_agent
+        self.on.assigned_leads.model.objects.create(full_name='x', phone='1', assigned_to=self.on)
+        self.assertEqual(_auto_assign_agent(), self.on)  # 'off' has fewer leads but is excluded
+        r = self.client.post('/api/leads/create/', json.dumps({'full_name': 'Ali', 'phone': '0321', 'agent_phone': '03008929319'}),
+                             content_type='application/json', HTTP_X_API_KEY='lk')
+        self.assertEqual(r.json()['assigned_agent']['assignment'], 'auto')
+        self.assertEqual(r.json()['assigned_agent']['name'], self.on.get_full_name())
+
+    def test_lead_form_hides_disabled_agent_but_keeps_current_assignee(self):
+        from .forms import LeadForm
+        from .models import Lead
+        self.assertNotIn(self.off, LeadForm(user=self.admin).fields['assigned_to'].queryset)
+        lead = Lead.objects.create(full_name='x', phone='1', assigned_to=self.off)
+        self.assertIn(self.off, LeadForm(instance=lead, user=self.admin).fields['assigned_to'].queryset)
+
+    def test_team_form_toggles_flag(self):
+        self.client.force_login(self.admin)
+        data = {'first_name': 'A', 'last_name': 'B', 'email': 'on@x.pk', 'phone': '', 'role': 'agent',
+                'assigned_role': '', 'is_active': 'True', 'badge': ''}
+        self.client.post(f'/crm/team/{self.on.pk}/edit/', data)
+        self.on.refresh_from_db()
+        self.assertFalse(self.on.can_receive_leads)

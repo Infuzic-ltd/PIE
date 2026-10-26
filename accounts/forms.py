@@ -1,5 +1,6 @@
 from django import forms
 from django.contrib.auth import authenticate
+from django.db.models import Q
 from .models import (
     User, Property, Customer, Block, BlockRequiredDocument, AMENITY_LIST, Role, PERMISSION_LIST,
     Lead, LeadDocument,
@@ -147,7 +148,7 @@ class TeamMemberCreateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'password', 'badge', 'financial_person', 'legal_person']
+        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'password', 'badge', 'financial_person', 'legal_person', 'can_receive_leads']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -176,7 +177,7 @@ class TeamMemberUpdateForm(forms.ModelForm):
 
     class Meta:
         model = User
-        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'is_active', 'badge', 'financial_person', 'legal_person']
+        fields = ['first_name', 'last_name', 'email', 'phone', 'role', 'assigned_role', 'is_active', 'badge', 'financial_person', 'legal_person', 'can_receive_leads']
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -300,7 +301,10 @@ class LeadForm(forms.ModelForm):
 
     def __init__(self, *args, user=None, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['assigned_to'].queryset = User.objects.filter(is_active=True).exclude(role=User.ROLE_AFFILIATE)
+        # Only users with "Assign Leads" on can be picked, but keep the current assignee so editing still validates.
+        self.fields['assigned_to'].queryset = User.objects.filter(
+            Q(can_receive_leads=True) | Q(pk=self.instance.assigned_to_id), is_active=True,
+        ).exclude(role=User.ROLE_AFFILIATE)
         self.fields['assigned_to'].empty_label = '— Unassigned —'
         self.fields['assigned_to'].required = False
         self.fields['follow_up_date'].required = False

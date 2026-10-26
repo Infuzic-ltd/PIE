@@ -87,6 +87,10 @@ class User(AbstractUser):
     photo = models.URLField(max_length=500, blank=True)
     financial_person = models.BooleanField(default=False)
     legal_person = models.BooleanField(default=False)
+    can_receive_leads = models.BooleanField(
+        default=True, verbose_name='Assign Leads',
+        help_text='When off, leads cannot be assigned to this user (manually, by auto-assign, or via the API).',
+    )
     badge = models.CharField(max_length=30, choices=BADGE_CHOICES, blank=True, default=BADGE_NONE)
 
     invited_by = models.ForeignKey(

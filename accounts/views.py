@@ -343,6 +343,8 @@ def submit_property_lead(request, pk):
         return JsonResponse({'ok': False, 'errors': errors}, status=400)
 
     listing_agent = property_obj.created_by
+    if listing_agent and not listing_agent.can_receive_leads:
+        listing_agent = None
     agent = listing_agent or _auto_assign_agent()
     lead = Lead.objects.create(
         full_name=full_name,
@@ -359,7 +361,7 @@ def submit_property_lead(request, pk):
     if agent and listing_agent:
         assignment_note = f' Assigned to listing agent {agent.get_full_name()}.'
     elif agent:
-        assignment_note = f' Auto-assigned to {agent.get_full_name()} (property had no listing agent).'
+        assignment_note = f' Auto-assigned to {agent.get_full_name()} (property had no listing agent accepting leads).'
     else:
         assignment_note = ' No active agent available to assign.'
     LeadActivity.objects.create(
@@ -1839,7 +1841,7 @@ def block_required_document_delete(request, pk):
 def _auto_assign_agent():
     """Equal-distribution assignment: the active agent with the fewest currently-assigned leads."""
     return (
-        User.objects.filter(role=User.ROLE_AGENT, is_active=True)
+        User.objects.filter(role=User.ROLE_AGENT, is_active=True, can_receive_leads=True)
         .annotate(lead_count=Count('assigned_leads'))
         .order_by('lead_count', 'id')
         .first()
@@ -1961,7 +1963,7 @@ def lead_create(request):
         lead = form.save(commit=False)
         lead.created_by = request.user
         if not request.user.is_crm_admin:
-            lead.assigned_to = request.user
+            lead.assigned_to = request.user if request.user.can_receive_leads else _auto_assign_agent()
         elif not lead.assigned_to_id:
             lead.assigned_to = _auto_assign_agent()
         if lead.assigned_to_id and lead.status == Lead.STATUS_RECEIVED:
@@ -2206,12 +2208,12 @@ def lead_api_create(request):
         key = re.sub(r'\D', '', agent_phone)[-10:]  # last 10 digits = PK mobile number without 0/92 prefix
         if len(key) == 10:
             preassigned_agent = next(
-                (u for u in User.objects.filter(is_active=True).exclude(role=User.ROLE_AFFILIATE).exclude(phone='')
+                (u for u in User.objects.filter(is_active=True, can_receive_leads=True).exclude(role=User.ROLE_AFFILIATE).exclude(phone='')
                  if re.sub(r'\D', '', u.phone)[-10:] == key),
                 None,
             )
         if not preassigned_agent:
-            agent_phone_warning = f'No active CRM user found with phone {agent_phone}; lead was auto-assigned instead.'
+            agent_phone_warning = f'No active CRM user accepting leads found with phone {agent_phone}; lead was auto-assigned instead.'
             warnings.append(agent_phone_warning)
 
     lead = Lead(
@@ -2252,7 +2254,7 @@ def lead_api_create(request):
         if preassigned_agent:
             assignment_note = f' Already assigned to {agent.get_full_name()} (per agent_phone).'
         elif agent_phone_warning and agent:
-            assignment_note = f' agent_phone {agent_phone} matched no active CRM user; auto-assigned to {agent.get_full_name()}.'
+            assignment_note = f' agent_phone {agent_phone} matched no active CRM user accepting leads; auto-assigned to {agent.get_full_name()}.'
         elif agent:
             assignment_note = f' Auto-assigned to {agent.get_full_name()}.'
         else:

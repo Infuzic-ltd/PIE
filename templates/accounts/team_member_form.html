@@ -159,6 +159,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);bo
         <div class="form-group full" style="flex-direction:row;gap:24px;align-items:center">
           <label style="display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink)"><input type="checkbox" name="financial_person" value="true" style="width:auto" {% if form.financial_person.value %}checked{% endif %}> Financial Person</label>
           <label style="display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink)"><input type="checkbox" name="legal_person" value="true" style="width:auto" {% if form.legal_person.value %}checked{% endif %}> Legal Person</label>
+          <label style="display:flex;align-items:center;gap:8px;font-weight:500;color:var(--ink)" title="When off, leads cannot be assigned to this member"><input type="checkbox" name="can_receive_leads" value="true" style="width:auto" {% if form.can_receive_leads.value %}checked{% endif %}> Assign Leads</label>
         </div>
       </div>
     </div>
