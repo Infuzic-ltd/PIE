@@ -3,7 +3,7 @@ from django.contrib.auth import authenticate
 from django.db.models import Q
 from .models import (
     User, Property, Customer, Block, BlockRequiredDocument, AMENITY_LIST, Role, PERMISSION_LIST,
-    Lead, LeadDocument,
+    Lead, LeadDocument, CustomerFeedback,
 )
 
 
@@ -363,3 +363,28 @@ class LeadDocumentForm(forms.ModelForm):
             lead.required_documents_qs() if lead is not None else BlockRequiredDocument.objects.none()
         )
         self.fields['requirement'].label = 'Satisfies Requirement'
+
+
+class CustomerFeedbackForm(forms.ModelForm):
+    # Honeypot: hidden from people, so anything typed here came from a bot.
+    website = forms.CharField(required=False)
+
+    class Meta:
+        model = CustomerFeedback
+        fields = ['name', 'phone', 'email', 'service', 'agent', 'rating', 'recommend', 'liked', 'improve', 'allow_testimonial']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Only team members already public on the website, so the form doesn't reveal anyone else.
+        self.fields['agent'].queryset = (
+            User.objects.filter(is_active=True, show_on_website=True)
+            .exclude(role=User.ROLE_AFFILIATE).order_by('first_name', 'last_name')
+        )
+        self.fields['agent'].required = False
+        self.fields['rating'].error_messages = {'required': 'Please choose a star rating.'}
+        self.fields['recommend'].error_messages = {'required': 'Please let us know if you would recommend us.'}
+
+    def clean_website(self):
+        if self.cleaned_data.get('website'):
+            raise forms.ValidationError('Spam detected.')
+        return ''

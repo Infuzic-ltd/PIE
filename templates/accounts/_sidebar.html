@@ -147,6 +147,11 @@
     {% endif %}
 
     {% if request.user.is_crm_admin %}
+    <div class="pie-nav-item {% if url_name == 'customer_feedback_list' %}pie-active{% endif %}">
+      <div class="pie-nav-row">
+        <a href="{% url 'customer_feedback_list' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="m12 7 1.2 2.4 2.6.4-1.9 1.8.5 2.6-2.4-1.3-2.4 1.3.5-2.6-1.9-1.8 2.6-.4z"/></svg> Customer Feedback</a>
+      </div>
+    </div>
     <div class="pie-nav-item {% if 'site_settings' in url_name %}pie-active{% endif %}">
       <div class="pie-nav-row">
         <a href="{% url 'site_settings' %}" class="pie-nav-link"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3.2"/><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2-1.5-2-3.4-2.3 1a7 7 0 0 0-1.7-1L15 3H9.6l-.4 2.6a7 7 0 0 0-1.7 1l-2.3-1-2 3.4 2 1.5a7.6 7.6 0 0 0 0 2l-2 1.5 2 3.4 2.3-1c.5.4 1.1.7 1.7 1L9.6 21H15l.4-2.6c.6-.3 1.2-.6 1.7-1l2.3 1 2-3.4z"/></svg> Settings</a>

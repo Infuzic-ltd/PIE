@@ -345,3 +345,95 @@ class AssignLeadsToggleTests(TestCase):
         self.client.post(f'/crm/team/{self.on.pk}/edit/', data)
         self.on.refresh_from_db()
         self.assertFalse(self.on.can_receive_leads)
+
+
+class CustomerFeedbackTests(TestCase):
+    def setUp(self):
+        from .models import Lead, SiteSettings
+        self.admin = User.objects.create_user(username='ad', email='ad@x.pk', password='x', role=User.ROLE_ADMIN)
+        self.agent = User.objects.create_user(username='a', email='a@x.pk', password='x', first_name='Ahmed', last_name='Raza')
+        self.lead = Lead.objects.create(full_name='Sana Malik', phone='03331234567', assigned_to=self.agent, lead_type=Lead.TYPE_SELLER)
+        s = SiteSettings.load()
+        s.instagram_url = 'https://instagram.com/pieestate'
+        s.save()
+
+    def data(self, **kw):
+        return {'name': 'Ali', 'rating': '4', 'recommend': 'yes', 'improve': 'Faster replies', **kw}
+
+    def test_submit_notifies_admins_and_thanks_page_shows_socials(self):
+        from .models import CustomerFeedback
+        self.assertContains(self.client.get('/feedback/'), 'name="rating"')
+        r = self.client.post('/feedback/', self.data())
+        self.assertRedirects(r, '/feedback/?thanks=1')
+        fb = CustomerFeedback.objects.get()
+        self.assertEqual((fb.rating, fb.improve, fb.lead), (4, 'Faster replies', None))
+        self.assertTrue(Notification.objects.filter(recipient=self.admin, title='New Customer Feedback').exists())
+        self.assertContains(self.client.get('/feedback/?thanks=1'), 'https://instagram.com/pieestate')
+
+    def test_rating_required_and_honeypot_blocks_bots(self):
+        from .models import CustomerFeedback
+        self.assertContains(self.client.post('/feedback/', self.data(rating='')), 'Please choose a star rating.')
+        self.client.post('/feedback/', self.data(website='spam.example'))
+        self.assertFalse(CustomerFeedback.objects.exists())
+
+    def test_whatsapp_token_prefills_and_links_lead_and_agent(self):
+        from .models import CustomerFeedback
+        url = f'/feedback/?t={self.lead.feedback_token()}'
+        page = self.client.get(url)
+        self.assertContains(page, 'value="Sana Malik"')
+        self.assertContains(page, 'value="selling" checked')
+        self.client.post(url, self.data(name='Sana Malik'))
+        fb = CustomerFeedback.objects.get()
+        self.assertEqual((fb.lead, fb.agent), (self.lead, self.agent))  # agent isn't public, still recorded
+
+    def test_tampered_token_is_ignored(self):
+        self.assertNotContains(self.client.get(f'/feedback/?t={self.lead.pk}:bad'), 'Sana Malik')
+
+    def test_crm_list_admin_only(self):
+        from .models import CustomerFeedback
+        CustomerFeedback.objects.create(name='Ali', rating=5, recommend='yes', liked='Honest advice')
+        self.client.force_login(self.agent)
+        self.assertEqual(self.client.get('/crm/feedback/').status_code, 403)
+        self.client.force_login(self.admin)
+        r = self.client.get('/crm/feedback/')
+        self.assertContains(r, 'Honest advice')
+        self.assertContains(r, '100%')
+
+    def test_settings_saves_social_links(self):
+        from .models import SiteSettings
+        self.client.force_login(self.admin)
+        self.client.post('/crm/settings/', {'facebook_url': ' https://facebook.com/pie ', 'instagram_url': ''})
+        s = SiteSettings.load()
+        self.assertEqual((s.facebook_url, s.instagram_url), ('https://facebook.com/pie', ''))
+
+
+@override_settings(WHATSAPP_API_TOKEN='tok')
+@mock.patch('accounts.whatsapp.time.sleep', lambda s: None)
+class FeedbackRequestWhatsAppTests(TestCase):
+    def setUp(self):
+        from .models import Lead
+        self.agent = User.objects.create_user(username='a', email='a@x.pk', password='x', phone='03122211828', first_name='Ahmed', last_name='Raza')
+        self.lead = Lead.objects.create(full_name='Sana Malik', phone='03331234567', assigned_to=self.agent, status=Lead.STATUS_DEAL_CLOSED)
+
+    def close_deal(self):
+        from .models import Lead
+        from .whatsapp import on_lead_status_changed
+        calls = []
+        with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo(calls)):
+            on_lead_status_changed(self.lead, Lead.STATUS_POSSESSION_COMPLETE)
+        return calls
+
+    def test_not_sent_until_template_approved(self):
+        self.close_deal()
+        self.assertEqual(list(WhatsAppMessage.objects.values_list('template_name', flat=True)), ['client_milestone_alert'])
+
+    @mock.patch.dict('accounts.whatsapp.FLOWS', {'client_feedback_request': '999'})
+    def test_deal_closed_sends_feedback_link_to_lead_only(self):
+        calls = self.close_deal()
+        sent = sorted(WhatsAppMessage.objects.values_list('template_name', 'phone'))
+        self.assertEqual(sent, [('client_feedback_request', '923331234567'), ('client_milestone_alert', '923331234567')])
+        values = [{a['field_name']: a['value'] for a in body['actions']} for url, body, _ in calls if url.endswith('/contacts')]
+        fb = next(v for v in values if 'tpl_button_path' in v)
+        self.assertEqual(fb['tpl_button_path'], f'?t={self.lead.feedback_token()}')
+        self.assertEqual(fb['tpl_agent_name_phone'], 'Ahmed Raza (03122211828)')
+        self.assertTrue(any(u.endswith('/send/999') for u, _, _ in calls))

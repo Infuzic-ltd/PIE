@@ -5,7 +5,7 @@ from .models import (
     Customer, Block, BlockRequiredDocument,
     Lead, LeadActivity, LeadDocument, LeadPayment,
     Role, PushSubscription, Notification, AgentTarget,
-    PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage, WhatsAppFailure,
+    PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage, WhatsAppFailure, CustomerFeedback,
 )
 
 
@@ -314,3 +314,12 @@ class WhatsAppFailureAdmin(admin.ModelAdmin):
 
     def has_add_permission(self, request):
         return False
+
+
+@admin.register(CustomerFeedback)
+class CustomerFeedbackAdmin(admin.ModelAdmin):
+    list_display = ('name', 'rating', 'recommend', 'service', 'agent', 'allow_testimonial', 'created_at')
+    list_filter = ('rating', 'recommend', 'service', 'allow_testimonial')
+    search_fields = ('name', 'phone', 'email', 'liked', 'improve')
+    autocomplete_fields = ('agent',)
+    readonly_fields = ('created_at',)

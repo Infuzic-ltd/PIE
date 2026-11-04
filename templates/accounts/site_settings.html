@@ -139,6 +139,33 @@ input:focus,select:focus{outline:none;border-color:var(--blue);box-shadow:0 0 0 
       </label>
     </div>
 
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Social Media</div>
+      <div class="help" style="margin-bottom:16px">Shown on the website's <a href="{% url 'website_feedback' %}" target="_blank" style="color:var(--blue);font-weight:600">Customer Feedback</a> page, where customers are asked to follow PIE. Leave a field blank to hide that network.</div>
+      <div class="form-grid">
+        <div class="form-group">
+          <label>Facebook</label>
+          <input type="url" name="facebook_url" value="{{ settings.facebook_url }}" placeholder="https://facebook.com/pieestate">
+        </div>
+        <div class="form-group">
+          <label>Instagram</label>
+          <input type="url" name="instagram_url" value="{{ settings.instagram_url }}" placeholder="https://instagram.com/pieestate">
+        </div>
+        <div class="form-group">
+          <label>YouTube</label>
+          <input type="url" name="youtube_url" value="{{ settings.youtube_url }}" placeholder="https://youtube.com/@pieestate">
+        </div>
+        <div class="form-group">
+          <label>TikTok</label>
+          <input type="url" name="tiktok_url" value="{{ settings.tiktok_url }}" placeholder="https://tiktok.com/@pieestate">
+        </div>
+        <div class="form-group">
+          <label>LinkedIn</label>
+          <input type="url" name="linkedin_url" value="{{ settings.linkedin_url }}" placeholder="https://linkedin.com/company/pieestate">
+        </div>
+      </div>
+    </div>
+
     <div class="actions-row">
       <button type="submit" class="btn primary">
         <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>

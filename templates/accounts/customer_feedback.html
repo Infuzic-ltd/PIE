@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Customer Feedback — PIE Real Estate</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+<script src="{% static 'accounts/js/notification-bell.js' %}"></script>
+<style>
+:root{--navy:#0d1b3e;--gold:#c9a24b;--bg:#f1f4f9;--card:#fff;--line:#e7ecf3;--ink:#1a2332;--ink-soft:#5a6678;--ink-faint:#8a94a6;--blue:#2563eb;--green:#22c55e;--orange:#f59e0b;--red:#ef4444;--radius:14px;--shadow:0 1px 3px rgba(16,30,60,.05),0 10px 30px rgba(16,30,60,.05)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.5}
+a{color:inherit;text-decoration:none}
+.shell{display:flex;min-height:100vh}
+.main{flex:1;min-width:0;display:flex;flex-direction:column}
+.topbar{display:flex;align-items:center;gap:16px;padding:14px 26px;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:0;z-index:30}
+.topbar h1{font-size:18px;font-weight:700;flex:1}
+.content{padding:24px 26px 40px;flex:1}
+.btn{display:inline-flex;align-items:center;gap:7px;padding:9px 16px;border-radius:10px;font-size:13px;font-weight:600;border:1px solid var(--line);background:#fff;color:var(--ink);cursor:pointer;white-space:nowrap;font-family:inherit}
+.card{background:#fff;border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+.kpi{padding:16px 18px}
+.kpi .kl{font-size:12px;color:var(--ink-soft);font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.kpi .kv{font-size:24px;font-weight:800;margin-top:4px}
+.tbl-wrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#f1f3f6;color:#111;font-weight:600;text-align:left;padding:10px 14px;white-space:nowrap}
+td{padding:12px 14px;border-top:1px solid var(--line);vertical-align:top;background:#fff}
+.stars{color:var(--orange);letter-spacing:1px;white-space:nowrap}
+.stars .off{color:#d7dce4}
+.who{font-weight:600}
+.sub{font-size:12px;color:var(--ink-faint)}
+.txt{max-width:320px;white-space:pre-line}
+.pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:11.5px;font-weight:600}
+.pill.yes{background:#dcfce7;color:#166534}.pill.maybe{background:#fef3c7;color:#92400e}.pill.no{background:#fee2e2;color:#991b1b}
+.empty{text-align:center;padding:52px 20px;color:var(--ink-soft)}
+.pagination{display:flex;align-items:center;justify-content:space-between;padding:16px 18px;border-top:1px solid var(--line)}
+.pg-info{font-size:12.5px;color:var(--ink-soft)}
+.pg-btns{display:flex;gap:6px}
+.pg-btn{min-width:32px;height:32px;border-radius:7px;border:1px solid var(--line);background:#fff;font-size:13px;font-weight:500;display:grid;place-items:center;color:var(--ink-soft);padding:0 8px}
+.pg-btn.disabled{opacity:.4;pointer-events:none}
+.scrim{display:none;position:fixed;inset:0;background:rgba(8,16,36,.5);z-index:35}
+.float-menu{display:none;position:fixed;top:14px;left:14px;z-index:60;width:42px;height:42px;border-radius:12px;border:none;background:var(--navy);color:#fff;cursor:pointer;align-items:center;justify-content:center}
+.float-menu svg{width:20px;height:20px;stroke:#fff;fill:none;stroke-width:2}
+@media(max-width:880px){.sidebar{position:fixed;left:0;top:0;transform:translateX(-100%);transition:transform .25s ease}body.nav-open .sidebar{transform:translateX(0)}body.nav-open .scrim{display:block}.float-menu{display:inline-flex}.content{padding:18px 16px 40px}.kpis{grid-template-columns:1fr}}
+</style>
+</head><body>
+<div class="scrim" id="scrim"></div>
+<div class="shell">
+<button class="float-menu" id="menuBtn"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+
+{% include 'accounts/_sidebar.html' %}
+
+<main class="main">
+<div class="topbar">
+  <button class="float-menu" id="menuBtnTop" style="position:static;width:36px;height:36px;border-radius:9px;background:var(--navy)"><svg viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></svg></button>
+  <h1>Customer Feedback</h1>
+  <a href="{% url 'website_feedback' %}" target="_blank" class="btn">Open Feedback Form ↗</a>
+</div>
+<div class="content">
+
+<div class="kpis">
+  <div class="card kpi"><div class="kl">Average Rating</div><div class="kv">{% if avg_rating %}{{ avg_rating|floatformat:1 }} / 5{% else %}—{% endif %}</div></div>
+  <div class="card kpi"><div class="kl">Would Recommend</div><div class="kv">{% if recommend_pct is not None %}{{ recommend_pct }}%{% else %}—{% endif %}</div></div>
+  <div class="card kpi"><div class="kl">Responses</div><div class="kv">{{ total }}</div></div>
+</div>
+
+<div class="card">
+  {% if page_obj %}
+  <div class="tbl-wrap">
+  <table>
+    <thead><tr><th>Customer</th><th>Rating</th><th>Recommend</th><th>Service / Agent</th><th>Liked Most</th><th>How to Improve</th><th>Received</th></tr></thead>
+    <tbody>
+    {% for f in page_obj %}
+    <tr>
+      <td><div class="who">{{ f.name }}</div><div class="sub">{{ f.phone }}{% if f.phone and f.email %} · {% endif %}{{ f.email }}</div>{% if f.allow_testimonial %}<div class="sub" style="color:var(--green)">✓ OK to quote publicly</div>{% endif %}</td>
+      <td><span class="stars">{% for i in "12345" %}{% if forloop.counter <= f.rating %}★{% else %}<span class="off">★</span>{% endif %}{% endfor %}</span></td>
+      <td><span class="pill {{ f.recommend }}">{{ f.get_recommend_display }}</span></td>
+      <td>{{ f.get_service_display|default:"—" }}<div class="sub">{{ f.agent.get_full_name|default:"" }}</div></td>
+      <td class="txt">{{ f.liked|default:"—" }}</td>
+      <td class="txt">{{ f.improve|default:"—" }}</td>
+      <td style="white-space:nowrap">{{ f.created_at|date:"M d, Y" }}<div class="sub">{{ f.created_at|time:"P" }}</div></td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div class="empty">No feedback yet. Share <a href="{% url 'website_feedback' %}" target="_blank" style="color:var(--blue);font-weight:600">the feedback form</a> with customers after a deal or visit.</div>
+  {% endif %}
+  {% if page_obj.paginator.num_pages > 1 %}
+  <div class="pagination">
+    <div class="pg-info">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }} — {{ page_obj.paginator.count }} total</div>
+    <div class="pg-btns">
+      <a href="{% if page_obj.has_previous %}?page={{ page_obj.previous_page_number }}{% else %}#{% endif %}" class="pg-btn {% if not page_obj.has_previous %}disabled{% endif %}">‹ Prev</a>
+      <a href="{% if page_obj.has_next %}?page={{ page_obj.next_page_number }}{% else %}#{% endif %}" class="pg-btn {% if not page_obj.has_next %}disabled{% endif %}">Next ›</a>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+</div></main></div>
+<script>
+var mb=document.getElementById('menuBtn'),mbt=document.getElementById('menuBtnTop'),sc=document.getElementById('scrim');
+function tog(){document.body.classList.toggle('nav-open')}
+if(mb)mb.addEventListener('click',tog);if(mbt)mbt.addEventListener('click',tog);if(sc)sc.addEventListener('click',tog);
+</script>
+</body></html>

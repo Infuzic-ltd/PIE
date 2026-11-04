@@ -104,8 +104,8 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
 
   <div class="masthead">
     <div class="eyebrow">WhatsApp Business API &mdash; Template Submission Plan</div>
-    <h1>PIE Real Estate needs 10 message templates</h1>
-    <p class="lede">Four cover inventory changes, three cover the lead pipeline, one sends a property recommendation to a client (one property per message), one covers client milestones and one covers affiliate onboarding with login details. Every template follows WhatsApp&rsquo;s variable rules (see Template rules), so none will be rejected for a variable at the start or end.</p>
+    <h1>PIE Real Estate needs 11 message templates</h1>
+    <p class="lede">Four cover inventory changes, three cover the lead pipeline, one sends a property recommendation to a client (one property per message), one covers client milestones, one asks a customer for feedback once their deal closes, and one covers affiliate onboarding with login details. Every template follows WhatsApp&rsquo;s variable rules (see Template rules), so none will be rejected for a variable at the start or end.</p>
     <div class="decisions">
       <span class="chip">Scope &rarr; <b>grouped by shape</b></span>
       <span class="chip">Lead-facing templates &rarr; <b>Utility</b></span>
@@ -115,7 +115,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
   </div>
 
   <h2>At a glance</h2>
-  <p class="lede">All ten submit under Meta&rsquo;s current three-category system (Utility / Marketing / Authentication) and every one here is Utility. The inventory and internal templates report on an operational change the recipient already manages; the two client-facing templates are scoped to a reply to that specific lead&rsquo;s own inquiry or an update on their own active deal (see the compliance notes in those cards).</p>
+  <p class="lede">All eleven submit under Meta&rsquo;s current three-category system (Utility / Marketing / Authentication) and every one here is Utility. The inventory and internal templates report on an operational change the recipient already manages; the three client-facing templates are scoped to a reply to that specific lead&rsquo;s own inquiry, an update on their own active deal, or feedback on their own completed deal (see the compliance notes in those cards).</p>
   <div class="table-wrap">
     <table>
       <thead><tr><th>Template</th><th>Audience</th><th>Covers</th><th>Category</th></tr></thead>
@@ -129,6 +129,7 @@ footer{margin-top:56px;padding-top:18px;border-top:1px solid var(--border);color
         <tr><td class="name mono">internal_figures_alert</td><td>Agents &amp; Admins</td><td>Payment Recorded &middot; Deal Terms Locked &middot; Agent Target Pace (View Lead button)</td><td>Utility</td></tr>
         <tr><td class="name mono">property_recommendation</td><td>Clients</td><td>One matching property with a View Property button to the website (send once per property)</td><td>Utility</td></tr>
         <tr><td class="name mono">client_milestone_alert</td><td>Leads &amp; Customers</td><td>Booking Confirmed &middot; Documentation &middot; Possession Complete &middot; Deal Closed</td><td>Utility</td></tr>
+        <tr><td class="name mono">client_feedback_request</td><td>Customers</td><td>Deal Closed &rarr; Share Feedback button to the website feedback form</td><td>Utility</td></tr>
         <tr><td class="name mono">affiliate_approved_alert</td><td>Affiliates</td><td>Account Approved, with login email and temporary password</td><td>Utility</td></tr>
       </tbody>
     </table>
@@ -685,6 +686,56 @@ For any questions, reply to this message or contact your agent Ahmed Raza (0300-
       </div>
     </div>
     <div class="note">Body {{2}} per stage: Booking Confirmed &rarr; &ldquo;Your booking for [property] has been confirmed.&rdquo; &middot; Documentation &rarr; &ldquo;Your file has moved into documentation. Our team will contact you about next steps.&rdquo; &middot; Possession Complete &rarr; &ldquo;Possession of your property is now complete. Congratulations!&rdquo; &middot; Deal Closed &rarr; &ldquo;Your deal has been successfully closed. Thank you for choosing PIE Real Estate!&rdquo; Only send to a client who opted in, and only about their own deal.</div>
+  </div>
+
+  <div class="tpl">
+    <div class="tpl-head">
+      <div>
+        <div class="tpl-name">client_feedback_request</div>
+        <div class="tpl-covers">Covers: Deal Closed &mdash; asks the customer to rate their experience on the website feedback form. Sent right after the Deal Closed milestone.</div>
+      </div>
+      <div class="badges"><span class="badge utility">Utility</span><span class="badge lang">English (US)</span></div>
+    </div>
+    <div class="spec-grid">
+      <div>
+        <div class="field"><div class="field-label">Header (text, static)</div><div class="field-value mono">How Did We Do?</div></div>
+        <div class="field"><div class="field-label">Footer</div><div class="field-value mono">PIE Real Estate</div></div>
+        <div class="field"><div class="field-label">Button 1 (URL, dynamic)</div><div class="field-value mono">Share Feedback
+https://www.pieestate.com/feedback/{{1}}</div></div>
+      </div>
+      <div>
+        <div class="field"><div class="field-label">Body</div><div class="field-value mono">Hi {{1}}, congratulations on closing your deal for {{2}} with PIE Real Estate!
+
+We would love to hear how your experience was with your agent {{3}} and our team.
+
+It takes less than a minute and helps us serve every client better. Tap Share Feedback below to tell us how we did.</div></div>
+      </div>
+    </div>
+    <div class="table-wrap var-table">
+      <table>
+        <thead><tr><th>Variable</th><th>Meaning</th><th>Sample value (for Meta review)</th></tr></thead>
+        <tbody>
+          <tr><td class="mono">Body {{1}}</td><td>Customer&rsquo;s first name</td><td class="mono">Ayesha</td></tr>
+          <tr><td class="mono">Body {{2}}</td><td>Property title, or &ldquo;your property&rdquo; if none is linked</td><td class="mono">3-Bed Apartment</td></tr>
+          <tr><td class="mono">Body {{3}}</td><td>Assigned agent&rsquo;s name and number</td><td class="mono">Ahmed Raza (0300-1234567)</td></tr>
+          <tr><td class="mono">Button 1 {{1}}</td><td>Signed lead token, completing the feedback link</td><td class="mono">?t=MzE:1tAbCd:Xy7kP2qR</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="wa-frame">
+      <div class="wa-label">Rendered preview</div>
+      <div class="wa-bubble">
+        <div class="wa-header">How Did We Do?</div>
+        <div>Hi Ayesha, congratulations on closing your deal for 3-Bed Apartment with PIE Real Estate!
+
+We would love to hear how your experience was with your agent Ahmed Raza (0300-1234567) and our team.
+
+It takes less than a minute and helps us serve every client better. Tap Share Feedback below to tell us how we did.</div>
+        <div class="wa-footer">PIE Real Estate</div>
+        <div class="wa-btn">&#128279; Share Feedback</div>
+      </div>
+    </div>
+    <div class="note">Share Feedback opens <span class="mono">https://www.pieestate.com/feedback/?t=&hellip;</span>. The token ties the response to this lead and agent and pre-fills the customer&rsquo;s name, without exposing other leads. Compliance: keep it about this customer&rsquo;s own completed deal. Don&rsquo;t add &ldquo;follow us&rdquo;, offers or listings to the message: promotional content makes it Marketing. The follow-us links are on the thank-you screen instead. In InstantConvo, map Body {{1}} &rarr; <span class="mono">tpl_first_name</span>, {{2}} &rarr; <span class="mono">tpl_property_title</span>, {{3}} &rarr; <span class="mono">tpl_agent_name_phone</span>, Button {{1}} &rarr; <span class="mono">tpl_button_path</span>, then paste the flow id into <span class="mono">FLOWS[&#39;client_feedback_request&#39;]</span> in <span class="mono">accounts/whatsapp.py</span>. Until then nothing is sent.</div>
   </div>
 
   <h2>Affiliate onboarding</h2>

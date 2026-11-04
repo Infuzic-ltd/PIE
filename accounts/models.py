@@ -1,6 +1,7 @@
 import re
 import uuid
 from django.contrib.auth.models import AbstractUser
+from django.core import signing
 from django.db import models
 from django.utils.text import slugify
 
@@ -551,6 +552,19 @@ class Lead(models.Model):
             return self.STATUS_ORDER.index(self.status)
         except ValueError:
             return -1
+
+    FEEDBACK_SALT = 'lead-feedback'
+
+    def feedback_token(self):
+        """Signed, unguessable lead id for the feedback link sent on WhatsApp when the deal closes."""
+        return signing.dumps(self.pk, salt=self.FEEDBACK_SALT)
+
+    @classmethod
+    def from_feedback_token(cls, token):
+        try:
+            return cls.objects.select_related('assigned_to').filter(pk=signing.loads(token, salt=cls.FEEDBACK_SALT)).first()
+        except signing.BadSignature:
+            return None
 
     def is_lost(self):
         return self.status == self.STATUS_DEAL_LOST
@@ -1392,6 +1406,13 @@ class SiteSettings(models.Model):
     smtp_use_tls = models.BooleanField(default=True)
     from_email = models.EmailField(blank=True, help_text='Address emails will appear to be sent from')
 
+    # Public social profiles — shown on the website wherever we ask visitors to follow PIE. Blank = hidden.
+    facebook_url = models.URLField(max_length=300, blank=True)
+    instagram_url = models.URLField(max_length=300, blank=True)
+    youtube_url = models.URLField(max_length=300, blank=True)
+    tiktok_url = models.URLField(max_length=300, blank=True)
+    linkedin_url = models.URLField(max_length=300, blank=True)
+
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
@@ -1416,3 +1437,60 @@ class SiteSettings(models.Model):
     @property
     def email_configured(self):
         return bool(self.smtp_host and self.smtp_username and self.smtp_password and self.from_email)
+
+    SOCIAL_NETWORKS = [
+        ('facebook', 'Facebook'), ('instagram', 'Instagram'), ('youtube', 'YouTube'),
+        ('tiktok', 'TikTok'), ('linkedin', 'LinkedIn'),
+    ]
+
+    @property
+    def social_links(self):
+        """Configured profiles only, as [{'key', 'label', 'url'}] in display order."""
+        return [
+            {'key': key, 'label': label, 'url': getattr(self, f'{key}_url')}
+            for key, label in self.SOCIAL_NETWORKS if getattr(self, f'{key}_url')
+        ]
+
+
+class CustomerFeedback(models.Model):
+    """Submitted from the public /feedback/ page: how a customer's experience with PIE went."""
+    SERVICE_CHOICES = [
+        ('buying', 'Buying'),
+        ('selling', 'Selling'),
+        ('renting', 'Renting'),
+        ('investing', 'Investing'),
+        ('other', 'Other'),
+    ]
+    RECOMMEND_YES = 'yes'
+    RECOMMEND_CHOICES = [
+        (RECOMMEND_YES, 'Yes, definitely'),
+        ('maybe', 'Maybe'),
+        ('no', 'No'),
+    ]
+    RATING_CHOICES = [(i, str(i)) for i in range(1, 6)]
+
+    name = models.CharField(max_length=150)
+    phone = models.CharField(max_length=20, blank=True)
+    email = models.EmailField(blank=True)
+    service = models.CharField(max_length=20, choices=SERVICE_CHOICES, blank=True)
+    agent = models.ForeignKey(
+        'User', on_delete=models.SET_NULL, null=True, blank=True, related_name='feedback_received',
+        help_text='The PIE team member who helped this customer, if they picked one.',
+    )
+    lead = models.ForeignKey(
+        'Lead', on_delete=models.SET_NULL, null=True, blank=True, related_name='feedback',
+        help_text='Set when the customer came from the deal-closed WhatsApp link.',
+    )
+    rating = models.PositiveSmallIntegerField(choices=RATING_CHOICES)
+    recommend = models.CharField(max_length=10, choices=RECOMMEND_CHOICES)
+    liked = models.TextField(blank=True)
+    improve = models.TextField(blank=True)
+    allow_testimonial = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        verbose_name_plural = 'customer feedback'
+
+    def __str__(self):
+        return f'{self.name} — {self.rating}/5'

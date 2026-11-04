@@ -13,7 +13,7 @@ from django.http import JsonResponse, HttpResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from django.db import transaction
-from django.db.models import Q, Sum, Count
+from django.db.models import Q, Sum, Count, Avg
 from django.core.paginator import Paginator
 from django.conf import settings
 from django.urls import reverse
@@ -24,9 +24,9 @@ from pywebpush import webpush, WebPushException
 from py_vapid import Vapid01
 from .forms import (
     SignupForm, LoginForm, PropertyForm, CustomerForm, BlockForm, TeamMemberCreateForm, TeamMemberUpdateForm,
-    RoleForm, LeadForm, LeadDocumentForm, AffiliateInviteForm, ChangePasswordForm,
+    RoleForm, LeadForm, LeadDocumentForm, AffiliateInviteForm, ChangePasswordForm, CustomerFeedbackForm,
 )
-from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage
+from .models import Property, PropertyImage, PropertyDocument, PropertyActivity, PushSubscription, Notification, Role, User, Customer, Block, BlockRequiredDocument, Lead, LeadActivity, LeadDocument, LeadPayment, AgentTarget, PropertySubmission, PropertySubmissionImage, SiteSettings, WhatsAppMessage, CustomerFeedback
 from . import payments as safepay_payments
 from .emailer import send_html_email, EmailNotConfigured, EmailSendError
 from .reports import build_dashboard_pdf
@@ -243,6 +243,36 @@ def website_property_detail(request, pk):
 
 def website_contact(request):
     return render(request, 'website/contact.html')
+
+
+FEEDBACK_SERVICE = {Lead.TYPE_BUYER: 'buying', Lead.TYPE_SELLER: 'selling', Lead.TYPE_INVESTOR: 'investing', Lead.TYPE_TENANT: 'renting'}
+
+
+def website_feedback(request):
+    """Public customer-feedback page. After submitting, the customer is thanked and invited to follow PIE's socials."""
+    # ?t= is a signed lead id from the deal-closed WhatsApp message (unguessable, so it can't expose other leads).
+    lead = Lead.from_feedback_token(request.GET['t']) if request.GET.get('t') else None
+    slug = request.GET.get('agent')
+    agent = (lead.assigned_to if lead else None) or (
+        User.objects.filter(slug=slug, is_active=True, show_on_website=True).first() if slug else None)
+    initial = {'agent': agent.pk if agent else None}
+    if lead:
+        initial.update(name=lead.full_name, phone=lead.phone, email=lead.email, service=FEEDBACK_SERVICE.get(lead.lead_type, ''))
+    form = CustomerFeedbackForm(request.POST or None, initial=initial)
+    if request.method == 'POST' and form.is_valid():
+        feedback = form.save(commit=False)
+        if lead:
+            feedback.lead = lead
+            feedback.agent = feedback.agent or lead.assigned_to
+        feedback.save()
+        for admin in User.objects.filter(role=User.ROLE_ADMIN, is_active=True):
+            notify_user(admin, 'New Customer Feedback', f'{feedback.name} rated PIE {feedback.rating}/5.', reverse('customer_feedback_list'))
+        return redirect(f"{reverse('website_feedback')}?thanks=1")
+    return render(request, 'website/feedback.html', {
+        'form': form,
+        'thanks': request.GET.get('thanks') == '1',
+        'social_links': SiteSettings.load().social_links,
+    })
 
 
 def website_listing(request):
@@ -1586,11 +1616,25 @@ def site_settings_view(request):
         settings_obj.smtp_password = request.POST.get('smtp_password', '').strip()
         settings_obj.smtp_use_tls = request.POST.get('smtp_use_tls') == 'true'
         settings_obj.from_email = request.POST.get('from_email', '').strip()
+        for key, _ in SiteSettings.SOCIAL_NETWORKS:
+            setattr(settings_obj, f'{key}_url', request.POST.get(f'{key}_url', '').strip())
 
         settings_obj.save()
         messages.success(request, 'Settings updated.')
         return redirect('site_settings')
     return render(request, 'accounts/site_settings.html', {'settings': settings_obj})
+
+
+@admin_required
+def customer_feedback_list(request):
+    qs = CustomerFeedback.objects.select_related('agent')
+    stats = qs.aggregate(total=Count('pk'), avg=Avg('rating'), recommend=Count('pk', filter=Q(recommend=CustomerFeedback.RECOMMEND_YES)))
+    return render(request, 'accounts/customer_feedback.html', {
+        'page_obj': Paginator(qs, 20).get_page(request.GET.get('page')),
+        'total': stats['total'],
+        'avg_rating': stats['avg'],
+        'recommend_pct': round(stats['recommend'] * 100 / stats['total']) if stats['total'] else None,
+    })
 
 
 # ── Web Push ──────────────────────────────────────────────────────────────────

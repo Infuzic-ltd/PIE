@@ -51,6 +51,8 @@ FLOWS = {
     'property_recommendation': '1788774297339',
     'client_milestone_alert': '1788772111813',
     'affiliate_approved_alert': '1788771644124',
+    # Pending Meta approval: paste the InstantConvo flow id here once approved. Until then nothing is sent.
+    'client_feedback_request': '',
 }
 
 MILESTONE_TEXT = {
@@ -359,12 +361,26 @@ def notify_client_milestone(lead):
     }, f'The update "{lead.get_status_display()}"', prop=lead.property)])
 
 
+def notify_feedback_request(lead):
+    """client_feedback_request after a deal closes: a button to the website feedback form, tied to this lead."""
+    if not FLOWS['client_feedback_request'] or not lead.phone:
+        return []
+    return _send([_client_item(lead, 'client_feedback_request', {
+        'tpl_first_name': _first_name(lead),
+        'tpl_property_title': lead.property.title if lead.property_id else 'your property',
+        'tpl_agent_name_phone': _name_phone(lead.assigned_to),
+        'tpl_button_path': f'?t={lead.feedback_token()}',
+    }, 'The feedback request', prop=lead.property)])
+
+
 def on_lead_status_changed(lead, old_status):
     """Call after a lead's status is saved."""
     if lead.status == old_status:
         return
     if lead.status in MILESTONE_TEXT:
         notify_client_milestone(lead)
+        if lead.status == Lead.STATUS_DEAL_CLOSED:
+            notify_feedback_request(lead)
     elif lead.status == Lead.STATUS_DEAL_LOST:
         notify_deal_lost(lead)
 

@@ -57,6 +57,7 @@ urlpatterns = [
 
     # Site Settings (admin only)
     path('settings/', views.site_settings_view, name='site_settings'),
+    path('feedback/', views.customer_feedback_list, name='customer_feedback_list'),
 
     # Blocks (admin only)
     path('blocks/', views.block_list, name='block_list'),
