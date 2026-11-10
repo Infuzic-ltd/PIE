@@ -51,15 +51,14 @@ FLOWS = {
     'property_recommendation': '1788774297339',
     'client_milestone_alert': '1788772111813',
     'affiliate_approved_alert': '1788771644124',
-    # Pending Meta approval: paste the InstantConvo flow id here once approved. Until then nothing is sent.
-    'client_feedback_request': '',
+    'customer_feeback': '1794054250802',  # spelled as approved on Meta
 }
 
 MILESTONE_TEXT = {
     Lead.STATUS_BOOKING_CONFIRMED: 'Your booking for {property} has been confirmed.',
     Lead.STATUS_DOCUMENTATION: 'Your file has moved into documentation. Our team will contact you about next steps.',
     Lead.STATUS_POSSESSION_COMPLETE: 'Possession of your property is now complete. Congratulations!',
-    Lead.STATUS_DEAL_CLOSED: 'Your deal has been successfully closed. Thank you for choosing PIE Real Estate!',
+    # Deal Closed sends customer_feeback instead (its body already thanks the customer).
 }
 
 
@@ -362,13 +361,11 @@ def notify_client_milestone(lead):
 
 
 def notify_feedback_request(lead):
-    """client_feedback_request after a deal closes: a button to the website feedback form, tied to this lead."""
-    if not FLOWS['client_feedback_request'] or not lead.phone:
+    """customer_feeback after a deal closes: a button to the website feedback form, tied to this lead."""
+    if not lead.phone:
         return []
-    return _send([_client_item(lead, 'client_feedback_request', {
+    return _send([_client_item(lead, 'customer_feeback', {
         'tpl_first_name': _first_name(lead),
-        'tpl_property_title': lead.property.title if lead.property_id else 'your property',
-        'tpl_agent_name_phone': _name_phone(lead.assigned_to),
         'tpl_button_path': f'?t={lead.feedback_token()}',
     }, 'The feedback request', prop=lead.property)])
 
@@ -379,8 +376,8 @@ def on_lead_status_changed(lead, old_status):
         return
     if lead.status in MILESTONE_TEXT:
         notify_client_milestone(lead)
-        if lead.status == Lead.STATUS_DEAL_CLOSED:
-            notify_feedback_request(lead)
+    elif lead.status == Lead.STATUS_DEAL_CLOSED:
+        notify_feedback_request(lead)
     elif lead.status == Lead.STATUS_DEAL_LOST:
         notify_deal_lost(lead)
 

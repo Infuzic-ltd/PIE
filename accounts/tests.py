@@ -415,25 +415,27 @@ class FeedbackRequestWhatsAppTests(TestCase):
         self.agent = User.objects.create_user(username='a', email='a@x.pk', password='x', phone='03122211828', first_name='Ahmed', last_name='Raza')
         self.lead = Lead.objects.create(full_name='Sana Malik', phone='03331234567', assigned_to=self.agent, status=Lead.STATUS_DEAL_CLOSED)
 
-    def close_deal(self):
-        from .models import Lead
+    def close_deal(self, old_status='possession_complete'):
         from .whatsapp import on_lead_status_changed
         calls = []
         with mock.patch('accounts.whatsapp.requests.post', side_effect=fake_instantconvo(calls)):
-            on_lead_status_changed(self.lead, Lead.STATUS_POSSESSION_COMPLETE)
+            on_lead_status_changed(self.lead, old_status)
         return calls
 
-    def test_not_sent_until_template_approved(self):
-        self.close_deal()
-        self.assertEqual(list(WhatsAppMessage.objects.values_list('template_name', flat=True)), ['client_milestone_alert'])
-
-    @mock.patch.dict('accounts.whatsapp.FLOWS', {'client_feedback_request': '999'})
     def test_deal_closed_sends_feedback_link_to_lead_only(self):
         calls = self.close_deal()
         sent = sorted(WhatsAppMessage.objects.values_list('template_name', 'phone'))
-        self.assertEqual(sent, [('client_feedback_request', '923331234567'), ('client_milestone_alert', '923331234567')])
-        values = [{a['field_name']: a['value'] for a in body['actions']} for url, body, _ in calls if url.endswith('/contacts')]
-        fb = next(v for v in values if 'tpl_button_path' in v)
-        self.assertEqual(fb['tpl_button_path'], f'?t={self.lead.feedback_token()}')
-        self.assertEqual(fb['tpl_agent_name_phone'], 'Ahmed Raza (03122211828)')
-        self.assertTrue(any(u.endswith('/send/999') for u, _, _ in calls))
+        self.assertEqual(sent, [('customer_feeback', '923331234567')])  # no separate "deal closed" milestone
+        fb = next({a['field_name']: a['value'] for a in body['actions']} for url, body, _ in calls
+                  if url.endswith('/contacts') and any(a['field_name'] == 'tpl_button_path' for a in body['actions']))
+        self.assertEqual(fb, {'tpl_first_name': 'Sana', 'tpl_button_path': f'?t={self.lead.feedback_token()}'})
+        self.assertTrue(any(u.endswith('/send/1794054250802') for u, _, _ in calls))
+        # The link in the message opens the form pre-filled for this lead
+        self.assertContains(self.client.get('/feedback/' + fb['tpl_button_path']), 'value="Sana Malik"')
+
+    def test_other_statuses_do_not_send_feedback(self):
+        from .models import Lead
+        self.lead.status = Lead.STATUS_POSSESSION_COMPLETE
+        self.close_deal(old_status=Lead.STATUS_DOCUMENTATION)
+        self.assertTrue(WhatsAppMessage.objects.filter(template_name='client_milestone_alert').exists())
+        self.assertFalse(WhatsAppMessage.objects.filter(template_name='customer_feeback').exists())
