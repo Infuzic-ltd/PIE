@@ -366,7 +366,7 @@ def notify_feedback_request(lead):
         return []
     return _send([_client_item(lead, 'customer_feeback', {
         'tpl_first_name': _first_name(lead),
-        'tpl_button_path': f'?t={lead.feedback_token()}',
+        'pie_feedback': f'?t={lead.feedback_token()}',  # button URL {{1}} in the customer_feeback flow
     }, 'The feedback request', prop=lead.property)])
 
 

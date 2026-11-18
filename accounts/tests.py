@@ -427,11 +427,11 @@ class FeedbackRequestWhatsAppTests(TestCase):
         sent = sorted(WhatsAppMessage.objects.values_list('template_name', 'phone'))
         self.assertEqual(sent, [('customer_feeback', '923331234567')])  # no separate "deal closed" milestone
         fb = next({a['field_name']: a['value'] for a in body['actions']} for url, body, _ in calls
-                  if url.endswith('/contacts') and any(a['field_name'] == 'tpl_button_path' for a in body['actions']))
-        self.assertEqual(fb, {'tpl_first_name': 'Sana', 'tpl_button_path': f'?t={self.lead.feedback_token()}'})
+                  if url.endswith('/contacts') and any(a['field_name'] == 'pie_feedback' for a in body['actions']))
+        self.assertEqual(fb, {'tpl_first_name': 'Sana', 'pie_feedback': f'?t={self.lead.feedback_token()}'})
         self.assertTrue(any(u.endswith('/send/1794054250802') for u, _, _ in calls))
         # The link in the message opens the form pre-filled for this lead
-        self.assertContains(self.client.get('/feedback/' + fb['tpl_button_path']), 'value="Sana Malik"')
+        self.assertContains(self.client.get('/feedback/' + fb['pie_feedback']), 'value="Sana Malik"')
 
     def test_other_statuses_do_not_send_feedback(self):
         from .models import Lead
