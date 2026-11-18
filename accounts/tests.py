@@ -273,7 +273,7 @@ class WhatsAppLeadTriggerTests(TestCase):
             lead.status, lead.lost_reason = Lead.STATUS_DEAL_LOST, 'Budget'
             on_lead_status_changed(lead, Lead.STATUS_BOOKING_CONFIRMED)
         sent = sorted(WhatsAppMessage.objects.values_list('template_name', 'phone'))
-        self.assertEqual(sent, [('client_milestone_alert', '923331234567'),
+        self.assertEqual(sent, [('client_milestone_alert', '923331234567'), ('customer_feeback', '923331234567'),
                                 ('fyi_internal_alert', '923001112223'), ('fyi_internal_alert', '923122211828')])
         milestone = {a['field_name']: a['value'] for a in calls[0][1]['actions']}
         self.assertEqual(milestone['tpl_milestone_text'], 'Your booking for your property has been confirmed.')
@@ -432,6 +432,15 @@ class FeedbackRequestWhatsAppTests(TestCase):
         self.assertTrue(any(u.endswith('/send/1794054250802') for u, _, _ in calls))
         # The link in the message opens the form pre-filled for this lead
         self.assertContains(self.client.get('/feedback/' + fb['pie_feedback']), 'value="Sana Malik"')
+
+    def test_deal_lost_sends_feedback_to_lead_and_alert_to_agent(self):
+        from .models import Lead
+        self.lead.status = Lead.STATUS_DEAL_LOST
+        calls = self.close_deal(old_status=Lead.STATUS_NEGOTIATION)
+        sent = sorted(WhatsAppMessage.objects.values_list('template_name', 'phone'))
+        self.assertEqual(sent, [('customer_feeback', '923331234567'), ('fyi_internal_alert', '923122211828')])
+        self.assertTrue(any(body and any(a['field_name'] == 'pie_feedback' and a['value'] == f'?t={self.lead.feedback_token()}'
+                                         for a in body.get('actions', [])) for u, body, _ in calls if u.endswith('/contacts')))
 
     def test_other_statuses_do_not_send_feedback(self):
         from .models import Lead

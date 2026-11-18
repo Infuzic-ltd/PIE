@@ -361,7 +361,7 @@ def notify_client_milestone(lead):
 
 
 def notify_feedback_request(lead):
-    """customer_feeback after a deal closes: a button to the website feedback form, tied to this lead."""
+    """customer_feeback after a deal is closed or lost: a button to the website feedback form, tied to this lead."""
     if not lead.phone:
         return []
     return _send([_client_item(lead, 'customer_feeback', {
@@ -379,7 +379,8 @@ def on_lead_status_changed(lead, old_status):
     elif lead.status == Lead.STATUS_DEAL_CLOSED:
         notify_feedback_request(lead)
     elif lead.status == Lead.STATUS_DEAL_LOST:
-        notify_deal_lost(lead)
+        notify_deal_lost(lead)  # internal alert to the agent and admins
+        notify_feedback_request(lead)
 
 
 def send_property_recommendation(lead, prop, sent_by):
